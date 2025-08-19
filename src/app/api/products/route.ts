@@ -7,14 +7,18 @@ export async function GET(request: NextRequest) {
   try {
     // Use nextUrl.searchParams instead of new URL(request.url)
     const collection = request.nextUrl.searchParams.get('collection');
-    const limit = parseInt(request.nextUrl.searchParams.get('limit') || '10');
-
-    if (!collection) {
-      return NextResponse.json({ error: 'Collection parameter is required' }, { status: 400 });
-    }
+    const limit = parseInt(request.nextUrl.searchParams.get('limit') || '20');
 
     const db = new DatabaseService();
-    const products = await db.getProductsByCategory(collection);
+    let products;
+
+    if (collection) {
+      // Get products by specific category
+      products = await db.getProductsByCategory(collection);
+    } else {
+      // Get all products if no collection specified
+      products = await db.getProducts();
+    }
     
     // Transform products to Shopify format and limit the results
     const transformedProducts = products
