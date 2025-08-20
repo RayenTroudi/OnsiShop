@@ -11,7 +11,15 @@ export async function GET(request: NextRequest) {
     const cartId = cookieStore.get('cartId')?.value;
     
     if (!cartId) {
-      return NextResponse.json({ items: [], totalQuantity: 0, cost: { totalAmount: { amount: '0', currencyCode: 'USD' } } });
+      return NextResponse.json({ 
+        lines: [], 
+        totalQuantity: 0, 
+        cost: { 
+          totalAmount: { amount: '0', currencyCode: 'USD' },
+          totalTaxAmount: { amount: '0', currencyCode: 'USD' }
+        },
+        checkoutUrl: ''
+      });
     }
 
     const cart = await prisma.cart.findUnique({
@@ -26,7 +34,15 @@ export async function GET(request: NextRequest) {
     });
 
     if (!cart) {
-      return NextResponse.json({ items: [], totalQuantity: 0, cost: { totalAmount: { amount: '0', currencyCode: 'USD' } } });
+      return NextResponse.json({ 
+        lines: [], 
+        totalQuantity: 0, 
+        cost: { 
+          totalAmount: { amount: '0', currencyCode: 'USD' },
+          totalTaxAmount: { amount: '0', currencyCode: 'USD' }
+        },
+        checkoutUrl: ''
+      });
     }
 
     // Transform to match Shopify cart format

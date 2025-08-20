@@ -32,11 +32,16 @@ export default function UserMenu() {
 
   const checkAuth = async () => {
     try {
+      // For demo mode, we'll skip auth checks
+      // TODO: Re-enable when auth is properly implemented
+      setUser(null);
+      /*
       const response = await fetch('/api/auth/me');
       if (response.ok) {
         const userData = await response.json();
         setUser(userData.user);
       }
+      */
     } catch (error) {
       console.error('Auth check failed:', error);
     } finally {

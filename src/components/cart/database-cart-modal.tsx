@@ -3,72 +3,81 @@
 import Price from '@/components/common/price';
 import { Dialog, Transition } from '@headlessui/react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { Fragment, useState } from 'react';
+
+interface Product {
+  id: string;
+  name: string;
+  title: string;
+  description?: string;
+  price: number;
+  stock: number;
+  image?: string;
+  images?: string;
+}
 
 interface CartItem {
   id: string;
+  cartId: string;
+  productId: string;
   quantity: number;
-  cost: {
-    totalAmount: { amount: string; currencyCode: string };
-  };
-  merchandise: {
-    id: string;
-    title: string;
-    selectedOptions: any[];
-    product: {
-      id: string;
-      handle: string;
-      title: string;
-      featuredImage: {
-        url: string;
-        altText: string;
-      };
-    };
-  };
+  variantId?: string;
+  product: Product;
+  createdAt: string;
+  updatedAt: string;
 }
 
-interface CartData {
-  lines: CartItem[];
-  totalQuantity: number;
-  cost: {
-    totalAmount: { amount: string; currencyCode: string };
-    totalTaxAmount: { amount: string; currencyCode: string };
-  };
-  checkoutUrl: string;
+interface Cart {
+  id: string;
+  userId: string;
+  items: CartItem[];
+  totalItems: number;
+  totalAmount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface DatabaseCartModalProps {
-  cart: CartData | null;
+  cart: Cart | null;
   isOpen: boolean;
   onClose: () => void;
   onCartUpdate: () => void;
+  userId: string;
 }
 
 export default function DatabaseCartModal({
   cart,
   isOpen,
   onClose,
-  onCartUpdate
+  onCartUpdate,
+  userId
 }: DatabaseCartModalProps) {
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const updateQuantity = async (itemId: string, newQuantity: number) => {
     setIsUpdating(itemId);
+    setError(null);
+    
     try {
-      const response = await fetch(`/api/cart/${itemId}`, {
-        method: 'PATCH',
+      const response = await fetch('/api/cart/update', {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ quantity: newQuantity })
+        body: JSON.stringify({ itemId, quantity: newQuantity })
       });
 
-      if (response.ok) {
+      const result = await response.json();
+      
+      if (result.success) {
         onCartUpdate();
+      } else {
+        setError(result.message);
       }
     } catch (error) {
       console.error('Error updating cart:', error);
+      setError('Failed to update item');
     } finally {
       setIsUpdating(null);
     }
@@ -76,18 +85,50 @@ export default function DatabaseCartModal({
 
   const removeItem = async (itemId: string) => {
     setIsUpdating(itemId);
+    setError(null);
+    
     try {
-      const response = await fetch(`/api/cart/${itemId}`, {
+      const response = await fetch(`/api/cart/remove/${itemId}`, {
         method: 'DELETE'
       });
 
-      if (response.ok) {
+      const result = await response.json();
+      
+      if (result.success) {
         onCartUpdate();
+      } else {
+        setError(result.message);
       }
     } catch (error) {
       console.error('Error removing item:', error);
+      setError('Failed to remove item');
     } finally {
       setIsUpdating(null);
+    }
+  };
+
+  const handleCheckout = async () => {
+    try {
+      const response = await fetch('/api/cart/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        alert(`Order ${result.data.orderId} placed successfully!`);
+        onCartUpdate();
+        onClose();
+      } else {
+        setError(result.message);
+      }
+    } catch (error) {
+      console.error('Error during checkout:', error);
+      setError('Checkout failed');
     }
   };
 
@@ -135,7 +176,19 @@ export default function DatabaseCartModal({
               </button>
             </div>
 
-            {!cart || cart.lines.length === 0 ? (
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {error}
+                <button 
+                  onClick={() => setError(null)}
+                  className="ml-2 text-red-500 hover:text-red-700"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+            {!cart || !cart.items || cart.items.length === 0 ? (
               <div className="mt-20 flex w-full flex-col items-center justify-center overflow-hidden">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="text-gray-400">
                   <path
@@ -153,80 +206,91 @@ export default function DatabaseCartModal({
             ) : (
               <div className="flex h-full flex-col justify-between overflow-hidden p-1">
                 <ul className="flex-grow overflow-auto py-4">
-                  {cart.lines.map((item) => (
-                    <li key={item.id} className="flex w-full flex-col border-b border-purple">
-                      <div className="relative flex w-full flex-row justify-between px-1 py-4">
-                        <div className="absolute z-40 -mt-2 ml-[55px]">
-                          <button
-                            onClick={() => removeItem(item.id)}
-                            disabled={isUpdating === item.id}
-                            className="h-6 w-6 rounded-full bg-red-500 text-white hover:bg-red-600 flex items-center justify-center text-xs"
-                          >
-                            ×
-                          </button>
-                        </div>
-                        
-                        <Link
-                          href={`/product/${item.merchandise.product.handle}`}
-                          onClick={onClose}
-                          className="z-30 flex flex-row space-x-4"
-                        >
-                          <div className="relative h-16 w-16 cursor-pointer overflow-hidden rounded-md bg-neutral-300">
-                            <Image
-                              className="h-full w-full object-cover"
-                              width={64}
-                              height={64}
-                              alt={item.merchandise.product.featuredImage.altText}
-                              src={item.merchandise.product.featuredImage.url}
+                  {cart.items.map((item) => {
+                    const product = item.product;
+                    const imageUrl = product.image || 
+                      (product.images ? JSON.parse(product.images)[0] : null) ||
+                      '/images/placeholder.jpg';
+                    const subtotal = product.price * item.quantity;
+
+                    return (
+                      <li key={item.id} className="flex w-full flex-col border-b border-purple">
+                        <div className="relative flex w-full flex-row justify-between px-1 py-4">
+                          <div className="absolute z-40 -mt-2 ml-[55px]">
+                            <button
+                              onClick={() => removeItem(item.id)}
+                              disabled={isUpdating === item.id}
+                              className="h-6 w-6 rounded-full bg-red-500 text-white hover:bg-red-600 flex items-center justify-center text-xs disabled:opacity-50"
+                            >
+                              ×
+                            </button>
+                          </div>
+                          
+                          <div className="z-30 flex flex-row space-x-4">
+                            <div className="relative h-16 w-16 cursor-pointer overflow-hidden rounded-md bg-neutral-300">
+                              <Image
+                                className="h-full w-full object-cover"
+                                width={64}
+                                height={64}
+                                alt={product.name || product.title}
+                                src={imageUrl}
+                              />
+                            </div>
+                            
+                            <div className="flex flex-1 flex-col">
+                              <span className="font-lora text-base font-bold leading-tight">
+                                {product.name || product.title}
+                              </span>
+                              <span className="text-sm text-gray-500">
+                                Stock: {product.stock}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex h-16 flex-col justify-between">
+                            <Price
+                              className="flex justify-end space-y-2 text-right text-sm font-medium"
+                              amount={subtotal.toString()}
+                              currencyCode="USD"
                             />
-                          </div>
-                          
-                          <div className="flex flex-1 flex-col">
-                            <span className="font-lora text-base font-bold leading-tight">
-                              {item.merchandise.product.title}
-                            </span>
-                          </div>
-                        </Link>
-                        
-                        <div className="flex h-16 flex-col justify-between">
-                          <Price
-                            className="flex justify-end space-y-2 text-right text-sm font-medium"
-                            amount={item.cost.totalAmount.amount}
-                            currencyCode={item.cost.totalAmount.currencyCode}
-                          />
-                          
-                          <div className="ml-auto flex h-9 flex-row items-center rounded-[8px] bg-lightPurple">
-                            <button
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              disabled={isUpdating === item.id}
-                              className="h-9 w-9 flex items-center justify-center hover:bg-purple/20 rounded-l-[8px]"
-                            >
-                              −
-                            </button>
-                            <span className="w-6 border-x-2 border-purple/50 text-center font-lora font-bold leading-[1]">
-                              {item.quantity}
-                            </span>
-                            <button
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              disabled={isUpdating === item.id}
-                              className="h-9 w-9 flex items-center justify-center hover:bg-purple/20 rounded-r-[8px]"
-                            >
-                              +
-                            </button>
+                            
+                            <div className="ml-auto flex h-9 flex-row items-center rounded-[8px] bg-lightPurple">
+                              <button
+                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                disabled={isUpdating === item.id || item.quantity <= 1}
+                                className="h-9 w-9 flex items-center justify-center hover:bg-purple/20 rounded-l-[8px] disabled:opacity-50"
+                              >
+                                −
+                              </button>
+                              <span className="w-6 border-x-2 border-purple/50 text-center font-lora font-bold leading-[1]">
+                                {item.quantity}
+                              </span>
+                              <button
+                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                disabled={isUpdating === item.id || item.quantity >= product.stock}
+                                className="h-9 w-9 flex items-center justify-center hover:bg-purple/20 rounded-r-[8px] disabled:opacity-50"
+                              >
+                                +
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
                 
                 <div className="py-4 font-lora text-sm font-bold">
                   <div className="mb-3 flex items-center justify-between border-b border-purple pb-1">
-                    <p>Taxes</p>
+                    <p>Items</p>
+                    <p className="text-right">{cart.totalItems}</p>
+                  </div>
+                  <div className="mb-3 flex items-center justify-between border-b border-purple pb-1 pt-1">
+                    <p>Subtotal</p>
                     <Price
                       className="text-right text-base"
-                      amount={cart.cost.totalTaxAmount.amount}
-                      currencyCode={cart.cost.totalTaxAmount.currencyCode}
+                      amount={cart.totalAmount.toString()}
+                      currencyCode="USD"
                     />
                   </div>
                   <div className="mb-3 flex items-center justify-between border-b border-purple pb-1 pt-1">
@@ -237,19 +301,19 @@ export default function DatabaseCartModal({
                     <p>Total</p>
                     <Price
                       className="text-right text-base"
-                      amount={cart.cost.totalAmount.amount}
-                      currencyCode={cart.cost.totalAmount.currencyCode}
+                      amount={cart.totalAmount.toString()}
+                      currencyCode="USD"
                     />
                   </div>
                 </div>
                 
-                <Link
-                  href={cart.checkoutUrl}
-                  className="btn-dark text-center block"
-                  onClick={onClose}
+                <button
+                  onClick={handleCheckout}
+                  className="btn-dark text-center block w-full"
+                  disabled={cart.items.length === 0}
                 >
                   Proceed to Checkout
-                </Link>
+                </button>
               </div>
             )}
           </Dialog.Panel>

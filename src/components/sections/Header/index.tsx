@@ -6,7 +6,7 @@ import MobileMenu from './mobile-menu';
 // next
 
 // components
-import DatabaseCartIcon from '@/components/cart/database-cart-icon';
+import CartIconWrapper from '@/components/cart/CartIconWrapper';
 import Logo from '@/components/layout/Logo';
 import { Suspense } from 'react';
 import Menu from './Menu';
@@ -94,7 +94,7 @@ const Header = async () => {
             </div>
             <Suspense fallback={<div className="h-9 w-9"></div>}>
               <div className="flex h-full items-center justify-center">
-                <DatabaseCartIcon />
+                <CartIconWrapper />
               </div>
             </Suspense>
           </div>

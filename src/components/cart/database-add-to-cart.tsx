@@ -1,11 +1,13 @@
 'use client';
 
+import { useCart } from '@/contexts/CartContext';
 import { useState } from 'react';
 
 interface DatabaseAddToCartProps {
   productId: string;
   variantId?: string;
   availableForSale?: boolean;
+  stock?: number;
   className?: string;
   children?: React.ReactNode;
 }
@@ -14,41 +16,26 @@ export default function DatabaseAddToCart({
   productId,
   variantId,
   availableForSale = true,
+  stock = 0,
   className = '',
   children
 }: DatabaseAddToCartProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const { addToCart } = useCart();
 
   const handleAddToCart = async () => {
-    if (!availableForSale) return;
+    if (!availableForSale || stock <= 0) return;
 
     setIsLoading(true);
     setMessage('');
 
     try {
-      const response = await fetch('/api/cart', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          productId,
-          variantId,
-          quantity: 1
-        })
-      });
-
-      if (response.ok) {
-        setMessage('Added to cart!');
-        // Trigger cart update event
-        window.dispatchEvent(new CustomEvent('cartUpdated'));
-        
-        // Clear message after 2 seconds
-        setTimeout(() => setMessage(''), 2000);
-      } else {
-        throw new Error('Failed to add to cart');
-      }
+      await addToCart(productId, 1, variantId);
+      setMessage('Added to cart!');
+      
+      // Clear message after 2 seconds
+      setTimeout(() => setMessage(''), 2000);
     } catch (error) {
       console.error('Error adding to cart:', error);
       setMessage('Failed to add to cart');
@@ -58,23 +45,31 @@ export default function DatabaseAddToCart({
     }
   };
 
+  const isOutOfStock = stock <= 0 || !availableForSale;
+
   return (
     <div className="relative">
       <button
         onClick={handleAddToCart}
-        disabled={!availableForSale || isLoading}
+        disabled={isOutOfStock || isLoading}
         className={`${className} ${
-          !availableForSale 
+          isOutOfStock 
             ? 'cursor-not-allowed opacity-50' 
             : 'hover:opacity-80 transition-opacity'
         }`}
       >
         {children || (
           <span>
-            {isLoading ? 'Adding...' : availableForSale ? 'Add to Cart' : 'Sold Out'}
+            {isLoading ? 'Adding...' : isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
           </span>
         )}
       </button>
+      
+      {stock > 0 && stock <= 5 && !isOutOfStock && (
+        <div className="absolute top-full left-0 mt-1 text-xs text-orange-600 whitespace-nowrap">
+          Only {stock} left
+        </div>
+      )}
       
       {message && (
         <div className={`absolute top-full left-0 mt-2 px-3 py-1 rounded text-sm z-10 ${

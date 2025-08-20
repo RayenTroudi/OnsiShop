@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 export default function AdminDashboard() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [categories, setCategories] = useState<AdminCategory[]>([]);
+  const [contentCount, setContentCount] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -19,8 +20,24 @@ export default function AdminDashboard() {
     // Load data
     setProducts(db.getProducts());
     setCategories(db.getCategories());
+    
+    // Fetch content count
+    fetchContentCount();
+    
     setIsLoaded(true);
   }, []);
+
+  const fetchContentCount = async () => {
+    try {
+      const response = await fetch('/api/content');
+      const result = await response.json();
+      if (result.success && result.items) {
+        setContentCount(result.items.length);
+      }
+    } catch (error) {
+      console.error('Error fetching content count:', error);
+    }
+  };
 
   if (!isLoaded) {
     return (
@@ -33,7 +50,7 @@ export default function AdminDashboard() {
   return (
     <div className="px-4 py-6 sm:px-0">
       {/* Dashboard Stats */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
@@ -68,6 +85,26 @@ export default function AdminDashboard() {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Categories</dt>
                   <dd className="text-lg font-medium text-gray-900">{categories.length}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Content Items</dt>
+                  <dd className="text-lg font-medium text-gray-900">{contentCount}</dd>
                 </dl>
               </div>
             </div>
@@ -119,6 +156,15 @@ export default function AdminDashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
               </svg>
               Add Category
+            </Link>
+            <Link
+              href="/admin/content"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Manage Content
             </Link>
             <Link
               href="/admin/products"

@@ -9,6 +9,7 @@ import Loading from '@/components/common/Loading';
 const loading = () => <Loading />;
 
 // components
+import ClientProviders from '@/components/layout/ClientProviders';
 import Header from '@/components/sections/Header';
 const Footer = dynamic(() => import('@/components/sections/Footer'), {
   loading
@@ -57,11 +58,13 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang="en" className={`${quicksand.variable} ${lora.variable} ${quicksand.className}`}>
       <body className="bg-white text-veryDarkPurple">
-        <Header />
-        <Suspense>
-          <main>{children}</main>
-        </Suspense>
-        <Footer />
+        <ClientProviders>
+          <Header />
+          <Suspense>
+            <main>{children}</main>
+          </Suspense>
+          <Footer />
+        </ClientProviders>
       </body>
     </html>
   );

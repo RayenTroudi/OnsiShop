@@ -73,6 +73,7 @@ const ProductDescription = ({ product }: { product: Product }) => {
         <DatabaseAddToCart
           productId={product.id}
           availableForSale={product.availableForSale}
+          stock={(product as any).stock || 999} // Default high stock for Shopify products
           className="w-full bg-purple text-white py-4 rounded-lg font-quicksand text-[22px] font-semibold hover:bg-darkPurple transition-colors"
         >
           <span>Add To Cart</span>

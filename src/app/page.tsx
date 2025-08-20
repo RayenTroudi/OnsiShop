@@ -6,7 +6,7 @@ import Loading from '@/components/common/Loading';
 const loading = () => <Loading />;
 
 // components
-import HomeVideo from '@/components/sections/HomeVideo';
+import HeroSection from '@/components/sections/HeroSection';
 const Discounts = dynamic(() => import('@/components/sections/Discounts'), {
   loading
 });
@@ -49,7 +49,7 @@ export const metadata = {
 export default async function HomePage() {
   return (
     <>
-      <HomeVideo />
+      <HeroSection />
       <Discounts />
       <BestSellers />
       <Promotions />

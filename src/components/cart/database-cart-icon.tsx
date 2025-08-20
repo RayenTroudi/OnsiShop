@@ -1,44 +1,17 @@
 'use client';
 
+import { useCart } from '@/contexts/CartContext';
 import { useEffect, useState } from 'react';
 import CartModal from './database-cart-modal';
 
-interface CartData {
-  lines: any[];
-  totalQuantity: number;
-  cost: {
-    totalAmount: { amount: string; currencyCode: string };
-    totalTaxAmount: { amount: string; currencyCode: string };
-  };
-  checkoutUrl: string;
-}
-
 export default function DatabaseCartIcon() {
-  const [cart, setCart] = useState<CartData | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-
-  const fetchCart = async () => {
-    try {
-      const response = await fetch('/api/cart');
-      if (response.ok) {
-        const cartData = await response.json();
-        setCart(cartData);
-      }
-    } catch (error) {
-      console.error('Error fetching cart:', error);
-    }
-  };
-
+  const [userId, setUserId] = useState('');
+  const { cart, refreshCart } = useCart();
+  
   useEffect(() => {
-    fetchCart();
-
-    // Listen for cart updates
-    const handleCartUpdate = () => {
-      fetchCart();
-    };
-
-    window.addEventListener('cartUpdated', handleCartUpdate);
-    return () => window.removeEventListener('cartUpdated', handleCartUpdate);
+    const storedUserId = localStorage.getItem('demo-user-id') || 'demo-user-123';
+    setUserId(storedUserId);
   }, []);
 
   const openCart = () => setIsOpen(true);
@@ -52,24 +25,16 @@ export default function DatabaseCartIcon() {
         className="flex h-full items-center justify-center [&>*]:transition-all [&>*]:duration-300 hover:[&>*]:opacity-50"
       >
         <div className="relative">
-          <svg
-            width="36"
-            height="36"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M3 3H5L5.4 5M7 13H17L21 5H5.4M7 13L5.4 5M7 13L4.7 15.3C4.3 15.7 4.6 16.5 5.1 16.5H17M17 13V16.5M9 19.5C9.8 19.5 10.5 20.2 10.5 21S9.8 22.5 9 22.5 7.5 21.8 7.5 21 8.2 19.5 9 19.5ZM20 19.5C20.8 19.5 21.5 20.2 21.5 21S20.8 22.5 20 22.5 18.5 21.8 18.5 21 19.2 19.5 20 19.5Z"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          {cart && cart.totalQuantity > 0 && (
-            <div className="absolute -top-2 -right-2 bg-purple text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-              {cart.totalQuantity}
+          <img
+            src="/images/cart.png"
+            alt="Cart"
+            width={36}
+            height={36}
+            className="w-9 h-9"
+          />
+          {cart && cart.totalItems > 0 && (
+            <div className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 bg-purple text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center min-w-[16px] text-[10px] z-10">
+              {cart.totalItems > 99 ? '99+' : cart.totalItems}
             </div>
           )}
         </div>
@@ -80,7 +45,8 @@ export default function DatabaseCartIcon() {
           cart={cart} 
           isOpen={isOpen} 
           onClose={closeCart}
-          onCartUpdate={fetchCart}
+          onCartUpdate={refreshCart}
+          userId={userId}
         />
       )}
     </>
