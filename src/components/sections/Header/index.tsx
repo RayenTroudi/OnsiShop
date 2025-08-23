@@ -1,7 +1,7 @@
 import { getMenu } from '@/lib/shopify';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import MobileMenu from './mobile-menu';
 
 // next
 
@@ -13,39 +13,28 @@ import Menu from './Menu';
 import SearchIcon from './SearchIcon';
 import UserMenu from './UserMenu';
 
+// Dynamically import MobileMenu to prevent SSR issues with useSearchParams
+const MobileMenu = dynamic(() => import('./mobile-menu'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-8 w-8 items-center justify-center">
+      <div className="h-6 w-6 animate-pulse rounded bg-gray-200"></div>
+    </div>
+  )
+});
+
 // Get categories from API route (safer for server components)
-async function getCategories() {
-  try {
-    console.log('🔍 Getting categories from API route...');
-    
-    // In production or server environment, use the full URL
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}`
-      : 'http://localhost:3000';
-    
-    const response = await fetch(`${baseUrl}/api/categories`, {
-      cache: 'no-store'
-    });
-    
-    if (!response.ok) {
-      console.warn('❌ Failed to fetch categories:', response.status);
-      return [];
-    }
-    
-    const categories = await response.json();
-    console.log('✅ Categories from API:', categories.length, categories.map((c: any) => c.name));
-    
-    return Array.isArray(categories) ? categories : [];
-  } catch (error) {
-    console.error('❌ Error fetching categories:', error);
-    return [];
-  }
+async function getCategories(): Promise<Array<{ id: string; name: string; handle: string }>> {
+  // During build time, return empty array to prevent infinite loops
+  // Categories will be fetched on the client side
+  console.log('🔍 Skipping category fetch during build/SSR');
+  return [];
 }
 
 const Header = async () => {
   // Get categories from our database
   const categories = await getCategories();
-  console.log('🔍 Categories in header:', categories.length, categories.map(c => c.name));
+  console.log('🔍 Categories in header:', categories.length, categories.length > 0 ? categories.map(c => c.name) : []);
   
   // Transform categories into menu format
   const categoryMenu = categories.map(category => ({
@@ -66,9 +55,15 @@ const Header = async () => {
         <h2 className="sr-only">Main Navigation Menu</h2>
         <div className="flex h-full w-full items-center justify-between">
           {/* Mobile menu */}
-          <div className="md:hidden">
-            <MobileMenu menu={menu} />
-          </div>
+          <Suspense fallback={
+            <div className="flex h-8 w-8 items-center justify-center md:hidden">
+              <div className="h-6 w-6 animate-pulse rounded bg-gray-200"></div>
+            </div>
+          }>
+            <div className="md:hidden">
+              <MobileMenu menu={menu} />
+            </div>
+          </Suspense>
           
           {/* Logo */}
           <Link

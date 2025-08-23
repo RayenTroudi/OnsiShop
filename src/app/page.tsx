@@ -23,7 +23,8 @@ const AboutUs = dynamic(() => import('@/components/sections/AboutUs'), {
   loading
 });
 
-export const runtime = 'edge';
+// Removed edge runtime to fix Prisma bundling issues
+// export const runtime = 'edge';
 
 export const metadata = {
   description: 'ONSI clothing store e-commerce website',

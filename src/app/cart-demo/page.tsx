@@ -1,23 +1,76 @@
+'use client';
+
 import AddToCartButton from '@/components/cart/AddToCartButton';
 import CartLayout from '@/components/cart/CartLayout';
-import { prisma } from '@/lib/database';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
-export const metadata = {
-  title: 'Cart Demo - ONSI',
-  description: 'Demo of the complete cart system'
-};
+// Prevent static generation since this page uses dynamic cart context
+export const dynamic = 'force-dynamic';
 
-export default async function CartDemoPage() {
-  // Get some products for demo
-  const products = await prisma.product.findMany({
-    take: 6,
-    orderBy: { createdAt: 'desc' }
-  });
+interface Product {
+  id: string;
+  title: string;
+  description?: string;
+  price: number;
+  images?: string;
+  name?: string;
+  stock?: number;
+}
+
+export default function CartDemoPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Demo user ID (in real app, get from auth)
   const demoUserId = 'demo-user-123';
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const response = await fetch('/api/products?limit=6');
+        if (response.ok) {
+          const data = await response.json();
+          setProducts(Array.isArray(data) ? data : data.products || []);
+        } else {
+          console.error('Failed to fetch products');
+          setProducts([]);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProducts();
+  }, []);
+
+  if (loading) {
+    return (
+      <CartLayout userId={demoUserId}>
+        <div className="max-w-6xl mx-auto p-6">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded mb-8 w-64"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden">
+                  <div className="w-full h-48 bg-gray-200"></div>
+                  <div className="p-4">
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded mb-3"></div>
+                    <div className="h-6 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </CartLayout>
+    );
+  }
 
   return (
     <CartLayout userId={demoUserId}>

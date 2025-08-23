@@ -1,7 +1,9 @@
-import { DEFAULT_CONTENT_VALUES, getContentValue, getSiteContent } from '@/lib/content';
+import { DEFAULT_CONTENT_VALUES, getContentValue } from '@/lib/content';
 
 const AboutUs = async () => {
-  const content = await getSiteContent();
+  // Use default content values for now to avoid API calls during SSR
+  // TODO: Implement proper content management with static generation
+  const content = {};
   
   const title = getContentValue(content, 'about.title', DEFAULT_CONTENT_VALUES['about.title']);
   const description = getContentValue(content, 'about.description', DEFAULT_CONTENT_VALUES['about.description']);

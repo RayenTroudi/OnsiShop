@@ -7,7 +7,7 @@ import { Fragment, useEffect, useState } from 'react';
 
 import { Menu } from '@/lib/shopify/types';
 import { Spin as Hamburger } from 'hamburger-react';
-import Search from './search';
+import SearchWrapper from './SearchWrapper';
 
 export default function MobileMenu({ menu }: { menu: Menu[] }) {
   const pathname = usePathname();
@@ -73,7 +73,7 @@ export default function MobileMenu({ menu }: { menu: Menu[] }) {
                 </div>
 
                 <div className="mb-6 w-full">
-                  <Search />
+                  <SearchWrapper />
                 </div>
                 {menu.length ? (
                   <nav className="flex w-full flex-col">

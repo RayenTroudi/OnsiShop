@@ -1,8 +1,10 @@
-import { DEFAULT_CONTENT_VALUES, getContentValue, getSiteContent } from '@/lib/content';
+import { DEFAULT_CONTENT_VALUES, getContentValue } from '@/lib/content';
 import Link from 'next/link';
 
 const HeroSection = async () => {
-  const content = await getSiteContent();
+  // Use default content values for now to avoid API calls during SSR
+  // TODO: Implement proper content management with static generation
+  const content = {};
   
   const title = getContentValue(content, 'hero.title', DEFAULT_CONTENT_VALUES['hero.title']);
   const subtitle = getContentValue(content, 'hero.subtitle', DEFAULT_CONTENT_VALUES['hero.subtitle']);

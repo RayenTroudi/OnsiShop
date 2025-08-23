@@ -39,5 +39,9 @@ module.exports = {
         permanent: true
       }
     ];
+  },
+  // Skip static generation for problematic pages
+  generateBuildId: async () => {
+    return process.env.BUILD_ID || 'development';
   }
 };

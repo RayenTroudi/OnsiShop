@@ -4,7 +4,7 @@
 import Image from 'next/image';
 
 // react
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 // framer motion
 import { LazyMotion, domAnimation, m } from 'framer-motion';
@@ -34,7 +34,13 @@ const ProductCard = ({
   duration?: number;
 }) => {
   const [activeImage, setActiveImage] = useState('main');
+  const [isMounted, setIsMounted] = useState(false);
   const timeoutId = useRef<ReturnType<typeof setTimeout>>();
+
+  // Only render DatabaseAddToCart on the client side
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // my old method of getting color and image information
   // get unique color virants with images
@@ -167,14 +173,16 @@ const ProductCard = ({
             Number(product.priceRange?.minVariantPrice?.amount || '0')
           )}
         </p>
-        <DatabaseAddToCart
-          productId={product.id}
-          availableForSale={product.availableForSale}
-          stock={(product as any).stock || 999} // Default high stock for Shopify products
-          className="w-full bg-purple text-white px-4 py-2 rounded-lg font-semibold hover:bg-darkPurple transition-colors"
-        >
-          <span>Add to Cart</span>
-        </DatabaseAddToCart>
+        {isMounted && (
+          <DatabaseAddToCart
+            productId={product.id}
+            availableForSale={product.availableForSale}
+            stock={(product as any).stock || 999} // Default high stock for Shopify products
+            className="w-full bg-purple text-white px-4 py-2 rounded-lg font-semibold hover:bg-darkPurple transition-colors"
+          >
+            <span>Add to Cart</span>
+          </DatabaseAddToCart>
+        )}
       </m.article>
     </LazyMotion>
   );
