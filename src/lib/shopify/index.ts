@@ -5,49 +5,49 @@ import { revalidateTag } from 'next/cache';
 import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import {
-    addToCartMutation,
-    createCartMutation,
-    editCartItemsMutation,
-    removeFromCartMutation
+  addToCartMutation,
+  createCartMutation,
+  editCartItemsMutation,
+  removeFromCartMutation
 } from './mutations/cart';
 import { getCartQuery } from './queries/cart';
 import {
-    getCollectionProductsQuery,
-    getCollectionQuery,
-    getCollectionsQuery
+  getCollectionProductsQuery,
+  getCollectionQuery,
+  getCollectionsQuery
 } from './queries/collection';
 import { getMenuQuery } from './queries/menu';
 import { getPageQuery, getPagesQuery } from './queries/page';
 import {
-    getProductQuery,
-    getProductRecommendationsQuery,
-    getProductsQuery
+  getProductQuery,
+  getProductRecommendationsQuery,
+  getProductsQuery
 } from './queries/product';
 import {
-    Cart,
-    Collection,
-    Connection,
-    Image,
-    Menu,
-    Page,
-    Product,
-    ShopifyAddToCartOperation,
-    ShopifyCart,
-    ShopifyCartOperation,
-    ShopifyCollection,
-    ShopifyCollectionOperation,
-    ShopifyCollectionProductsOperation,
-    ShopifyCollectionsOperation,
-    ShopifyCreateCartOperation,
-    ShopifyMenuOperation,
-    ShopifyPageOperation,
-    ShopifyPagesOperation,
-    ShopifyProduct,
-    ShopifyProductOperation,
-    ShopifyProductRecommendationsOperation,
-    ShopifyProductsOperation,
-    ShopifyRemoveFromCartOperation,
-    ShopifyUpdateCartOperation
+  Cart,
+  Collection,
+  Connection,
+  Image,
+  Menu,
+  Page,
+  Product,
+  ShopifyAddToCartOperation,
+  ShopifyCart,
+  ShopifyCartOperation,
+  ShopifyCollection,
+  ShopifyCollectionOperation,
+  ShopifyCollectionProductsOperation,
+  ShopifyCollectionsOperation,
+  ShopifyCreateCartOperation,
+  ShopifyMenuOperation,
+  ShopifyPageOperation,
+  ShopifyPagesOperation,
+  ShopifyProduct,
+  ShopifyProductOperation,
+  ShopifyProductRecommendationsOperation,
+  ShopifyProductsOperation,
+  ShopifyRemoveFromCartOperation,
+  ShopifyUpdateCartOperation
 } from './types';
 
 const domain = process.env.SHOPIFY_STORE_DOMAIN
@@ -164,6 +164,9 @@ export async function shopifyFetch<T>({
 }
 
 const removeEdgesAndNodes = (array: Connection<any>) => {
+  if (!array || !array.edges) {
+    return [];
+  }
   return array.edges.map((edge) => edge?.node);
 };
 
@@ -177,7 +180,7 @@ const reshapeCart = (cart: ShopifyCart): Cart => {
 
   return {
     ...cart,
-    lines: removeEdgesAndNodes(cart.lines)
+    lines: cart.lines ? removeEdgesAndNodes(cart.lines) : []
   };
 };
 
@@ -209,19 +212,27 @@ const reshapeCollections = (collections: ShopifyCollection[]) => {
 };
 
 const reshapeImages = (images: Connection<Image>, productTitle: string) => {
+  if (!images) {
+    return [];
+  }
+  
   const flattened = removeEdgesAndNodes(images);
 
   return flattened.map((image) => {
-    const filename = image.url.match(/.*\/(.*)\..*/)[1];
+    if (!image || !image.url) {
+      return null;
+    }
+    
+    const filename = image.url.match(/.*\/(.*)\..*/)?.[1] || 'image';
     return {
       ...image,
       altText: image.altText || `${productTitle} - ${filename}`
     };
-  });
+  }).filter(Boolean); // Remove null entries
 };
 
 const reshapeProduct = (product: ShopifyProduct, filterHiddenProducts: boolean = true) => {
-  if (!product || (filterHiddenProducts && product.tags.includes(HIDDEN_PRODUCT_TAG))) {
+  if (!product || (filterHiddenProducts && product.tags?.includes(HIDDEN_PRODUCT_TAG))) {
     return undefined;
   }
 
@@ -229,8 +240,8 @@ const reshapeProduct = (product: ShopifyProduct, filterHiddenProducts: boolean =
 
   return {
     ...rest,
-    images: reshapeImages(images, product.title),
-    variants: removeEdgesAndNodes(variants)
+    images: images ? reshapeImages(images, product.title) : [],
+    variants: variants ? removeEdgesAndNodes(variants) : []
   };
 };
 
@@ -358,7 +369,12 @@ export async function getCollectionProducts({
     return [];
   }
 
-  return reshapeProducts(removeEdgesAndNodes(res.body.data.collection.products));
+  const products = res.body.data.collection.products;
+  if (!products) {
+    return [];
+  }
+
+  return reshapeProducts(removeEdgesAndNodes(products));
 }
 
 export async function getCollections(): Promise<Collection[]> {
@@ -366,7 +382,7 @@ export async function getCollections(): Promise<Collection[]> {
     query: getCollectionsQuery,
     tags: [TAGS.collections]
   });
-  const shopifyCollections = removeEdgesAndNodes(res.body?.data?.collections);
+  const shopifyCollections = removeEdgesAndNodes(res.body?.data?.collections) || [];
   const collections = [
     {
       handle: '',
@@ -429,7 +445,12 @@ export async function getPages(): Promise<Page[]> {
     query: getPagesQuery
   });
 
-  return removeEdgesAndNodes(res.body.data.pages);
+  const pages = res.body?.data?.pages;
+  if (!pages) {
+    return [];
+  }
+
+  return removeEdgesAndNodes(pages);
 }
 
 export async function getProduct(handle: string): Promise<Product | undefined> {
@@ -478,7 +499,12 @@ export async function getProducts({
     }
   });
 
-  return reshapeProducts(removeEdgesAndNodes(res.body.data.products));
+  const products = res.body?.data?.products;
+  if (!products) {
+    return [];
+  }
+
+  return reshapeProducts(removeEdgesAndNodes(products));
 }
 
 // This is called from `app/api/revalidate.ts` so providers can control revalidation logic.

@@ -13,8 +13,10 @@ const DEFAULT_CONTENT = {
   'hero.subtitle': 'Discover the latest fashion trends and styles',
   'hero.description': 'Shop our collection of high-quality clothing for men and women. From casual wear to formal attire, we have everything you need to look your best.',
   'hero.buttonText': 'Shop Now',
+  'hero.backgroundVideo': '/videos/clothing-shoot.mp4',
   'about.title': 'About Our Store',
   'about.description': 'We are passionate about bringing you the finest clothing at affordable prices.',
+  'about.backgroundImage': '/images/about-background.jpg',
   'footer.companyName': 'Clothing Store',
   'footer.description': 'Your fashion destination',
   'contact.email': 'contact@clothingstore.com',
@@ -28,6 +30,8 @@ export default function ContentManagerPage() {
   const [newValue, setNewValue] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [activeTab, setActiveTab] = useState('content');
   const [message, setMessage] = useState('');
 
@@ -149,6 +153,110 @@ export default function ContentManagerPage() {
     showMessage('Content item removed');
   };
 
+  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (50MB max)
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
+      showMessage('File too large. Maximum size is 50MB.', 'error');
+      event.target.value = '';
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['video/mp4', 'video/webm', 'video/avi', 'video/mov'];
+    if (!allowedTypes.includes(file.type)) {
+      showMessage('Invalid file type. Only MP4, WebM, AVI, and MOV files are allowed.', 'error');
+      event.target.value = '';
+      return;
+    }
+
+    try {
+      setIsUploadingVideo(true);
+      const formData = new FormData();
+      formData.append('video', file);
+
+      const response = await fetch('/api/admin/upload-video', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Update the hero.backgroundVideo content
+        setContent(prev => ({
+          ...prev,
+          'hero.backgroundVideo': result.videoUrl
+        }));
+        showMessage('Video uploaded successfully!');
+      } else {
+        showMessage(result.error || 'Failed to upload video', 'error');
+      }
+    } catch (error) {
+      console.error('Error uploading video:', error);
+      showMessage('Error uploading video', 'error');
+    } finally {
+      setIsUploadingVideo(false);
+      // Reset file input
+      event.target.value = '';
+    }
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (10MB max)
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      showMessage('File too large. Maximum size is 10MB.', 'error');
+      event.target.value = '';
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      showMessage('Invalid file type. Only JPEG, PNG, WebP, and GIF files are allowed.', 'error');
+      event.target.value = '';
+      return;
+    }
+
+    try {
+      setIsUploadingImage(true);
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('/api/admin/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Update the about.backgroundImage content
+        setContent(prev => ({
+          ...prev,
+          'about.backgroundImage': result.imageUrl
+        }));
+        showMessage('Background image uploaded successfully!');
+      } else {
+        showMessage(result.error || 'Failed to upload image', 'error');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      showMessage('Error uploading image', 'error');
+    } finally {
+      setIsUploadingImage(false);
+      // Reset file input
+      event.target.value = '';
+    }
+  };
+
   const contentKeys = Object.keys(content);
   const heroKeys = contentKeys.filter(key => key.startsWith('hero.'));
   const aboutKeys = contentKeys.filter(key => key.startsWith('about.'));
@@ -221,6 +329,8 @@ export default function ContentManagerPage() {
           {[
             { key: 'content', label: 'All Content' },
             { key: 'hero', label: 'Hero Section' },
+            { key: 'videos', label: 'Video Management' },
+            { key: 'images', label: 'Image Management' },
             { key: 'about', label: 'About' },
             { key: 'footer', label: 'Footer' },
             { key: 'contact', label: 'Contact' },
@@ -288,9 +398,71 @@ export default function ContentManagerPage() {
         {activeTab === 'hero' && (
           <div className="border rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Hero Section Content</h2>
-            <p className="text-gray-600 mb-4">Content for the main hero section on your homepage</p>
+            <p className="text-gray-600 mb-6">Content for the main hero section on your homepage</p>
+            
+            {/* Background Video Upload Section */}
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+              <h3 className="text-lg font-medium mb-3">Background Video</h3>
+              <div className="space-y-4">
+                {content['hero.backgroundVideo'] && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Current Video</label>
+                    <div className="relative w-full max-w-md">
+                      <video 
+                        src={content['hero.backgroundVideo']} 
+                        className="w-full h-32 object-cover rounded-lg border"
+                        controls
+                        muted
+                      />
+                      <div className="mt-2 text-sm text-gray-600">
+                        {content['hero.backgroundVideo']}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Upload New Video
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="file"
+                      accept="video/mp4,video/webm,video/avi,video/mov"
+                      onChange={handleVideoUpload}
+                      disabled={isUploadingVideo}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    {isUploadingVideo && (
+                      <div className="flex items-center text-sm text-blue-600">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                        Uploading...
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Supports MP4, WebM, AVI, MOV. Max size: 50MB
+                  </p>
+                </div>
+                
+                {content['hero.backgroundVideo'] && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Video URL (editable)</label>
+                    <input
+                      type="text"
+                      value={content['hero.backgroundVideo'] || ''}
+                      onChange={(e) => updateContentValue('hero.backgroundVideo', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="/videos/your-video.mp4"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Text Content */}
             <div className="space-y-4">
-              {heroKeys.map((key) => (
+              {heroKeys.filter(key => key !== 'hero.backgroundVideo').map((key) => (
                 <div key={key}>
                   <label className="block text-sm font-medium mb-1">
                     {key.replace('hero.', '')}
@@ -316,12 +488,344 @@ export default function ContentManagerPage() {
           </div>
         )}
 
+        {/* Dedicated Video Management Tab */}
+        {activeTab === 'videos' && (
+          <div className="border rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Video Management</h2>
+            <p className="text-gray-600 mb-6">Manage background videos and other video content for your website</p>
+            
+            {/* Hero Background Video */}
+            <div className="mb-8 p-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+              <h3 className="text-lg font-semibold mb-4 text-purple-800">🎬 Hero Background Video</h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Current Video Preview */}
+                <div>
+                  <label className="block text-sm font-medium mb-3 text-gray-700">Current Background Video</label>
+                  {content['hero.backgroundVideo'] ? (
+                    <div className="space-y-3">
+                      <div className="relative">
+                        <video 
+                          src={content['hero.backgroundVideo']} 
+                          className="w-full h-40 object-cover rounded-lg border-2 border-purple-200 shadow-sm"
+                          controls
+                          muted
+                          poster="/images/video-placeholder.jpg"
+                        />
+                        <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
+                          Preview
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-600 bg-white p-2 rounded border">
+                        <strong>File:</strong> {content['hero.backgroundVideo']}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full h-40 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        <div className="text-4xl mb-2">🎥</div>
+                        <div>No background video set</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Upload Controls */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700">
+                      Upload New Background Video
+                    </label>
+                    <div className="border-2 border-dashed border-purple-300 rounded-lg p-4 bg-white">
+                      <input
+                        type="file"
+                        accept="video/mp4,video/webm,video/avi,video/mov"
+                        onChange={handleVideoUpload}
+                        disabled={isUploadingVideo}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 cursor-pointer"
+                      />
+                      <div className="mt-2 text-xs text-gray-500">
+                        <div>• Supported formats: MP4, WebM, AVI, MOV</div>
+                        <div>• Maximum file size: 50MB</div>
+                        <div>• Recommended resolution: 1920x1080</div>
+                      </div>
+                    </div>
+                    
+                    {isUploadingVideo && (
+                      <div className="mt-3 flex items-center justify-center text-sm text-purple-600 bg-purple-50 p-3 rounded-lg">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600 mr-3"></div>
+                        Uploading video... Please wait
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700">
+                      Or set video URL manually
+                    </label>
+                    <input
+                      type="text"
+                      value={content['hero.backgroundVideo'] || ''}
+                      onChange={(e) => updateContentValue('hero.backgroundVideo', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      placeholder="/videos/your-video.mp4"
+                    />
+                    <div className="mt-1 text-xs text-gray-500">
+                      Enter the path to a video file in your public/videos folder
+                    </div>
+                  </div>
+
+                  {content['hero.backgroundVideo'] && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          const videoUrl = content['hero.backgroundVideo'];
+                          if (videoUrl) {
+                            const link = document.createElement('a');
+                            link.href = videoUrl;
+                            link.target = '_blank';
+                            link.click();
+                          }
+                        }}
+                        className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
+                      >
+                        🔗 Open Video
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm('Are you sure you want to remove the background video?')) {
+                            updateContentValue('hero.backgroundVideo', '');
+                          }
+                        }}
+                        className="flex-1 px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm"
+                      >
+                        🗑️ Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Video Tips */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="text-md font-semibold mb-2 text-blue-800">💡 Video Optimization Tips</h4>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• Use MP4 format for best browser compatibility</li>
+                <li>• Keep file size under 10MB for faster loading</li>
+                <li>• Use 1920x1080 resolution for full HD quality</li>
+                <li>• Videos should be 10-30 seconds long for hero backgrounds</li>
+                <li>• Consider using a compressed format to reduce bandwidth usage</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* Dedicated Image Management Tab */}
+        {activeTab === 'images' && (
+          <div className="border rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Image Management</h2>
+            <p className="text-gray-600 mb-6">Manage background images and other image content for your website</p>
+            
+            {/* About Background Image */}
+            <div className="mb-8 p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+              <h3 className="text-lg font-semibold mb-4 text-green-800">🖼️ About Section Background Image</h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Current Image Preview */}
+                <div>
+                  <label className="block text-sm font-medium mb-3 text-gray-700">Current Background Image</label>
+                  {content['about.backgroundImage'] ? (
+                    <div className="space-y-3">
+                      <div className="relative">
+                        <img 
+                          src={content['about.backgroundImage']} 
+                          alt="About background"
+                          className="w-full h-40 object-cover rounded-lg border-2 border-green-200 shadow-sm"
+                          onError={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2Yjc4OGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub3QgZm91bmQ8L3RleHQ+PC9zdmc+';
+                          }}
+                        />
+                        <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
+                          Preview
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-600 bg-white p-2 rounded border">
+                        <strong>File:</strong> {content['about.backgroundImage']}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full h-40 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        <div className="text-4xl mb-2">🖼️</div>
+                        <div>No background image set</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Upload Controls */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700">
+                      Upload New Background Image
+                    </label>
+                    <div className="border-2 border-dashed border-green-300 rounded-lg p-4 bg-white">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                        onChange={handleImageUpload}
+                        disabled={isUploadingImage}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"
+                      />
+                      <div className="mt-2 text-xs text-gray-500">
+                        <div>• Supported formats: JPEG, PNG, WebP, GIF</div>
+                        <div>• Maximum file size: 10MB</div>
+                        <div>• Recommended resolution: 1920x1080 or higher</div>
+                      </div>
+                    </div>
+                    
+                    {isUploadingImage && (
+                      <div className="mt-3 flex items-center justify-center text-sm text-green-600 bg-green-50 p-3 rounded-lg">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600 mr-3"></div>
+                        Uploading image... Please wait
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700">
+                      Or set image URL manually
+                    </label>
+                    <input
+                      type="text"
+                      value={content['about.backgroundImage'] || ''}
+                      onChange={(e) => updateContentValue('about.backgroundImage', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      placeholder="/images/your-image.jpg"
+                    />
+                    <div className="mt-1 text-xs text-gray-500">
+                      Enter the path to an image file in your public/images folder
+                    </div>
+                  </div>
+
+                  {content['about.backgroundImage'] && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          const imageUrl = content['about.backgroundImage'];
+                          if (imageUrl) {
+                            const link = document.createElement('a');
+                            link.href = imageUrl;
+                            link.target = '_blank';
+                            link.click();
+                          }
+                        }}
+                        className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
+                      >
+                        🔗 Open Image
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm('Are you sure you want to remove the background image?')) {
+                            updateContentValue('about.backgroundImage', '');
+                          }
+                        }}
+                        className="flex-1 px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm"
+                      >
+                        🗑️ Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Image Optimization Tips */}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <h4 className="text-md font-semibold mb-2 text-green-800">💡 Image Optimization Tips</h4>
+              <ul className="text-sm text-green-700 space-y-1">
+                <li>• Use JPEG for photos with many colors, PNG for graphics with transparency</li>
+                <li>• WebP format provides better compression with quality</li>
+                <li>• Keep file size under 2MB for faster loading</li>
+                <li>• Use 1920x1080 or higher resolution for background images</li>
+                <li>• Consider compressing images before upload to reduce bandwidth usage</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
         {/* About Section Tab */}
         {activeTab === 'about' && (
           <div className="border rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">About Section Content</h2>
+            <p className="text-gray-600 mb-6">Content for the about section including background image</p>
+            
+            {/* Background Image Upload Section */}
+            <div className="mb-6 p-4 bg-green-50 rounded-lg">
+              <h3 className="text-lg font-medium mb-3">Background Image</h3>
+              <div className="space-y-4">
+                {content['about.backgroundImage'] && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Current Background Image</label>
+                    <div className="relative w-full max-w-md">
+                      <img 
+                        src={content['about.backgroundImage']} 
+                        alt="About background"
+                        className="w-full h-32 object-cover rounded-lg border"
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement;
+                          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2Yjc4OGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub3QgZm91bmQ8L3RleHQ+PC9zdmc+';
+                        }}
+                      />
+                      <div className="mt-2 text-sm text-gray-600">
+                        {content['about.backgroundImage']}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Upload New Background Image
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                      onChange={handleImageUpload}
+                      disabled={isUploadingImage}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                    />
+                    {isUploadingImage && (
+                      <div className="flex items-center text-sm text-green-600">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600 mr-2"></div>
+                        Uploading...
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Supports JPEG, PNG, WebP, GIF. Max size: 10MB
+                  </p>
+                </div>
+                
+                {content['about.backgroundImage'] && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Image URL (editable)</label>
+                    <input
+                      type="text"
+                      value={content['about.backgroundImage'] || ''}
+                      onChange={(e) => updateContentValue('about.backgroundImage', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="/images/your-image.jpg"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Text Content */}
             <div className="space-y-4">
-              {aboutKeys.map((key) => (
+              {aboutKeys.filter(key => key !== 'about.backgroundImage').map((key) => (
                 <div key={key}>
                   <label className="block text-sm font-medium mb-1">
                     {key.replace('about.', '')}

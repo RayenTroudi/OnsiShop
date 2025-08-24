@@ -48,6 +48,7 @@ export const DEFAULT_CONTENT_VALUES = {
   'hero.subtitle': 'Discover the latest fashion trends and styles',
   'hero.description': 'Shop our collection of high-quality clothing for men and women. From casual wear to formal attire, we have everything you need to look your best.',
   'hero.buttonText': 'Shop Now',
+  'hero.backgroundVideo': '/videos/clothing-shoot.mp4',
   'about.title': 'Perfect blend of Japanese and Western fashion',
   'about.description': 'We strive to create pieces that are both unique and timeless and take pride in offering high-quality clothing that is both comfortable and stylish.',
   'about.buttonText': 'About Us',
