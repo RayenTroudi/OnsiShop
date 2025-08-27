@@ -8,7 +8,7 @@ import { Suspense } from 'react';
 
 // shopify
 import { HIDDEN_PRODUCT_TAG } from '@/lib/constants';
-import { getProduct } from '@/lib/shopify';
+import { getProduct } from '@/lib/mock-shopify';
 
 // components
 // import { ProductDescription } from '@/components/product/product-description';

@@ -2,7 +2,7 @@ import Grid from '@/components/grid';
 import ProductGridItems from '@/components/layout/product-grid-items';
 import FilterList from '@/components/layout/search/filter';
 import { defaultSort, sorting } from '@/lib/constants';
-import { getProducts } from '@/lib/shopify';
+import { getProducts } from '@/lib/mock-shopify';
 
 export const runtime = 'edge';
 

@@ -7,7 +7,7 @@ import { useMemo } from 'react';
 import DatabaseAddToCart from '../cart/database-add-to-cart';
 
 // types
-import { Product } from '@/lib/shopify/types';
+import { Product } from '@/lib/types';
 import { useSearchParams } from 'next/navigation';
 import { VariantSelector } from './VariantSelector';
 export type Combination = {

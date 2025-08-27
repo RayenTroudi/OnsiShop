@@ -8,7 +8,7 @@ import clsx from 'clsx';
 import { createUrl } from '@/lib/utils';
 
 // types
-import { ProductOption } from '@/lib/shopify/types';
+import { ProductOption } from '@/lib/types';
 import { Combination } from './ProductDescription';
 
 export function VariantSelector({

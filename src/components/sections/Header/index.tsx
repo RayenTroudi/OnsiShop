@@ -1,5 +1,4 @@
-import { getMenu } from '@/lib/shopify';
-
+import { getMenu } from '@/lib/mock-shopify';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 
@@ -43,11 +42,11 @@ const Header = async () => {
     items: []
   }));
   
-  // Fallback to Shopify menu if no categories
-  const shopifyMenu = categoryMenu.length === 0 ? await getMenu('main-menu') : [];
-  const menu = categoryMenu.length > 0 ? categoryMenu : shopifyMenu;
+  // Fallback to mock menu if no categories
+  const mockMenu = categoryMenu.length === 0 ? await getMenu('main-menu') : [];
+  const menu = categoryMenu.length > 0 ? categoryMenu : mockMenu;
   
-  console.log('🔍 Final menu:', menu.length, menu.map(m => m.title));
+  console.log('🔍 Final menu:', menu.length, menu.map((m: any) => m.title));
   return (
     <header className="sticky top-0 z-40 flex w-full items-center justify-center border-b border-purple/20 bg-white/90 px-4 py-2 shadow-sm backdrop-blur-md md:h-20 md:py-0 xl:px-12">
       <h1 className="sr-only">ONSI</h1>

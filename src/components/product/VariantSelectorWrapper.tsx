@@ -1,6 +1,6 @@
 'use client';
 
-import { ProductOption } from '@/lib/shopify/types';
+import { ProductOption } from '@/lib/types';
 import { Suspense } from 'react';
 import { Combination } from './ProductDescription';
 import { VariantSelector } from './VariantSelector';

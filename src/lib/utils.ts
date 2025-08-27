@@ -11,40 +11,8 @@ export const ensureStartsWith = (stringToCheck: string, startsWith: string) =>
   stringToCheck.startsWith(startsWith) ? stringToCheck : `${startsWith}${stringToCheck}`;
 
 export const validateEnvironmentVariables = () => {
-  const requiredEnvironmentVariables = ['SHOPIFY_STORE_DOMAIN', 'SHOPIFY_STOREFRONT_ACCESS_TOKEN'];
-  const missingEnvironmentVariables = [] as string[];
-
-  requiredEnvironmentVariables.forEach((envVar) => {
-    if (!process.env[envVar]) {
-      missingEnvironmentVariables.push(envVar);
-    }
-  });
-
-  // Allow demo/mock credentials for development
-  const isDemoMode = process.env.SHOPIFY_STORE_DOMAIN?.includes('demo-store') || 
-                     process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN?.includes('demo_token');
-
-  if (missingEnvironmentVariables.length && !isDemoMode) {
-    throw new Error(
-      `The following environment variables are missing. Your site will not work without them. Read more: https://vercel.com/docs/integrations/shopify#configure-environment-variables\n\n${missingEnvironmentVariables.join(
-        '\n'
-      )}\n`
-    );
-  }
-
-  if (isDemoMode) {
-    console.log('Running in demo mode with mock Shopify data');
-    return;
-  }
-
-  if (
-    process.env.SHOPIFY_STORE_DOMAIN?.includes('[') ||
-    process.env.SHOPIFY_STORE_DOMAIN?.includes(']')
-  ) {
-    throw new Error(
-      'Your `SHOPIFY_STORE_DOMAIN` environment variable includes brackets (ie. `[` and / or `]`). Your site will not work with them there. Please remove them.'
-    );
-  }
+  // Custom e-commerce app - no external dependencies required
+  console.log('Custom e-commerce app initialized');
 };
 
 // from https://stackoverflow.com/a/31615643

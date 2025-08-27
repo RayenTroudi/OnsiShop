@@ -6,7 +6,7 @@ import { useMediaQuery } from 'react-responsive';
 import ProductCard from '@/components/product/ProductCard';
 
 // types
-import { Product } from '@/lib/shopify/types';
+import { Product } from '@/lib/types';
 
 const ProductList = ({ products }: { products: Product[] }) => {
   const isLg = useMediaQuery({ query: '(min-width: 1024px)' });

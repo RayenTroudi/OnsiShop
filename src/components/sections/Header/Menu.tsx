@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 
-import { Menu } from '@/lib/shopify/types';
 import SubMenu from './SubMenu';
 
-const Menu = ({ menu }: { menu: Menu[] }) => {
+import { Menu as MenuType } from '@/lib/types';
+
+const Menu = ({ menu }: { menu: MenuType[] }) => {
   // Show actual categories if available, otherwise show "All Products"
   const menuItems = menu && menu.length > 0 ? menu : [
     { title: 'All Products', path: '/search', items: [] }
@@ -59,7 +60,7 @@ const Menu = ({ menu }: { menu: Menu[] }) => {
       {menuItems.length ? (
         <nav className="hidden h-full md:flex md:items-center">
           <ul className="flex h-full items-center gap-1 lg:gap-2 xl:gap-3">
-            {menuItems.map((item: Menu, index) => {
+            {menuItems.map((item: MenuType, index) => {
               const variant = getItemVariant(item.title);
               const styles = getItemStyles(variant);
               

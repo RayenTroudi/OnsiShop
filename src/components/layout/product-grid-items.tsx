@@ -3,7 +3,7 @@ import Grid from '@/components/grid';
 import ProductCard from '../product/ProductCard';
 
 // types
-import { Product } from '@/lib/shopify/types';
+import { Product } from '@/lib/types';
 
 export default function ProductGridItems({ products }: { products: Product[] }) {
   return (

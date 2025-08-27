@@ -18,7 +18,7 @@ import 'swiper/css/navigation';
 import { useMediaQuery } from 'react-responsive';
 
 // types
-import { Product } from '@/lib/shopify/types';
+import { Product } from '@/lib/types';
 
 // components
 import ProductCard from '../../product/ProductCard';

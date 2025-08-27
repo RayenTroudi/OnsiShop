@@ -1,5 +1,5 @@
 // shopify
-import { getProductRecommendations } from '@/lib/shopify';
+import { getProductRecommendations } from '@/lib/mock-shopify';
 
 // components
 import ProductCard from '@/components/product/ProductCard';

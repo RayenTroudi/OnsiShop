@@ -2,7 +2,7 @@
 import Link from 'next/link';
 
 // shopify
-import { getMenu } from '@/lib/shopify';
+import { getMenu } from '@/lib/mock-shopify';
 
 const Categories = async () => {
   const menu = await getMenu('main-menu');

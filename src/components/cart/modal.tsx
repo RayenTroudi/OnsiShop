@@ -2,7 +2,7 @@
 
 import Price from '@/components/common/price';
 import { DEFAULT_OPTION } from '@/lib/constants';
-import type { Cart } from '@/lib/shopify/types';
+import type { Cart } from '@/lib/types';
 import { createUrl } from '@/lib/utils';
 import { Dialog, Transition } from '@headlessui/react';
 import Image from 'next/image';

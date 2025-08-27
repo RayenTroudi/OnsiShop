@@ -20,7 +20,7 @@ import { colors } from '@/settings/colors';
 
 // types
 import DatabaseAddToCart from '@/components/cart/database-add-to-cart';
-import { Product } from '@/lib/shopify/types';
+import { Product } from '@/lib/types';
 
 const ProductCard = ({
   product,
@@ -78,7 +78,7 @@ const ProductCard = ({
               (variant) =>
                 variant.selectedOptions?.[0]?.name === 'Color' &&
                 variant.selectedOptions?.[0]?.value === color
-            )?.image?.originalSrc || ''
+            )?.id || '' // Use variant ID as fallback since we don't have image structure
         })) || [],
     [product.options, product.variants]
   );

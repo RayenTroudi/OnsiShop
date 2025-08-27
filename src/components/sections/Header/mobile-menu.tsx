@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Fragment, useEffect, useState } from 'react';
 
-import { Menu } from '@/lib/shopify/types';
+import { Menu } from '@/lib/types';
 import { Spin as Hamburger } from 'hamburger-react';
 import SearchWrapper from './SearchWrapper';
 

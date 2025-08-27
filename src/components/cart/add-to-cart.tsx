@@ -1,7 +1,7 @@
 'use client';
 
 import { addItem } from '@/components/cart/actions';
-import { ProductVariant } from '@/lib/shopify/types';
+import { ProductVariant } from '@/lib/types';
 import clsx from 'clsx';
 import { useSearchParams } from 'next/navigation';
 import { useFormState, useFormStatus } from 'react-dom';

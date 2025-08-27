@@ -19,7 +19,7 @@ import 'swiper/css/effect-fade';
 import 'swiper/css/navigation';
 
 // types
-import { Product } from '@/lib/shopify/types';
+import { Product } from '@/lib/types';
 
 const ProductSlider = ({ product }: { product: Product }) => {
   // swiper

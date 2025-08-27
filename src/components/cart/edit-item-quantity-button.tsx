@@ -2,7 +2,7 @@
 
 import { updateItemQuantity } from '@/components/cart/actions';
 import LoadingDots from '@/components/common/loading-dots';
-import type { CartItem } from '@/lib/shopify/types';
+import type { CartItem } from '@/lib/types';
 import { MinusIcon, PlusIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { useFormState, useFormStatus } from 'react-dom';
