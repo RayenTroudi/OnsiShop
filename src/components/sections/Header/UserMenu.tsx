@@ -114,7 +114,7 @@ export default function UserMenu() {
           width="36" 
           height="36" 
           alt="User Menu" 
-          className="transition-all duration-300 ring-2 ring-green-500 rounded-full"
+          className="transition-all duration-300"
         />
       </button>
       <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 border border-gray-200">
