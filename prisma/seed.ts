@@ -187,6 +187,31 @@ async function main() {
   });
 
   console.log('✅ Products created');
+
+  // Create default site content
+  const siteContentData = [
+    { key: 'hero.title', value: 'Welcome to Our Clothing Store' },
+    { key: 'hero.subtitle', value: 'Discover the latest fashion trends and styles' },
+    { key: 'hero.description', value: 'Shop our collection of high-quality clothing for men and women. From casual wear to formal attire, we have everything you need to look your best.' },
+    { key: 'hero.buttonText', value: 'Shop Now' },
+    { key: 'hero.backgroundVideo', value: '/videos/clothing-shoot.mp4' },
+    { key: 'about.title', value: 'About Our Store' },
+    { key: 'about.description', value: 'We are passionate about bringing you the finest clothing at affordable prices. Our curated collection features the latest trends and timeless classics.' },
+    { key: 'about.backgroundImage', value: '/images/background-image-1756043891412-0nifzaa2fwm.PNG' },
+    { key: 'footer.companyName', value: 'OnsiShop' },
+    { key: 'footer.description', value: 'Your premium fashion destination' },
+    { key: 'contact.email', value: 'contact@onsishop.com' },
+    { key: 'contact.phone', value: '+1 (555) 123-4567' },
+    { key: 'contact.address', value: '123 Fashion Street, Style City, SC 12345' }
+  ];
+
+  // Delete existing site content and create new ones
+  await prisma.siteContent.deleteMany();
+  await prisma.siteContent.createMany({
+    data: siteContentData
+  });
+
+  console.log('✅ Site content created');
   console.log('🌱 Database seeded successfully!');
 }
 
