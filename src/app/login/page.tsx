@@ -25,24 +25,22 @@ export default function LoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include cookies
         body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Trigger auth change event to update header
+        // Trigger global auth change event
         window.dispatchEvent(new CustomEvent('authChange'));
         
-        // Small delay to allow auth state to update
-        setTimeout(() => {
-          // Redirect based on user role
-          if (data.user?.isAdmin) {
-            router.push('/admin');
-          } else {
-            router.push('/');
-          }
-        }, 100);
+        // Redirect based on user role
+        if (data.user?.isAdmin) {
+          router.push('/admin');
+        } else {
+          router.push('/');
+        }
       } else {
         setError(data.error || 'Login failed');
       }
@@ -72,6 +70,15 @@ export default function LoginPage() {
               create a new account
             </Link>
           </p>
+          
+          {/* Demo Credentials */}
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h3 className="text-sm font-medium text-blue-800 mb-2">Demo Credentials:</h3>
+            <div className="text-xs space-y-1 text-blue-700">
+              <p><strong>Admin:</strong> admin@gmail.com / admin@gmail.com</p>
+              <p><strong>User:</strong> demo@example.com / demo123</p>
+            </div>
+          </div>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24, // 24 hours
+      path: '/', // Ensure cookie is available site-wide
     });
 
     return response;

@@ -25,15 +25,22 @@ export default function AuthCheck({ children }: AuthCheckProps) {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch('/api/auth/me');
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include',
+        cache: 'no-store'
+      });
+      
       if (response.ok) {
         const userData = await response.json();
         if (userData.user?.isAdmin) {
           setUser(userData.user);
         } else {
-          router.push('/login');
+          // User is logged in but not admin
+          alert('Admin access required');
+          router.push('/');
         }
       } else {
+        // Not authenticated
         router.push('/login');
       }
     } catch (error) {
@@ -46,11 +53,20 @@ export default function AuthCheck({ children }: AuthCheckProps) {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/login');
+      const response = await fetch('/api/auth/logout', { 
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        router.push('/login');
+      } else {
+        console.error('Logout failed');
+        router.push('/login'); // Force logout anyway
+      }
     } catch (error) {
       console.error('Logout failed:', error);
-      router.push('/login');
+      router.push('/login'); // Force logout anyway
     }
   };
 

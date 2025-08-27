@@ -12,6 +12,7 @@ export async function POST() {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 0, // Expire immediately
+      path: '/', // Ensure cookie is cleared site-wide
     });
 
     return response;
