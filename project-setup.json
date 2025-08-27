@@ -1,0 +1,22 @@
+{
+  "name": "OnsiShop Database Setup",
+  "description": "Ensures database is ready when opening the project",
+  "scripts": {
+    "setup": "node setup-db.js && echo 'Setup complete! Ready to run npm run dev'",
+    "quick-check": "node check-db-content.js",
+    "reset-all": "npm run db:reset && echo 'Database reset complete!'"
+  },
+  "instructions": {
+    "onProjectOpen": [
+      "1. Run 'npm install' to install dependencies",
+      "2. Run 'npm run setup' to ensure database is ready", 
+      "3. Run 'npm run dev' to start the development server",
+      "4. Visit http://localhost:3000 to see your app"
+    ],
+    "ifDataMissing": [
+      "1. Run 'npm run quick-check' to see what's missing",
+      "2. Run 'npm run db:seed' to restore data",
+      "3. Or run 'npm run reset-all' for a fresh start"
+    ]
+  }
+}

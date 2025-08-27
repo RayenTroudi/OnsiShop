@@ -6,19 +6,21 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding database...');
 
-  // Delete old admin user if exists
-  await prisma.user.deleteMany({
-    where: { email: 'admin' },
-  });
+  try {
+    // Clear existing data first (optional - for development)
+    console.log('🧹 Cleaning existing data...');
+    await prisma.cartItem.deleteMany();
+    await prisma.cart.deleteMany();
+    await prisma.product.deleteMany();
+    await prisma.category.deleteMany();
+    await prisma.siteContent.deleteMany();
+    await prisma.user.deleteMany();
+    
+    console.log('✅ Existing data cleared');
 
-  // Create default admin user
-  const existingAdmin = await prisma.user.findUnique({
-    where: { email: 'admin@gmail.com' },
-  });
-
-  if (!existingAdmin) {
+    // Create default admin user
     const hashedPassword = await bcrypt.hash('admin@gmail.com', 12);
-    await prisma.user.create({
+    const adminUser = await prisma.user.create({
       data: {
         email: 'admin@gmail.com',
         password: hashedPassword,
@@ -26,193 +28,168 @@ async function main() {
         role: 'admin',
       },
     });
-    console.log('✅ Default admin user created (email: admin@gmail.com, password: admin@gmail.com)');
-  } else {
-    console.log('ℹ️ Admin user already exists');
+    console.log('✅ Admin user created (email: admin@gmail.com, password: admin@gmail.com)');
+
+    // Create demo users
+    const demoUser = await prisma.user.create({
+      data: {
+        email: 'demo@example.com',
+        password: await bcrypt.hash('demo123', 12),
+        name: 'Demo User',
+        role: 'user',
+      },
+    });
+    console.log('✅ Demo user created (email: demo@example.com, password: demo123)');
+
+    // Create categories with better data structure
+    const categories = [
+      {
+        name: 'Best Sellers',
+        handle: 'best-sellers',
+        description: 'Our most popular items that customers love.'
+      },
+      {
+        name: 'Dresses',
+        handle: 'dresses',
+        description: 'Elegant dresses for every occasion.'
+      },
+      {
+        name: 'T-Shirts',
+        handle: 't-shirts',
+        description: 'Comfortable and stylish t-shirts.'
+      },
+      {
+        name: 'Jeans',
+        handle: 'jeans',
+        description: 'Premium denim jeans in various styles.'
+      },
+      {
+        name: 'Shoes',
+        handle: 'shoes',
+        description: 'Footwear for comfort and style.'
+      },
+      {
+        name: 'Bags',
+        handle: 'bags',
+        description: 'Stylish bags and accessories.'
+      },
+      {
+        name: 'New Arrivals',
+        handle: 'new-arrivals',
+        description: 'Latest additions to our collection.'
+      }
+    ];
+
+    const createdCategories = await Promise.all(
+      categories.map(category => 
+        prisma.category.create({ data: category })
+      )
+    );
+    console.log(`✅ ${createdCategories.length} categories created`);
+
+    // Create products with proper relationships
+    const products = [
+      {
+        name: 'Summer Floral Dress',
+        handle: 'summer-floral-dress',
+        title: 'Summer Floral Dress',
+        description: 'Beautiful floral dress perfect for summer occasions.',
+        price: 89.99,
+        compareAtPrice: 120.00,
+        stock: 25,
+        image: '/uploads/1755164664582-rf8118eui29.png',
+        categoryId: createdCategories.find(c => c.handle === 'dresses')?.id,
+        availableForSale: true
+      },
+      {
+        name: 'Classic Denim Jeans',
+        handle: 'classic-denim-jeans',
+        title: 'Classic Denim Jeans',
+        description: 'Timeless denim jeans that never go out of style.',
+        price: 79.99,
+        compareAtPrice: 100.00,
+        stock: 30,
+        categoryId: createdCategories.find(c => c.handle === 'jeans')?.id,
+        availableForSale: true
+      },
+      {
+        name: 'Basic Cotton T-Shirt',
+        handle: 'basic-cotton-t-shirt',
+        title: 'Basic Cotton T-Shirt',
+        description: 'Comfortable 100% cotton t-shirt in various colors.',
+        price: 24.99,
+        compareAtPrice: 35.00,
+        stock: 50,
+        categoryId: createdCategories.find(c => c.handle === 't-shirts')?.id,
+        availableForSale: true
+      },
+      {
+        name: 'Sport Running Shoes',
+        handle: 'sport-running-shoes',
+        title: 'Sport Running Shoes',
+        description: 'High-performance running shoes for athletes.',
+        price: 129.99,
+        compareAtPrice: 160.00,
+        stock: 15,
+        categoryId: createdCategories.find(c => c.handle === 'shoes')?.id,
+        availableForSale: true
+      },
+      {
+        name: 'Classic Leather Handbag',
+        handle: 'classic-leather-handbag',
+        title: 'Classic Leather Handbag',
+        description: 'Elegant leather handbag perfect for any occasion.',
+        price: 199.99,
+        compareAtPrice: 250.00,
+        stock: 12,
+        image: '/uploads/1755165117062-c1lbki9nyvj.jpg',
+        categoryId: createdCategories.find(c => c.handle === 'bags')?.id,
+        availableForSale: true
+      }
+    ];
+
+    const createdProducts = await Promise.all(
+      products.map(product => 
+        prisma.product.create({ data: product })
+      )
+    );
+    console.log(`✅ ${createdProducts.length} products created`);
+
+    console.log(`✅ ${createdProducts.length} products created`);
+
+    // Create default site content
+    const siteContentData = [
+      { key: 'hero.title', value: 'Welcome to OnsiShop' },
+      { key: 'hero.subtitle', value: 'Discover Premium Fashion & Style' },
+      { key: 'hero.description', value: 'Shop our curated collection of high-quality clothing for men and women. From casual wear to formal attire, we have everything you need to express your unique style.' },
+      { key: 'hero.buttonText', value: 'Shop Collection' },
+      { key: 'hero.backgroundVideo', value: '/videos/clothing-shoot.mp4' },
+      { key: 'about.title', value: 'About OnsiShop' },
+      { key: 'about.description', value: 'We are passionate about bringing you the finest clothing at affordable prices. Our curated collection features the latest trends and timeless classics, carefully selected to help you look and feel your best.' },
+      { key: 'about.backgroundImage', value: '/images/background-image-1756043891412-0nifzaa2fwm.PNG' },
+      { key: 'footer.companyName', value: 'OnsiShop' },
+      { key: 'footer.description', value: 'Your Premium Fashion Destination' },
+      { key: 'contact.email', value: 'contact@onsishop.com' },
+      { key: 'contact.phone', value: '+1 (555) 123-4567' },
+      { key: 'contact.address', value: '123 Fashion Street, Style City, SC 12345' }
+    ];
+
+    await prisma.siteContent.createMany({
+      data: siteContentData
+    });
+    console.log(`✅ ${siteContentData.length} site content items created`);
+
+    console.log('� Database seeded successfully!');
+    console.log('📊 Summary:');
+    console.log(`   - ${createdCategories.length} categories`);
+    console.log(`   - ${createdProducts.length} products`);
+    console.log(`   - 2 users (1 admin, 1 demo)`);
+    console.log(`   - ${siteContentData.length} content items`);
+
+  } catch (error) {
+    console.error('❌ Error during seeding:', error);
+    throw error;
   }
-
-  // Create categories
-  const clothingCategory = await prisma.category.create({
-    data: {
-      name: 'Clothing',
-      handle: 'clothing',
-      description: 'All clothing items including shirts, pants, jackets, and more.',
-    },
-  });
-
-  const accessoriesCategory = await prisma.category.create({
-    data: {
-      name: 'Accessories',
-      handle: 'accessories',
-      description: 'Fashion accessories including bags, jewelry, hats, and more.',
-    },
-  });
-
-  console.log('✅ Categories created');
-
-  // Create sample products
-  const product1 = await prisma.product.create({
-    data: {
-      handle: 'classic-white-t-shirt',
-      title: 'Classic White T-Shirt',
-      description: 'A comfortable and versatile white t-shirt made from 100% cotton. Perfect for casual wear or layering.',
-      price: 29.99,
-      compareAtPrice: 39.99,
-      availableForSale: true,
-      categoryId: clothingCategory.id,
-      tags: JSON.stringify(['cotton', 'casual', 'white', 'comfortable']),
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop',
-        'https://images.unsplash.com/photo-1562157873-818bc0726f68?w=400&h=400&fit=crop'
-      ]),
-      variants: JSON.stringify([
-        {
-          id: 'variant_white_s',
-          title: 'Small / White',
-          price: 29.99,
-          availableForSale: true,
-          selectedOptions: [
-            { name: 'Size', value: 'Small' },
-            { name: 'Color', value: 'White' }
-          ]
-        },
-        {
-          id: 'variant_white_m',
-          title: 'Medium / White',
-          price: 29.99,
-          availableForSale: true,
-          selectedOptions: [
-            { name: 'Size', value: 'Medium' },
-            { name: 'Color', value: 'White' }
-          ]
-        },
-        {
-          id: 'variant_white_l',
-          title: 'Large / White',
-          price: 29.99,
-          availableForSale: true,
-          selectedOptions: [
-            { name: 'Size', value: 'Large' },
-            { name: 'Color', value: 'White' }
-          ]
-        }
-      ]),
-    },
-  });
-
-  const product2 = await prisma.product.create({
-    data: {
-      handle: 'denim-jacket',
-      title: 'Classic Denim Jacket',
-      description: 'A timeless denim jacket that never goes out of style. Made from premium denim with a comfortable fit.',
-      price: 89.99,
-      compareAtPrice: 119.99,
-      availableForSale: true,
-      categoryId: clothingCategory.id,
-      tags: JSON.stringify(['denim', 'jacket', 'classic', 'blue']),
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1544966503-7cc5ac882d5f?w=400&h=400&fit=crop',
-        'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&h=400&fit=crop'
-      ]),
-      variants: JSON.stringify([
-        {
-          id: 'variant_denim_s',
-          title: 'Small / Blue',
-          price: 89.99,
-          availableForSale: true,
-          selectedOptions: [
-            { name: 'Size', value: 'Small' },
-            { name: 'Color', value: 'Blue' }
-          ]
-        },
-        {
-          id: 'variant_denim_m',
-          title: 'Medium / Blue',
-          price: 89.99,
-          availableForSale: true,
-          selectedOptions: [
-            { name: 'Size', value: 'Medium' },
-            { name: 'Color', value: 'Blue' }
-          ]
-        },
-        {
-          id: 'variant_denim_l',
-          title: 'Large / Blue',
-          price: 89.99,
-          availableForSale: true,
-          selectedOptions: [
-            { name: 'Size', value: 'Large' },
-            { name: 'Color', value: 'Blue' }
-          ]
-        }
-      ]),
-    },
-  });
-
-  const product3 = await prisma.product.create({
-    data: {
-      handle: 'leather-handbag',
-      title: 'Leather Handbag',
-      description: 'Elegant leather handbag perfect for everyday use. Features multiple compartments and a timeless design.',
-      price: 149.99,
-      compareAtPrice: 199.99,
-      availableForSale: true,
-      categoryId: accessoriesCategory.id,
-      tags: JSON.stringify(['leather', 'handbag', 'accessories', 'brown']),
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop',
-        'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&h=400&fit=crop'
-      ]),
-      variants: JSON.stringify([
-        {
-          id: 'variant_bag_brown',
-          title: 'Brown',
-          price: 149.99,
-          availableForSale: true,
-          selectedOptions: [
-            { name: 'Color', value: 'Brown' }
-          ]
-        },
-        {
-          id: 'variant_bag_black',
-          title: 'Black',
-          price: 149.99,
-          availableForSale: true,
-          selectedOptions: [
-            { name: 'Color', value: 'Black' }
-          ]
-        }
-      ]),
-    },
-  });
-
-  console.log('✅ Products created');
-
-  // Create default site content
-  const siteContentData = [
-    { key: 'hero.title', value: 'Welcome to Our Clothing Store' },
-    { key: 'hero.subtitle', value: 'Discover the latest fashion trends and styles' },
-    { key: 'hero.description', value: 'Shop our collection of high-quality clothing for men and women. From casual wear to formal attire, we have everything you need to look your best.' },
-    { key: 'hero.buttonText', value: 'Shop Now' },
-    { key: 'hero.backgroundVideo', value: '/videos/clothing-shoot.mp4' },
-    { key: 'about.title', value: 'About Our Store' },
-    { key: 'about.description', value: 'We are passionate about bringing you the finest clothing at affordable prices. Our curated collection features the latest trends and timeless classics.' },
-    { key: 'about.backgroundImage', value: '/images/background-image-1756043891412-0nifzaa2fwm.PNG' },
-    { key: 'footer.companyName', value: 'OnsiShop' },
-    { key: 'footer.description', value: 'Your premium fashion destination' },
-    { key: 'contact.email', value: 'contact@onsishop.com' },
-    { key: 'contact.phone', value: '+1 (555) 123-4567' },
-    { key: 'contact.address', value: '123 Fashion Street, Style City, SC 12345' }
-  ];
-
-  // Delete existing site content and create new ones
-  await prisma.siteContent.deleteMany();
-  await prisma.siteContent.createMany({
-    data: siteContentData
-  });
-
-  console.log('✅ Site content created');
-  console.log('🌱 Database seeded successfully!');
 }
 
 main()
