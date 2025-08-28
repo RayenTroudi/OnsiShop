@@ -57,8 +57,8 @@ export default async function CategoryPage({
     // Apply sorting
     if (sortKey === 'PRICE') {
       products = products.sort((a: any, b: any) => {
-        const priceA = parseFloat(a.priceRange.minVariantPrice.amount);
-        const priceB = parseFloat(b.priceRange.minVariantPrice.amount);
+        const priceA = parseFloat(a.priceRange?.minVariantPrice?.amount || '0');
+        const priceB = parseFloat(b.priceRange?.minVariantPrice?.amount || '0');
         return reverse ? priceB - priceA : priceA - priceB;
       });
     } else if (sortKey === 'CREATED_AT') {

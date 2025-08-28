@@ -1,6 +1,7 @@
 // Mock data and functions to replace Shopify functionality
 
-import { Product, Collection, Menu, Page, Cart } from './types';
+import { NextResponse } from 'next/server';
+import { Cart, Collection, Menu, Page, Product } from './types';
 
 // Mock menu data
 export const getMenu = async (handle: string): Promise<Menu[]> => {
@@ -107,6 +108,6 @@ export const getProduct = async (handle: string): Promise<Product | null> => {
 };
 
 // Revalidation function (placeholder)
-export const revalidate = async (req: Request): Promise<Response> => {
-  return new Response('OK');
+export const revalidate = async (req: Request): Promise<NextResponse> => {
+  return NextResponse.json({ revalidated: true });
 };

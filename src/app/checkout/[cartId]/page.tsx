@@ -257,8 +257,8 @@ export default function CheckoutPage() {
                 <div key={item.id} className="flex items-center space-x-4 py-4 border-b border-gray-200">
                   <div className="relative h-16 w-16 overflow-hidden rounded-md">
                     <Image
-                      src={item.merchandise.product.featuredImage.url}
-                      alt={item.merchandise.product.featuredImage.altText}
+                      src={item.merchandise.product.featuredImage?.url || '/images/placeholder.jpg'}
+                      alt={item.merchandise.product.featuredImage?.altText || item.merchandise.product.title}
                       fill
                       className="object-cover"
                     />

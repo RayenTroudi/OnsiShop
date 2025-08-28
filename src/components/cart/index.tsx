@@ -10,5 +10,5 @@ export default async function Cart() {
     cart = await getCart(cartId);
   }
 
-  return <CartModal cart={cart} />;
+  return <CartModal cart={cart || undefined} />;
 }
