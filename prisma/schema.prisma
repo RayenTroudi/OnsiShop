@@ -20,7 +20,8 @@ model User {
   updatedAt DateTime @updatedAt
   
   // Relations
-  carts     Cart[]
+  carts        Cart[]
+  reservations Reservation[]
 }
 
 model Category {
@@ -127,4 +128,25 @@ model MediaAsset {
   section   String?  // hero, about, etc.
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Reservation {
+  id          String   @id @default(cuid())
+  userId      String
+  fullName    String
+  email       String
+  phone       String
+  street      String
+  city        String
+  zipCode     String
+  country     String
+  notes       String?
+  status      String   @default("pending") // pending, confirmed, cancelled, completed
+  totalAmount Float
+  items       String   // JSON string containing cart items
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

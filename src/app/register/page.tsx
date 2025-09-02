@@ -4,16 +4,18 @@ export const dynamic = 'force-dynamic';
 
 import Logo from '@/components/layout/Logo';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 
-export default function RegisterPage() {
+function RegisterForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect') || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,12 +50,8 @@ export default function RegisterPage() {
         
         // Small delay to allow auth state to update
         setTimeout(() => {
-          // Redirect based on user role
-          if (data.user?.isAdmin) {
-            router.push('/admin');
-          } else {
-            router.push('/');
-          }
+          // Redirect to intended page
+          router.push(redirectUrl);
         }, 100);
       } else {
         setError(data.error || 'Registration failed');
@@ -75,10 +73,15 @@ export default function RegisterPage() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Create Account
           </h2>
+          {redirectUrl !== '/' && (
+            <p className="mt-2 text-center text-sm text-gray-600">
+              Create an account to continue to checkout
+            </p>
+          )}
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
             <Link
-              href="/login"
+              href={`/login${redirectUrl !== '/' ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}`}
               className="font-medium text-indigo-600 hover:text-indigo-500"
             >
               sign in to existing account
@@ -162,5 +165,17 @@ export default function RegisterPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   );
 }

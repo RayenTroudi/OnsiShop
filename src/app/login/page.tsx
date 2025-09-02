@@ -4,15 +4,17 @@ export const dynamic = 'force-dynamic';
 
 import Logo from '@/components/layout/Logo';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect') || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,21 +27,19 @@ export default function LoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Include cookies
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Trigger global auth change event
         window.dispatchEvent(new CustomEvent('authChange'));
         
-        // Redirect based on user role
-        if (data.user?.isAdmin) {
+        if (data.user?.isAdmin && redirectUrl === '/') {
           router.push('/admin');
         } else {
-          router.push('/');
+          router.push(redirectUrl);
         }
       } else {
         setError(data.error || 'Login failed');
@@ -61,17 +61,21 @@ export default function LoginPage() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign In
           </h2>
+          {redirectUrl !== '/' && (
+            <p className="mt-2 text-center text-sm text-gray-600">
+              Please sign in to continue to checkout
+            </p>
+          )}
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
             <Link
-              href="/register"
+              href={`/register${redirectUrl !== '/' ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}`}
               className="font-medium text-indigo-600 hover:text-indigo-500"
             >
               create a new account
             </Link>
           </p>
           
-          {/* Demo Credentials */}
           <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <h3 className="text-sm font-medium text-blue-800 mb-2">Demo Credentials:</h3>
             <div className="text-xs space-y-1 text-blue-700">
@@ -142,5 +146,17 @@ export default function LoginPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

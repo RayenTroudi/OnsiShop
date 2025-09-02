@@ -73,14 +73,9 @@ const ProductCard = ({
         ?.find((option) => option.name === 'Color')
         ?.values?.map((color) => ({
           name: color,
-          image:
-            product.variants?.find(
-              (variant) =>
-                variant.selectedOptions?.[0]?.name === 'Color' &&
-                variant.selectedOptions?.[0]?.value === color
-            )?.id || '' // Use variant ID as fallback since we don't have image structure
+          image: product.images?.[0]?.url || '/images/placeholder-product.svg' // Use main product image as fallback
         })) || [],
-    [product.options, product.variants]
+    [product.options, product.images]
   );
 
   return (
@@ -107,7 +102,7 @@ const ProductCard = ({
               </div>
             )}
             <Image
-              src={product.images?.[0]?.url || 'https://via.placeholder.com/400x400/E5E7EB/9CA3AF?text=No+Image'}
+              src={product.images?.[0]?.url || '/images/placeholder-product.svg'}
               alt="product image"
               fill
               sizes="(min-width: 768px) 280px, 180px"
@@ -117,7 +112,7 @@ const ProductCard = ({
               })}
             />
             <Image
-              src={product.images?.[1]?.url || 'https://via.placeholder.com/400x400/E5E7EB/9CA3AF?text=No+Image'}
+              src={product.images?.[1]?.url || '/images/placeholder-product.svg'}
               alt="product image"
               fill
               sizes="(min-width: 768px) 280px, 180px"
@@ -130,7 +125,7 @@ const ProductCard = ({
               return (
                 <Image
                   key={i}
-                  src={variant.image}
+                  src={variant.image || '/images/placeholder-product.svg'}
                   fill
                   sizes="(min-width: 768px) 280px, 180px"
                   alt="product image"

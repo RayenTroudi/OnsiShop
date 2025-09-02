@@ -1,44 +1,45 @@
 'use client';
 
+import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function CartPage() {
+  const { user } = useAuth();
   const { 
     cart, 
     loading, 
     error, 
     updateQuantity, 
-    removeFromCart, 
-    checkout 
+    removeFromCart
   } = useCart();
+  const router = useRouter();
   
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [checkoutMessage, setCheckoutMessage] = useState('');
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const handleQuantityChange = async (itemId: string, newQuantity: number) => {
     if (newQuantity < 0) return;
+    setActionLoading(itemId);
     await updateQuantity(itemId, newQuantity);
+    setActionLoading(null);
   };
 
   const handleRemoveItem = async (itemId: string) => {
+    setActionLoading(itemId);
     await removeFromCart(itemId);
+    setActionLoading(null);
   };
 
-  const handleCheckout = async () => {
-    setCheckoutLoading(true);
-    setCheckoutMessage('');
-    
-    const result = await checkout();
-    
-    if (result.success) {
-      setCheckoutMessage(`Order ${result.orderId} placed successfully!`);
+  const handleCheckout = () => {
+    if (!user) {
+      // Redirect to login with checkout redirect
+      router.push('/login?redirect=/checkout');
     } else {
-      setCheckoutMessage('Checkout failed. Please try again.');
+      // User is logged in, go to checkout
+      router.push('/checkout');
     }
-    
-    setCheckoutLoading(false);
   };
 
   if (loading) {
@@ -82,16 +83,6 @@ export default function CartPage() {
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
       
-      {checkoutMessage && (
-        <div className={`mb-6 p-4 rounded ${
-          checkoutMessage.includes('successfully') 
-            ? 'bg-green-100 text-green-700 border border-green-400'
-            : 'bg-red-100 text-red-700 border border-red-400'
-        }`}>
-          {checkoutMessage}
-        </div>
-      )}
-
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         {/* Cart Items */}
         <div className="divide-y divide-gray-200">
@@ -197,10 +188,10 @@ export default function CartPage() {
               </a>
               <button
                 onClick={handleCheckout}
-                disabled={checkoutLoading || cart.items.length === 0}
+                disabled={cart.items.length === 0}
                 className="px-6 py-2 bg-purple text-white rounded-md hover:bg-purple/80 disabled:opacity-50"
               >
-                {checkoutLoading ? 'Processing...' : 'Checkout'}
+                {!user ? 'Login to Checkout' : 'Checkout'}
               </button>
             </div>
           </div>

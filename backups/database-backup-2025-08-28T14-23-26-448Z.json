@@ -1,0 +1,774 @@
+{
+  "timestamp": "2025-08-28T14:23:26.447Z",
+  "version": "1.0",
+  "data": {
+    "users": [
+      {
+        "id": "cmevhjcl8000096o8563yo4ah",
+        "name": "Administrator",
+        "email": "admin@gmail.com",
+        "password": "$2b$12$TOS/L2nTPJ8A/wRUXCLhpu5xyEpA1SW4/69xUDS93p7yw2vl1R/NO",
+        "role": "admin",
+        "createdAt": "2025-08-28T14:14:30.524Z",
+        "updatedAt": "2025-08-28T14:14:30.524Z"
+      },
+      {
+        "id": "cmevhjct5000196o81t3exy8i",
+        "name": "Demo User",
+        "email": "demo@example.com",
+        "password": "$2b$12$APdDSBc8o1SnZQ2/qvBIp.QN/tPRsU5AbiWGYmM5MXckasjxc0PSe",
+        "role": "user",
+        "createdAt": "2025-08-28T14:14:30.810Z",
+        "updatedAt": "2025-08-28T14:14:30.810Z"
+      }
+    ],
+    "categories": [
+      {
+        "id": "cmevhjctn000296o8kozgr6ge",
+        "name": "Best Sellers",
+        "handle": "best-sellers",
+        "description": "Our most popular items that customers love.",
+        "createdAt": "2025-08-28T14:14:30.828Z",
+        "updatedAt": "2025-08-28T14:14:30.828Z"
+      },
+      {
+        "id": "cmevhjcto000596o8khmdyeo6",
+        "name": "Dresses",
+        "handle": "dresses",
+        "description": "Elegant dresses for every occasion.",
+        "createdAt": "2025-08-28T14:14:30.828Z",
+        "updatedAt": "2025-08-28T14:14:30.828Z"
+      },
+      {
+        "id": "cmevhjcto000696o8lx4ygajy",
+        "name": "Jeans",
+        "handle": "jeans",
+        "description": "Premium denim jeans in various styles.",
+        "createdAt": "2025-08-28T14:14:30.828Z",
+        "updatedAt": "2025-08-28T14:14:30.828Z"
+      },
+      {
+        "id": "cmevhjcto000396o8csziwwgc",
+        "name": "T-Shirts",
+        "handle": "t-shirts",
+        "description": "Comfortable and stylish t-shirts.",
+        "createdAt": "2025-08-28T14:14:30.828Z",
+        "updatedAt": "2025-08-28T14:14:30.828Z"
+      },
+      {
+        "id": "cmevhjcto000796o8mzcthdqe",
+        "name": "New Arrivals",
+        "handle": "new-arrivals",
+        "description": "Latest additions to our collection.",
+        "createdAt": "2025-08-28T14:14:30.828Z",
+        "updatedAt": "2025-08-28T14:14:30.828Z"
+      },
+      {
+        "id": "cmevhjcto000896o81i598jvr",
+        "name": "Bags",
+        "handle": "bags",
+        "description": "Stylish bags and accessories.",
+        "createdAt": "2025-08-28T14:14:30.828Z",
+        "updatedAt": "2025-08-28T14:14:30.828Z"
+      },
+      {
+        "id": "cmevhjcto000496o8twst1vuj",
+        "name": "Shoes",
+        "handle": "shoes",
+        "description": "Footwear for comfort and style.",
+        "createdAt": "2025-08-28T14:14:30.828Z",
+        "updatedAt": "2025-08-28T14:14:30.828Z"
+      },
+      {
+        "id": "cmevhm8iy000096k0vpt93dg7",
+        "name": "Clothing",
+        "handle": "clothing",
+        "description": "All clothing items including shirts, pants, hoodies, etc.",
+        "createdAt": "2025-08-28T14:16:45.227Z",
+        "updatedAt": "2025-08-28T14:16:45.227Z"
+      },
+      {
+        "id": "cmevhm8jf000196k0p9ww518k",
+        "name": "Accessories",
+        "handle": "accessories",
+        "description": "Watches, jewelry, and other accessories",
+        "createdAt": "2025-08-28T14:16:45.244Z",
+        "updatedAt": "2025-08-28T14:16:45.244Z"
+      }
+    ],
+    "products": [
+      {
+        "id": "cmevhjcz9000g96o8ug3rfmqq",
+        "name": "Basic Cotton T-Shirt",
+        "handle": "basic-cotton-t-shirt",
+        "title": "Basic Cotton T-Shirt",
+        "description": "Comfortable 100% cotton t-shirt in various colors.",
+        "price": 24.99,
+        "stock": 50,
+        "image": null,
+        "compareAtPrice": 35,
+        "availableForSale": true,
+        "categoryId": "cmevhjcto000396o8csziwwgc",
+        "tags": null,
+        "images": null,
+        "variants": null,
+        "createdAt": "2025-08-28T14:14:31.029Z",
+        "updatedAt": "2025-08-28T14:14:31.029Z"
+      },
+      {
+        "id": "cmevhjcz9000e96o859j1atei",
+        "name": "Classic Denim Jeans",
+        "handle": "classic-denim-jeans",
+        "title": "Classic Denim Jeans",
+        "description": "Timeless denim jeans that never go out of style.",
+        "price": 79.99,
+        "stock": 30,
+        "image": null,
+        "compareAtPrice": 100,
+        "availableForSale": true,
+        "categoryId": "cmevhjcto000696o8lx4ygajy",
+        "tags": null,
+        "images": null,
+        "variants": null,
+        "createdAt": "2025-08-28T14:14:31.029Z",
+        "updatedAt": "2025-08-28T14:14:31.029Z"
+      },
+      {
+        "id": "cmevhjcz9000i96o8q3ni1v6l",
+        "name": "Classic Leather Handbag",
+        "handle": "classic-leather-handbag",
+        "title": "Classic Leather Handbag",
+        "description": "Elegant leather handbag perfect for any occasion.",
+        "price": 199.99,
+        "stock": 12,
+        "image": "/uploads/1755165117062-c1lbki9nyvj.jpg",
+        "compareAtPrice": 250,
+        "availableForSale": true,
+        "categoryId": "cmevhjcto000896o81i598jvr",
+        "tags": null,
+        "images": null,
+        "variants": null,
+        "createdAt": "2025-08-28T14:14:31.029Z",
+        "updatedAt": "2025-08-28T14:14:31.029Z"
+      },
+      {
+        "id": "cmevhjcz9000f96o8kwgvdhwk",
+        "name": "Sport Running Shoes",
+        "handle": "sport-running-shoes",
+        "title": "Sport Running Shoes",
+        "description": "High-performance running shoes for athletes.",
+        "price": 129.99,
+        "stock": 15,
+        "image": null,
+        "compareAtPrice": 160,
+        "availableForSale": true,
+        "categoryId": "cmevhjcto000496o8twst1vuj",
+        "tags": null,
+        "images": null,
+        "variants": null,
+        "createdAt": "2025-08-28T14:14:31.029Z",
+        "updatedAt": "2025-08-28T14:14:31.029Z"
+      },
+      {
+        "id": "cmevhjcz9000h96o8a3d1nzny",
+        "name": "Summer Floral Dress",
+        "handle": "summer-floral-dress",
+        "title": "Summer Floral Dress",
+        "description": "Beautiful floral dress perfect for summer occasions.",
+        "price": 89.99,
+        "stock": 25,
+        "image": "/uploads/1755164664582-rf8118eui29.png",
+        "compareAtPrice": 120,
+        "availableForSale": true,
+        "categoryId": "cmevhjcto000596o8khmdyeo6",
+        "tags": null,
+        "images": null,
+        "variants": null,
+        "createdAt": "2025-08-28T14:14:31.029Z",
+        "updatedAt": "2025-08-28T14:14:31.029Z"
+      },
+      {
+        "id": "cmevhjxrn000096s4bmmnp76r",
+        "name": "",
+        "handle": "cotton-hoodie-comfortable",
+        "title": "Comfortable Cotton Hoodie",
+        "description": "Soft and cozy cotton hoodie perfect for casual wear. Available in multiple colors.",
+        "price": 65.99,
+        "stock": 0,
+        "image": null,
+        "compareAtPrice": 89.99,
+        "availableForSale": true,
+        "categoryId": "cmevhm8iy000096k0vpt93dg7",
+        "tags": "[\"hoodie\",\"cotton\",\"casual\",\"comfort\"]",
+        "images": "[\"https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400&h=400&fit=crop\",\"https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400&h=400&fit=crop\"]",
+        "variants": "[{\"id\":\"hoodie-1-small-gray\",\"title\":\"Small / Gray\",\"price\":65.99,\"availableForSale\":true,\"selectedOptions\":[{\"name\":\"Size\",\"value\":\"Small\"},{\"name\":\"Color\",\"value\":\"Gray\"}]},{\"id\":\"hoodie-1-medium-gray\",\"title\":\"Medium / Gray\",\"price\":65.99,\"availableForSale\":true,\"selectedOptions\":[{\"name\":\"Size\",\"value\":\"Medium\"},{\"name\":\"Color\",\"value\":\"Gray\"}]},{\"id\":\"hoodie-1-large-black\",\"title\":\"Large / Black\",\"price\":65.99,\"availableForSale\":true,\"selectedOptions\":[{\"name\":\"Size\",\"value\":\"Large\"},{\"name\":\"Color\",\"value\":\"Black\"}]}]",
+        "createdAt": "2025-08-28T14:14:57.972Z",
+        "updatedAt": "2025-08-28T14:16:45.261Z"
+      },
+      {
+        "id": "cmevhjxs4000196s4vjhq8tsb",
+        "name": "",
+        "handle": "casual-shorts-summer",
+        "title": "Summer Casual Shorts",
+        "description": "Lightweight and breathable shorts perfect for hot summer days. Comfortable fit with multiple pockets.",
+        "price": 39.99,
+        "stock": 0,
+        "image": null,
+        "compareAtPrice": 49.99,
+        "availableForSale": true,
+        "categoryId": "cmevhm8iy000096k0vpt93dg7",
+        "tags": "[\"shorts\",\"summer\",\"casual\",\"lightweight\"]",
+        "images": "[\"https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=400&h=400&fit=crop\",\"https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=400&h=400&fit=crop\"]",
+        "variants": "[{\"id\":\"shorts-1-30-khaki\",\"title\":\"30 / Khaki\",\"price\":39.99,\"availableForSale\":true,\"selectedOptions\":[{\"name\":\"Size\",\"value\":\"30\"},{\"name\":\"Color\",\"value\":\"Khaki\"}]},{\"id\":\"shorts-1-32-khaki\",\"title\":\"32 / Khaki\",\"price\":39.99,\"availableForSale\":true,\"selectedOptions\":[{\"name\":\"Size\",\"value\":\"32\"},{\"name\":\"Color\",\"value\":\"Khaki\"}]},{\"id\":\"shorts-1-34-navy\",\"title\":\"34 / Navy\",\"price\":39.99,\"availableForSale\":true,\"selectedOptions\":[{\"name\":\"Size\",\"value\":\"34\"},{\"name\":\"Color\",\"value\":\"Navy\"}]}]",
+        "createdAt": "2025-08-28T14:14:57.988Z",
+        "updatedAt": "2025-08-28T14:16:45.278Z"
+      },
+      {
+        "id": "cmevhjxsj000296s4zdnli322",
+        "name": "",
+        "handle": "formal-blazer-business",
+        "title": "Business Formal Blazer",
+        "description": "Professional blazer perfect for business meetings and formal occasions. Tailored fit with premium fabric.",
+        "price": 189.99,
+        "stock": 0,
+        "image": null,
+        "compareAtPrice": 229.99,
+        "availableForSale": true,
+        "categoryId": "cmevhm8iy000096k0vpt93dg7",
+        "tags": "[\"blazer\",\"formal\",\"business\",\"professional\"]",
+        "images": "[\"https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&h=400&fit=crop\",\"https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&h=400&fit=crop\"]",
+        "variants": "[{\"id\":\"blazer-1-small-charcoal\",\"title\":\"Small / Charcoal\",\"price\":189.99,\"availableForSale\":true,\"selectedOptions\":[{\"name\":\"Size\",\"value\":\"Small\"},{\"name\":\"Color\",\"value\":\"Charcoal\"}]},{\"id\":\"blazer-1-medium-charcoal\",\"title\":\"Medium / Charcoal\",\"price\":189.99,\"availableForSale\":true,\"selectedOptions\":[{\"name\":\"Size\",\"value\":\"Medium\"},{\"name\":\"Color\",\"value\":\"Charcoal\"}]},{\"id\":\"blazer-1-large-navy\",\"title\":\"Large / Navy\",\"price\":189.99,\"availableForSale\":false,\"selectedOptions\":[{\"name\":\"Size\",\"value\":\"Large\"},{\"name\":\"Color\",\"value\":\"Navy\"}]}]",
+        "createdAt": "2025-08-28T14:14:58.004Z",
+        "updatedAt": "2025-08-28T14:16:45.295Z"
+      },
+      {
+        "id": "cmevhjxt0000496s4iykfb5nc",
+        "name": "",
+        "handle": "sneakers-white-classic",
+        "title": "Classic White Sneakers",
+        "description": "Timeless white sneakers that go with everything. Comfortable and durable for everyday wear.",
+        "price": 89.99,
+        "stock": 0,
+        "image": null,
+        "compareAtPrice": 119.99,
+        "availableForSale": true,
+        "categoryId": "cmevhjcto000496o8twst1vuj",
+        "tags": "[\"sneakers\",\"white\",\"classic\",\"casual\"]",
+        "images": "[\"https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400&h=400&fit=crop\",\"https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400&h=400&fit=crop\"]",
+        "variants": "[{\"id\":\"sneakers-1-7-white\",\"title\":\"Size 7\",\"price\":89.99,\"availableForSale\":true,\"selectedOptions\":[{\"name\":\"Size\",\"value\":\"7\"}]},{\"id\":\"sneakers-1-8-white\",\"title\":\"Size 8\",\"price\":89.99,\"availableForSale\":true,\"selectedOptions\":[{\"name\":\"Size\",\"value\":\"8\"}]},{\"id\":\"sneakers-1-9-white\",\"title\":\"Size 9\",\"price\":89.99,\"availableForSale\":true,\"selectedOptions\":[{\"name\":\"Size\",\"value\":\"9\"}]},{\"id\":\"sneakers-1-10-white\",\"title\":\"Size 10\",\"price\":89.99,\"availableForSale\":true,\"selectedOptions\":[{\"name\":\"Size\",\"value\":\"10\"}]}]",
+        "createdAt": "2025-08-28T14:14:58.021Z",
+        "updatedAt": "2025-08-28T14:14:58.021Z"
+      },
+      {
+        "id": "cmevhjxtg000596s4kcx7ufg9",
+        "name": "",
+        "handle": "watch-minimal-silver",
+        "title": "Minimal Silver Watch",
+        "description": "Elegant minimalist watch with silver band. Perfect for both casual and formal occasions.",
+        "price": 149.99,
+        "stock": 0,
+        "image": null,
+        "compareAtPrice": 199.99,
+        "availableForSale": true,
+        "categoryId": "cmevhm8jf000196k0p9ww518k",
+        "tags": "[\"watch\",\"silver\",\"minimal\",\"accessories\"]",
+        "images": "[\"https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400&h=400&fit=crop\",\"https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400&h=400&fit=crop\"]",
+        "variants": "[{\"id\":\"watch-1-silver\",\"title\":\"Silver\",\"price\":149.99,\"availableForSale\":true,\"selectedOptions\":[{\"name\":\"Color\",\"value\":\"Silver\"}]}]",
+        "createdAt": "2025-08-28T14:14:58.037Z",
+        "updatedAt": "2025-08-28T14:16:45.311Z"
+      },
+      {
+        "id": "cmevhjxtw000696s4ygpdtr3o",
+        "name": "",
+        "handle": "cardigan-wool-cozy",
+        "title": "Cozy Wool Cardigan",
+        "description": "Warm and comfortable wool cardigan perfect for layering. Soft texture with button-up front.",
+        "price": 79.99,
+        "stock": 0,
+        "image": null,
+        "compareAtPrice": 99.99,
+        "availableForSale": true,
+        "categoryId": "cmevhm8iy000096k0vpt93dg7",
+        "tags": "[\"cardigan\",\"wool\",\"cozy\",\"layering\"]",
+        "images": "[\"https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop\",\"https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop\"]",
+        "variants": "[{\"id\":\"cardigan-1-small-cream\",\"title\":\"Small / Cream\",\"price\":79.99,\"availableForSale\":true,\"selectedOptions\":[{\"name\":\"Size\",\"value\":\"Small\"},{\"name\":\"Color\",\"value\":\"Cream\"}]},{\"id\":\"cardigan-1-medium-cream\",\"title\":\"Medium / Cream\",\"price\":79.99,\"availableForSale\":true,\"selectedOptions\":[{\"name\":\"Size\",\"value\":\"Medium\"},{\"name\":\"Color\",\"value\":\"Cream\"}]},{\"id\":\"cardigan-1-large-beige\",\"title\":\"Large / Beige\",\"price\":79.99,\"availableForSale\":true,\"selectedOptions\":[{\"name\":\"Size\",\"value\":\"Large\"},{\"name\":\"Color\",\"value\":\"Beige\"}]}]",
+        "createdAt": "2025-08-28T14:14:58.053Z",
+        "updatedAt": "2025-08-28T14:16:45.327Z"
+      }
+    ],
+    "siteContent": [
+      {
+        "id": "cmevhjd21000j96o8e6qteicz",
+        "key": "hero.title",
+        "value": "Welcome to ONSI Fashion",
+        "createdAt": "2025-08-28T14:14:31.129Z",
+        "updatedAt": "2025-08-28T14:14:51.754Z"
+      },
+      {
+        "id": "cmevhjd21000k96o8m0olva8o",
+        "key": "hero.subtitle",
+        "value": "Discover the Perfect Blend of Style and Comfort",
+        "createdAt": "2025-08-28T14:14:31.129Z",
+        "updatedAt": "2025-08-28T14:14:51.770Z"
+      },
+      {
+        "id": "cmevhjd21000l96o8tt29d40z",
+        "key": "hero.description",
+        "value": "Shop our exclusive collection of premium clothing for men and women. From casual wear to formal attire, find your perfect style with our carefully curated fashion pieces.",
+        "createdAt": "2025-08-28T14:14:31.129Z",
+        "updatedAt": "2025-08-28T14:14:51.787Z"
+      },
+      {
+        "id": "cmevhjd21000m96o8d6fge85p",
+        "key": "hero.buttonText",
+        "value": "Shop Collection",
+        "createdAt": "2025-08-28T14:14:31.129Z",
+        "updatedAt": "2025-08-28T14:14:31.129Z"
+      },
+      {
+        "id": "cmevhjd21000n96o88l3vvxqg",
+        "key": "hero.backgroundVideo",
+        "value": "/videos/clothing-shoot.mp4",
+        "createdAt": "2025-08-28T14:14:31.129Z",
+        "updatedAt": "2025-08-28T14:14:31.129Z"
+      },
+      {
+        "id": "cmevhjd21000o96o8wuc9vdd8",
+        "key": "about.title",
+        "value": "Crafted with Passion, Designed for You",
+        "createdAt": "2025-08-28T14:14:31.129Z",
+        "updatedAt": "2025-08-28T14:14:51.847Z"
+      },
+      {
+        "id": "cmevhjd21000p96o8iogxo9gc",
+        "key": "about.description",
+        "value": "We believe that fashion is more than just clothing - it is a form of self-expression. Our carefully curated collection combines timeless elegance with contemporary trends, ensuring you always look and feel your best.",
+        "createdAt": "2025-08-28T14:14:31.129Z",
+        "updatedAt": "2025-08-28T14:14:51.869Z"
+      },
+      {
+        "id": "cmevhjd21000q96o8tvxwq7ga",
+        "key": "about.backgroundImage",
+        "value": "/images/about-background.jpg",
+        "createdAt": "2025-08-28T14:14:31.129Z",
+        "updatedAt": "2025-08-28T14:14:51.900Z"
+      },
+      {
+        "id": "cmevhjd21000r96o8mr5zh754",
+        "key": "footer.companyName",
+        "value": "ONSI Fashion",
+        "createdAt": "2025-08-28T14:14:31.129Z",
+        "updatedAt": "2025-08-28T14:14:51.915Z"
+      },
+      {
+        "id": "cmevhjd21000s96o8oj0sm4w0",
+        "key": "footer.description",
+        "value": "Premium fashion for the modern lifestyle. Quality, style, and comfort in every piece.",
+        "createdAt": "2025-08-28T14:14:31.129Z",
+        "updatedAt": "2025-08-28T14:14:51.945Z"
+      },
+      {
+        "id": "cmevhjd21000t96o8g7katcjy",
+        "key": "contact.email",
+        "value": "hello@onsifashion.com",
+        "createdAt": "2025-08-28T14:14:31.129Z",
+        "updatedAt": "2025-08-28T14:14:51.975Z"
+      },
+      {
+        "id": "cmevhjd21000u96o8ui3p0npi",
+        "key": "contact.phone",
+        "value": "+1 (555) 123-ONSI",
+        "createdAt": "2025-08-28T14:14:31.129Z",
+        "updatedAt": "2025-08-28T14:14:51.987Z"
+      },
+      {
+        "id": "cmevhjd21000v96o87zg3z5k8",
+        "key": "contact.address",
+        "value": "123 Fashion Avenue, Style District, New York, NY 10001",
+        "createdAt": "2025-08-28T14:14:31.129Z",
+        "updatedAt": "2025-08-28T14:14:52.001Z"
+      },
+      {
+        "id": "cmevhjt0a000996v49ttrrm5s",
+        "key": "hero.primaryButtonText",
+        "value": "Shop Collection",
+        "createdAt": "2025-08-28T14:14:51.802Z",
+        "updatedAt": "2025-08-28T14:14:51.802Z"
+      },
+      {
+        "id": "cmevhjt0p000a96v4mrnehmn7",
+        "key": "hero.secondaryButtonText",
+        "value": "Learn More",
+        "createdAt": "2025-08-28T14:14:51.818Z",
+        "updatedAt": "2025-08-28T14:14:51.818Z"
+      },
+      {
+        "id": "cmevhjt14000b96v4kuykks8x",
+        "key": "hero.backgroundImage",
+        "value": "/images/promotions/winter.jpg",
+        "createdAt": "2025-08-28T14:14:51.832Z",
+        "updatedAt": "2025-08-28T14:14:51.832Z"
+      },
+      {
+        "id": "cmevhjt2k000e96v4c9vkwejc",
+        "key": "about.buttonText",
+        "value": "Our Story",
+        "createdAt": "2025-08-28T14:14:51.885Z",
+        "updatedAt": "2025-08-28T14:14:51.885Z"
+      },
+      {
+        "id": "cmevhjt3u000h96v48buzama0",
+        "key": "footer.tagline",
+        "value": "Your Style, Our Passion",
+        "createdAt": "2025-08-28T14:14:51.930Z",
+        "updatedAt": "2025-08-28T14:14:51.930Z"
+      },
+      {
+        "id": "cmevhjt4o000j96v448gvu3fi",
+        "key": "footer.copyrightText",
+        "value": "© 2025 ONSI Fashion. All rights reserved.",
+        "createdAt": "2025-08-28T14:14:51.960Z",
+        "updatedAt": "2025-08-28T14:14:51.960Z"
+      },
+      {
+        "id": "cmevhjt65000n96v4wifgkg2e",
+        "key": "seo.title",
+        "value": "ONSI Fashion - Premium Clothing Store",
+        "createdAt": "2025-08-28T14:14:52.013Z",
+        "updatedAt": "2025-08-28T14:14:52.013Z"
+      },
+      {
+        "id": "cmevhjt6j000o96v48388yl1r",
+        "key": "seo.description",
+        "value": "Discover premium fashion at ONSI. Shop our collection of high-quality clothing for men and women. Style, comfort, and quality in every piece.",
+        "createdAt": "2025-08-28T14:14:52.027Z",
+        "updatedAt": "2025-08-28T14:14:52.027Z"
+      },
+      {
+        "id": "cmevhjt6z000p96v4fbxteosy",
+        "key": "seo.keywords",
+        "value": "fashion, clothing, premium, style, men, women, apparel, online store",
+        "createdAt": "2025-08-28T14:14:52.044Z",
+        "updatedAt": "2025-08-28T14:14:52.044Z"
+      }
+    ],
+    "navigationItems": [
+      {
+        "id": "cmevhjswc000096v4x1yhrnx3",
+        "name": "home",
+        "title": "Home",
+        "url": "/",
+        "order": 1,
+        "isPublished": true,
+        "parentId": null,
+        "createdAt": "2025-08-28T14:14:51.660Z",
+        "updatedAt": "2025-08-28T14:14:51.660Z"
+      },
+      {
+        "id": "cmevhjsww000196v405xsaebv",
+        "name": "shop",
+        "title": "Shop",
+        "url": "/search",
+        "order": 2,
+        "isPublished": true,
+        "parentId": null,
+        "createdAt": "2025-08-28T14:14:51.681Z",
+        "updatedAt": "2025-08-28T14:14:51.681Z"
+      },
+      {
+        "id": "cmevhjsxb000296v4oxm76la7",
+        "name": "categories",
+        "title": "Categories",
+        "url": "/search",
+        "order": 3,
+        "isPublished": true,
+        "parentId": null,
+        "createdAt": "2025-08-28T14:14:51.695Z",
+        "updatedAt": "2025-08-28T14:14:51.695Z"
+      },
+      {
+        "id": "cmevhjsxq000396v4pxxdnupv",
+        "name": "clothing",
+        "title": "Clothing",
+        "url": "/search/clothing",
+        "order": 1,
+        "isPublished": true,
+        "parentId": "cmevhjsxb000296v4oxm76la7",
+        "createdAt": "2025-08-28T14:14:51.711Z",
+        "updatedAt": "2025-08-28T14:14:51.711Z"
+      },
+      {
+        "id": "cmevhjsy4000496v4n6ksci5d",
+        "name": "accessories",
+        "title": "Accessories",
+        "url": "/search/accessories",
+        "order": 2,
+        "isPublished": true,
+        "parentId": "cmevhjsxb000296v4oxm76la7",
+        "createdAt": "2025-08-28T14:14:51.725Z",
+        "updatedAt": "2025-08-28T14:14:51.725Z"
+      },
+      {
+        "id": "cmevhjsyj000596v4xvm0g7t8",
+        "name": "about",
+        "title": "About",
+        "url": "/about-us",
+        "order": 4,
+        "isPublished": true,
+        "parentId": null,
+        "createdAt": "2025-08-28T14:14:51.739Z",
+        "updatedAt": "2025-08-28T14:14:51.739Z"
+      }
+    ],
+    "socialMedia": [
+      {
+        "id": "cmevhjt7g000q96v4ct3g3gmc",
+        "platform": "twitter",
+        "title": "X (Twitter)",
+        "url": "https://twitter.com/onsifashion",
+        "iconUrl": "/images/footer/social-media/x.png",
+        "order": 1,
+        "isPublished": true,
+        "createdAt": "2025-08-28T14:14:52.060Z",
+        "updatedAt": "2025-08-28T14:14:52.060Z"
+      },
+      {
+        "id": "cmevhjt7v000r96v4mjoc5tg8",
+        "platform": "facebook",
+        "title": "Facebook",
+        "url": "https://facebook.com/onsifashion",
+        "iconUrl": "/images/footer/social-media/facebook.png",
+        "order": 2,
+        "isPublished": true,
+        "createdAt": "2025-08-28T14:14:52.076Z",
+        "updatedAt": "2025-08-28T14:14:52.076Z"
+      },
+      {
+        "id": "cmevhjt8a000s96v4zwyzqf20",
+        "platform": "instagram",
+        "title": "Instagram",
+        "url": "https://instagram.com/onsifashion",
+        "iconUrl": "/images/footer/social-media/instagram.png",
+        "order": 3,
+        "isPublished": true,
+        "createdAt": "2025-08-28T14:14:52.090Z",
+        "updatedAt": "2025-08-28T14:14:52.090Z"
+      },
+      {
+        "id": "cmevhjt8o000t96v4i8t61p1f",
+        "platform": "youtube",
+        "title": "YouTube",
+        "url": "https://youtube.com/onsifashion",
+        "iconUrl": "/images/footer/social-media/youtube.png",
+        "order": 4,
+        "isPublished": true,
+        "createdAt": "2025-08-28T14:14:52.105Z",
+        "updatedAt": "2025-08-28T14:14:52.105Z"
+      },
+      {
+        "id": "cmevhjt92000u96v4jcp0nfpd",
+        "platform": "tiktok",
+        "title": "TikTok",
+        "url": "https://tiktok.com/@onsifashion",
+        "iconUrl": "/images/footer/social-media/tiktok.png",
+        "order": 5,
+        "isPublished": true,
+        "createdAt": "2025-08-28T14:14:52.119Z",
+        "updatedAt": "2025-08-28T14:14:52.119Z"
+      }
+    ],
+    "mediaAssets": [
+      {
+        "id": "cmevhmv3s000096ocjv0xrrdv",
+        "filename": "winter.jpg",
+        "url": "/images/promotions/winter.jpg",
+        "alt": "Winter collection promotion banner",
+        "type": "IMAGE",
+        "section": "hero",
+        "createdAt": "2025-08-28T14:17:14.489Z",
+        "updatedAt": "2025-08-28T14:17:14.489Z"
+      },
+      {
+        "id": "cmevhmv47000196oc6nmuawij",
+        "filename": "background-image-1756043891412-0nifzaa2fwm.PNG",
+        "url": "/images/background-image-1756043891412-0nifzaa2fwm.PNG",
+        "alt": "Hero background image",
+        "type": "IMAGE",
+        "section": "hero",
+        "createdAt": "2025-08-28T14:17:14.504Z",
+        "updatedAt": "2025-08-28T14:17:14.504Z"
+      },
+      {
+        "id": "cmevhmv4m000296oct2c2ay2b",
+        "filename": "logo.png",
+        "url": "/images/logo.png",
+        "alt": "ONSI Fashion logo",
+        "type": "IMAGE",
+        "section": "header",
+        "createdAt": "2025-08-28T14:17:14.518Z",
+        "updatedAt": "2025-08-28T14:17:14.518Z"
+      },
+      {
+        "id": "cmevhmv50000396oc5f6s7f8c",
+        "filename": "cart.png",
+        "url": "/images/cart.png",
+        "alt": "Shopping cart icon",
+        "type": "IMAGE",
+        "section": "header",
+        "createdAt": "2025-08-28T14:17:14.532Z",
+        "updatedAt": "2025-08-28T14:17:14.532Z"
+      },
+      {
+        "id": "cmevhmv5e000496och0egxl7c",
+        "filename": "profile.png",
+        "url": "/images/profile.png",
+        "alt": "User profile icon",
+        "type": "IMAGE",
+        "section": "header",
+        "createdAt": "2025-08-28T14:17:14.546Z",
+        "updatedAt": "2025-08-28T14:17:14.546Z"
+      },
+      {
+        "id": "cmevhmv5s000596ocablsp39g",
+        "filename": "magnifier.png",
+        "url": "/images/magnifier.png",
+        "alt": "Search magnifier icon",
+        "type": "IMAGE",
+        "section": "header",
+        "createdAt": "2025-08-28T14:17:14.560Z",
+        "updatedAt": "2025-08-28T14:17:14.560Z"
+      },
+      {
+        "id": "cmevhmv66000696ocp6cjmbj8",
+        "filename": "facebook.png",
+        "url": "/images/footer/social-media/facebook.png",
+        "alt": "Facebook icon",
+        "type": "IMAGE",
+        "section": "footer",
+        "createdAt": "2025-08-28T14:17:14.574Z",
+        "updatedAt": "2025-08-28T14:17:14.574Z"
+      },
+      {
+        "id": "cmevhmv6k000796oc1br39dcb",
+        "filename": "instagram.png",
+        "url": "/images/footer/social-media/instagram.png",
+        "alt": "Instagram icon",
+        "type": "IMAGE",
+        "section": "footer",
+        "createdAt": "2025-08-28T14:17:14.588Z",
+        "updatedAt": "2025-08-28T14:17:14.588Z"
+      },
+      {
+        "id": "cmevhmv6y000896ocs1zgvd5g",
+        "filename": "x.png",
+        "url": "/images/footer/social-media/x.png",
+        "alt": "X (Twitter) icon",
+        "type": "IMAGE",
+        "section": "footer",
+        "createdAt": "2025-08-28T14:17:14.603Z",
+        "updatedAt": "2025-08-28T14:17:14.603Z"
+      },
+      {
+        "id": "cmevhmv7c000996oczyxo7gcz",
+        "filename": "youtube.png",
+        "url": "/images/footer/social-media/youtube.png",
+        "alt": "YouTube icon",
+        "type": "IMAGE",
+        "section": "footer",
+        "createdAt": "2025-08-28T14:17:14.617Z",
+        "updatedAt": "2025-08-28T14:17:14.617Z"
+      },
+      {
+        "id": "cmevhmv8e000a96ocallk6n3q",
+        "filename": "tiktok.png",
+        "url": "/images/footer/social-media/tiktok.png",
+        "alt": "TikTok icon",
+        "type": "IMAGE",
+        "section": "footer",
+        "createdAt": "2025-08-28T14:17:14.654Z",
+        "updatedAt": "2025-08-28T14:17:14.654Z"
+      },
+      {
+        "id": "cmevhmv8s000b96ocmjxfcudx",
+        "filename": "visa.png",
+        "url": "/images/footer/payment-methods/visa.png",
+        "alt": "Visa payment method",
+        "type": "IMAGE",
+        "section": "footer",
+        "createdAt": "2025-08-28T14:17:14.669Z",
+        "updatedAt": "2025-08-28T14:17:14.669Z"
+      },
+      {
+        "id": "cmevhmv97000c96oc8tg301rm",
+        "filename": "mastercard.png",
+        "url": "/images/footer/payment-methods/mastercard.png",
+        "alt": "Mastercard payment method",
+        "type": "IMAGE",
+        "section": "footer",
+        "createdAt": "2025-08-28T14:17:14.683Z",
+        "updatedAt": "2025-08-28T14:17:14.683Z"
+      },
+      {
+        "id": "cmevhmv9l000d96oc1fmtl6d9",
+        "filename": "paypal.png",
+        "url": "/images/footer/payment-methods/paypal.png",
+        "alt": "PayPal payment method",
+        "type": "IMAGE",
+        "section": "footer",
+        "createdAt": "2025-08-28T14:17:14.697Z",
+        "updatedAt": "2025-08-28T14:17:14.697Z"
+      },
+      {
+        "id": "cmevhmv9z000e96octx8dmzl3",
+        "filename": "applepay.png",
+        "url": "/images/footer/payment-methods/applepay.png",
+        "alt": "Apple Pay payment method",
+        "type": "IMAGE",
+        "section": "footer",
+        "createdAt": "2025-08-28T14:17:14.711Z",
+        "updatedAt": "2025-08-28T14:17:14.711Z"
+      },
+      {
+        "id": "cmevhmvad000f96ocxhm72k8t",
+        "filename": "googlepay.png",
+        "url": "/images/footer/payment-methods/googlepay.png",
+        "alt": "Google Pay payment method",
+        "type": "IMAGE",
+        "section": "footer",
+        "createdAt": "2025-08-28T14:17:14.725Z",
+        "updatedAt": "2025-08-28T14:17:14.725Z"
+      },
+      {
+        "id": "cmevhmvar000g96ocz8b01m9a",
+        "filename": "home.webp",
+        "url": "/images/screenshots/home.webp",
+        "alt": "Homepage screenshot",
+        "type": "IMAGE",
+        "section": "screenshots",
+        "createdAt": "2025-08-28T14:17:14.739Z",
+        "updatedAt": "2025-08-28T14:17:14.739Z"
+      },
+      {
+        "id": "cmevhmvb5000h96ochqldtpz3",
+        "filename": "clothing-shoot.mp4",
+        "url": "/videos/clothing-shoot.mp4",
+        "alt": "clothing-shoot.mp4 video",
+        "type": "VIDEO",
+        "section": "hero",
+        "createdAt": "2025-08-28T14:17:14.754Z",
+        "updatedAt": "2025-08-28T14:17:14.754Z"
+      },
+      {
+        "id": "cmevhmvbk000i96ocsbf56w6i",
+        "filename": "clothing-shoot.webm",
+        "url": "/videos/clothing-shoot.webm",
+        "alt": "clothing-shoot.webm video",
+        "type": "VIDEO",
+        "section": "hero",
+        "createdAt": "2025-08-28T14:17:14.769Z",
+        "updatedAt": "2025-08-28T14:17:14.769Z"
+      }
+    ],
+    "reservations": []
+  }
+}

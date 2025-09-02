@@ -223,7 +223,7 @@ export class DatabaseService {
         width: 400,
         height: 400
       } : {
-        url: 'https://via.placeholder.com/400x400/E5E7EB/9CA3AF?text=No+Image',
+        url: '/images/placeholder-product.svg',
         altText: product.title,
         width: 400,
         height: 400

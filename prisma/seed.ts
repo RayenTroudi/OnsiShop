@@ -7,41 +7,70 @@ async function main() {
   console.log('🌱 Seeding database...');
 
   try {
-    // Clear existing data first (optional - for development)
-    console.log('🧹 Cleaning existing data...');
-    await prisma.cartItem.deleteMany();
-    await prisma.cart.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.category.deleteMany();
-    await prisma.siteContent.deleteMany();
-    await prisma.user.deleteMany();
+    // Check if this is the first run (no admin user exists)
+    const existingAdmin = await prisma.user.findUnique({
+      where: { email: 'admin@gmail.com' }
+    });
+
+    const isFirstRun = !existingAdmin;
     
-    console.log('✅ Existing data cleared');
+    if (isFirstRun) {
+      console.log('🧹 First run detected - initializing fresh database...');
+      // Only clear data on first run
+      await prisma.cartItem.deleteMany();
+      await prisma.cart.deleteMany();
+      await prisma.product.deleteMany();
+      await prisma.category.deleteMany();
+      await prisma.siteContent.deleteMany();
+      await prisma.user.deleteMany();
+      await prisma.navigationItem.deleteMany();
+      await prisma.socialMedia.deleteMany();
+      await prisma.mediaAsset.deleteMany();
+      
+      console.log('✅ Database initialized');
+    } else {
+      console.log('📦 Database already initialized - preserving existing data...');
+    }
 
-    // Create default admin user
-    const hashedPassword = await bcrypt.hash('admin@gmail.com', 12);
-    const adminUser = await prisma.user.create({
-      data: {
-        email: 'admin@gmail.com',
-        password: hashedPassword,
-        name: 'Administrator',
-        role: 'admin',
-      },
-    });
-    console.log('✅ Admin user created (email: admin@gmail.com, password: admin@gmail.com)');
+    // Create default admin user (only if doesn't exist)
+    let adminUser;
+    if (isFirstRun) {
+      const hashedPassword = await bcrypt.hash('admin@gmail.com', 12);
+      adminUser = await prisma.user.create({
+        data: {
+          email: 'admin@gmail.com',
+          password: hashedPassword,
+          name: 'Administrator',
+          role: 'admin',
+        },
+      });
+      console.log('✅ Admin user created (email: admin@gmail.com, password: admin@gmail.com)');
+    } else {
+      adminUser = existingAdmin;
+      console.log('✅ Admin user already exists');
+    }
 
-    // Create demo users
-    const demoUser = await prisma.user.create({
-      data: {
-        email: 'demo@example.com',
-        password: await bcrypt.hash('demo123', 12),
-        name: 'Demo User',
-        role: 'user',
-      },
+    // Create demo users (only if doesn't exist)
+    const existingDemo = await prisma.user.findUnique({
+      where: { email: 'demo@example.com' }
     });
+    
+    if (!existingDemo) {
+      const demoUser = await prisma.user.create({
+        data: {
+          email: 'demo@example.com',
+          password: await bcrypt.hash('demo123', 12),
+          name: 'Demo User',
+          role: 'user',
+        },
+      });
+      console.log('✅ Demo user created (email: demo@example.com, password: demo123)');
+    } else {
+      console.log('✅ Demo user already exists');
+    }
     console.log('✅ Demo user created (email: demo@example.com, password: demo123)');
 
-    // Create categories with better data structure
+    // Create categories with better data structure (only if they don't exist)
     const categories = [
       {
         name: 'Best Sellers',
@@ -80,14 +109,22 @@ async function main() {
       }
     ];
 
-    const createdCategories = await Promise.all(
-      categories.map(category => 
-        prisma.category.create({ data: category })
-      )
-    );
-    console.log(`✅ ${createdCategories.length} categories created`);
+    const createdCategories = [];
+    for (const categoryData of categories) {
+      const existingCategory = await prisma.category.findUnique({
+        where: { handle: categoryData.handle }
+      });
+      
+      if (!existingCategory) {
+        const newCategory = await prisma.category.create({ data: categoryData });
+        createdCategories.push(newCategory);
+      } else {
+        createdCategories.push(existingCategory);
+      }
+    }
+    console.log(`✅ ${createdCategories.length} categories ready (${categories.filter(async c => !(await prisma.category.findUnique({ where: { handle: c.handle } }))).length} new, ${createdCategories.length - categories.filter(async c => !(await prisma.category.findUnique({ where: { handle: c.handle } }))).length} existing)`);
 
-    // Create products with proper relationships
+    // Create products with proper relationships (only if they don't exist)
     const products = [
       {
         name: 'Summer Floral Dress',
@@ -148,16 +185,24 @@ async function main() {
       }
     ];
 
-    const createdProducts = await Promise.all(
-      products.map(product => 
-        prisma.product.create({ data: product })
-      )
-    );
-    console.log(`✅ ${createdProducts.length} products created`);
+    const createdProducts = [];
+    for (const productData of products) {
+      const existingProduct = await prisma.product.findUnique({
+        where: { handle: productData.handle }
+      });
+      
+      if (!existingProduct) {
+        const newProduct = await prisma.product.create({ data: productData });
+        createdProducts.push(newProduct);
+      } else {
+        createdProducts.push(existingProduct);
+      }
+    }
+    console.log(`✅ ${createdProducts.length} products ready`);
 
-    console.log(`✅ ${createdProducts.length} products created`);
+    console.log(`✅ ${createdProducts.length} products ready`);
 
-    // Create default site content
+    // Create default site content (only if it doesn't exist)
     const siteContentData = [
       { key: 'hero.title', value: 'Welcome to OnsiShop' },
       { key: 'hero.subtitle', value: 'Discover Premium Fashion & Style' },
@@ -174,10 +219,18 @@ async function main() {
       { key: 'contact.address', value: '123 Fashion Street, Style City, SC 12345' }
     ];
 
-    await prisma.siteContent.createMany({
-      data: siteContentData
-    });
-    console.log(`✅ ${siteContentData.length} site content items created`);
+    let contentCreated = 0;
+    for (const contentData of siteContentData) {
+      const existingContent = await prisma.siteContent.findUnique({
+        where: { key: contentData.key }
+      });
+      
+      if (!existingContent) {
+        await prisma.siteContent.create({ data: contentData });
+        contentCreated++;
+      }
+    }
+    console.log(`✅ ${siteContentData.length} content items ready (${contentCreated} new, ${siteContentData.length - contentCreated} existing)`);
 
     console.log('� Database seeded successfully!');
     console.log('📊 Summary:');

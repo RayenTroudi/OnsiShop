@@ -17,9 +17,12 @@
     "db:generate": "npx prisma generate",
     "db:push": "npx prisma db push",
     "db:seed": "npx prisma db seed",
+    "db:seed-all": "npx prisma db seed && npx tsx scripts/seed-additional.ts && npx tsx scripts/add-more-products.ts && npx tsx scripts/add-missing-data.ts && npx tsx scripts/restore-media-assets.ts && npx tsx scripts/add-about-background.ts && npx tsx scripts/add-background-video.ts",
+    "db:backup": "npx tsx scripts/backup-database.ts",
+    "db:restore": "npx tsx scripts/restore-database.ts",
     "db:studio": "npx prisma studio",
     "db:reset": "npx prisma migrate reset --force",
-    "db:setup": "npx prisma generate && npx prisma db push && npx prisma db seed",
+    "db:setup": "npx prisma generate && npx prisma db push && pnpm db:seed-all",
     "postinstall": "npx prisma generate"
   },
   "prisma": {
