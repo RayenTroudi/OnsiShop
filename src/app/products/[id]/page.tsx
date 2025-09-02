@@ -1,11 +1,18 @@
+import BuyNowButton from '@/components/cart/BuyNowButton';
+import DatabaseAddToCart from '@/components/cart/database-add-to-cart';
 import DeleteProductButton from '@/components/product/DeleteProductButton';
 import ProductRating from '@/components/product/ProductRating';
 import ProductReviews from '@/components/product/ProductReviews';
 import RelatedProducts from '@/components/product/RelatedProducts';
+import { PrismaClient } from '@prisma/client';
+import jwt from 'jsonwebtoken';
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Suspense } from 'react';
+
+const prisma = new PrismaClient();
 
 // Types
 interface Product {
@@ -14,6 +21,7 @@ interface Product {
   title: string;
   description?: string;
   price: number;
+  stock: number;
   image?: string;
   createdAt: string;
   updatedAt: string;
@@ -36,6 +44,28 @@ interface Product {
       name: string;
     };
   }>;
+}
+
+// Check if current user is admin
+async function isCurrentUserAdmin(): Promise<boolean> {
+  try {
+    const cookieStore = cookies();
+    const token = cookieStore.get('token')?.value;
+
+    if (!token) {
+      return false;
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { role: true }
+    });
+
+    return user?.role === 'admin';
+  } catch (error) {
+    return false;
+  }
 }
 
 // Fetch product data
@@ -84,6 +114,7 @@ export async function generateMetadata({
 
 export default async function ProductDetailPage({ params }: { params: { id: string } }) {
   const product = await getProduct(params.id);
+  const isAdmin = await isCurrentUserAdmin();
 
   if (!product) {
     return (
@@ -211,26 +242,58 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
 
               {/* Action Buttons */}
               <div className="space-y-4">
-                <button className="w-full bg-black text-white py-4 px-6 rounded-lg hover:bg-gray-800 transition-colors font-semibold">
-                  Add to Cart
-                </button>
+                <Suspense fallback={
+                  <div className="animate-pulse bg-gray-200 h-16 rounded-lg"></div>
+                }>
+                  <div className="flex space-x-3">
+                    <DatabaseAddToCart 
+                      productId={product.id} 
+                      availableForSale={product.stock > 0}
+                      stock={product.stock}
+                      className="flex-1 bg-purple text-white py-3 px-6 rounded-lg hover:bg-darkPurple transition-colors font-semibold text-center"
+                    >
+                      Add to Cart
+                    </DatabaseAddToCart>
+                    <BuyNowButton
+                      productId={product.id}
+                      availableForSale={product.stock > 0}
+                      stock={product.stock}
+                      className="flex-1 bg-orange-500 text-white py-3 px-6 rounded-lg hover:bg-orange-600 transition-colors font-semibold text-center"
+                    >
+                      Buy Now
+                    </BuyNowButton>
+                  </div>
+                </Suspense>
                 
-                <div className="flex space-x-4">
-                  <Link
-                    href={`/products/${product.id}/edit`}
-                    className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-center"
-                  >
-                    Edit Product
-                  </Link>
-                  
-                  <DeleteProductButton productId={product.id} productName={product.name} />
-                </div>
+                {/* Admin-only buttons */}
+                {isAdmin && (
+                  <div className="flex space-x-4">
+                    <Link
+                      href={`/products/${product.id}/edit`}
+                      className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-center"
+                    >
+                      Edit Product
+                    </Link>
+                    
+                    <DeleteProductButton productId={product.id} productName={product.name} />
+                  </div>
+                )}
               </div>
 
               {/* Product Details */}
               <div className="border-t pt-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Details</h3>
                 <dl className="space-y-3">
+                  <div className="flex">
+                    <dt className="w-1/3 text-gray-600">Stock:</dt>
+                    <dd className="w-2/3 text-gray-900">
+                      {product.stock > 0 ? (
+                        <span className="text-green-600">{product.stock} available</span>
+                      ) : (
+                        <span className="text-red-600">Out of stock</span>
+                      )}
+                    </dd>
+                  </div>
                   <div className="flex">
                     <dt className="w-1/3 text-gray-600">Product ID:</dt>
                     <dd className="w-2/3 text-gray-900 font-mono text-sm">{product.id}</dd>

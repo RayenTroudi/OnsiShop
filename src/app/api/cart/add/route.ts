@@ -17,12 +17,25 @@ export async function POST(request: NextRequest) {
     quantity = body.quantity || 1;
     variantId = body.variantId;
 
+    console.log('🛒 Cart Add Request:', {
+      userId: userId || 'MISSING',
+      productId: productId || 'MISSING',
+      quantity,
+      variantId: variantId || 'undefined',
+      bodyKeys: Object.keys(body)
+    });
+
     // Handle the case where variantId is the string "undefined"
     if (variantId === 'undefined' || variantId === '') {
       variantId = undefined;
     }
 
     if (!userId || !productId) {
+      console.log('🚨 Cart Add Validation Failed:', {
+        userId: !!userId,
+        productId: !!productId,
+        receivedBody: body
+      });
       return NextResponse.json({
         success: false,
         message: 'User ID and Product ID are required'

@@ -1,6 +1,6 @@
 'use client';
 
-import CheckoutForm from '@/components/checkout/CheckoutForm';
+import OrderCheckoutForm from '@/components/checkout/OrderCheckoutForm';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -50,13 +50,13 @@ export default function CheckoutContent() {
     );
   }
 
-  const handleSubmitSuccess = (reservationId: string) => {
-    router.push(`/checkout/success?reservationId=${reservationId}`);
+  const handleSubmitSuccess = (orderId: string) => {
+    router.push(`/order/${orderId}`);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <CheckoutForm onSubmitSuccess={handleSubmitSuccess} />
+      <OrderCheckoutForm onSubmitSuccess={handleSubmitSuccess} />
     </div>
   );
 }

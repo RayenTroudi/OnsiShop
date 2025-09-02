@@ -3,6 +3,7 @@
 import Price from '@/components/common/price';
 import { Dialog, Transition } from '@headlessui/react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Fragment, useState } from 'react';
 
 interface Product {
@@ -54,6 +55,7 @@ export default function DatabaseCartModal({
 }: DatabaseCartModalProps) {
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const updateQuantity = async (itemId: string, newQuantity: number) => {
     setIsUpdating(itemId);
@@ -107,29 +109,10 @@ export default function DatabaseCartModal({
     }
   };
 
-  const handleCheckout = async () => {
-    try {
-      const response = await fetch('/api/cart/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId })
-      });
-
-      const result = await response.json();
-      
-      if (result.success) {
-        alert(`Order ${result.data.orderId} placed successfully!`);
-        onCartUpdate();
-        onClose();
-      } else {
-        setError(result.message);
-      }
-    } catch (error) {
-      console.error('Error during checkout:', error);
-      setError('Checkout failed');
-    }
+  const handleCheckout = () => {
+    // Close the modal and navigate to checkout page
+    onClose();
+    router.push('/checkout');
   };
 
   return (

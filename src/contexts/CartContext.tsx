@@ -88,6 +88,13 @@ export function CartProvider({ children, userId }: CartProviderProps) {
       setLoading(true);
       setError(null);
       
+      console.log('🛒 CartContext addToCart called:', {
+        userId,
+        productId,
+        quantity,
+        variantId
+      });
+      
       const response = await fetch('/api/cart/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -95,6 +102,12 @@ export function CartProvider({ children, userId }: CartProviderProps) {
       });
       
       const result = await response.json();
+      
+      console.log('🛒 CartContext addToCart response:', {
+        status: response.status,
+        success: result.success,
+        message: result.message
+      });
       
       if (result.success) {
         await refreshCart();
@@ -104,8 +117,8 @@ export function CartProvider({ children, userId }: CartProviderProps) {
         return false;
       }
     } catch (err) {
+      console.error('🛒 CartContext addToCart error:', err);
       setError('Failed to add item to cart');
-      console.error('Add to cart error:', err);
       return false;
     } finally {
       setLoading(false);

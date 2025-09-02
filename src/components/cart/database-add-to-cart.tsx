@@ -27,17 +27,35 @@ export default function DatabaseAddToCart({
   const handleAddToCart = async () => {
     if (!availableForSale || stock <= 0) return;
 
+    console.log('DatabaseAddToCart: Adding to cart', {
+      productId,
+      variantId,
+      availableForSale,
+      stock
+    });
+
     setIsLoading(true);
     setMessage('');
 
     try {
-      await addToCart(productId, 1, variantId);
-      setMessage('Added to cart!');
-      
-      // Clear message after 2 seconds
-      setTimeout(() => setMessage(''), 2000);
+      // Only pass variantId if it's actually defined and not empty
+      const success = variantId && variantId.trim() !== '' 
+        ? await addToCart(productId, 1, variantId)
+        : await addToCart(productId, 1);
+        
+      console.log('DatabaseAddToCart: Result', success);
+        
+      if (success) {
+        setMessage('Added to cart!');
+        
+        // Clear message after 2 seconds
+        setTimeout(() => setMessage(''), 2000);
+      } else {
+        setMessage('Failed to add to cart');
+        setTimeout(() => setMessage(''), 3000);
+      }
     } catch (error) {
-      console.error('Error adding to cart:', error);
+      console.error('DatabaseAddToCart: Error adding to cart:', error);
       setMessage('Failed to add to cart');
       setTimeout(() => setMessage(''), 3000);
     } finally {

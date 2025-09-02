@@ -17,6 +17,7 @@ model User {
   updatedAt    DateTime      @updatedAt
   carts        Cart[]
   comments     Comment[]
+  orders       Order[]
   ratings      Rating[]
   reservations Reservation[]
 }
@@ -32,25 +33,26 @@ model Category {
 }
 
 model Product {
-  id               String     @id @default(cuid())
-  name             String     @default("")
-  handle           String     @unique
+  id               String      @id @default(cuid())
+  name             String      @default("")
+  handle           String      @unique
   title            String
   description      String?
   price            Float
-  stock            Int        @default(0)
+  stock            Int         @default(0)
   image            String?
   compareAtPrice   Float?
-  availableForSale Boolean    @default(true)
+  availableForSale Boolean     @default(true)
   categoryId       String?
   tags             String?
   images           String?
   variants         String?
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
   cartItems        CartItem[]
   comments         Comment[]
-  category         Category?  @relation(fields: [categoryId], references: [id])
+  orderItems       OrderItem[]
+  category         Category?   @relation(fields: [categoryId], references: [id])
   ratings          Rating[]
 }
 
@@ -76,6 +78,38 @@ model CartItem {
   cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
 
   @@unique([cartId, productId, variantId])
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  userId          String
+  fullName        String
+  email           String
+  phone           String
+  shippingAddress String
+  status          String      @default("pending")
+  totalAmount     Float
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items           OrderItem[]
+
+  @@index([userId])
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 model SiteContent {
