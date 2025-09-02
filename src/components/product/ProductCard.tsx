@@ -88,7 +88,7 @@ const ProductCard = ({
         viewport={{ once: true }}
       >
         <a
-          href={'/product/' + product.handle}
+          href={'/products/' + product.id}
           onMouseEnter={() => {
             setActiveImage('hover');
             clearTimeout(timeoutId.current);
@@ -158,7 +158,7 @@ const ProductCard = ({
             );
           })}
         </div>
-        <a href={'/product/' + product.handle}>
+        <a href={'/products/' + product.id}>
           <h3 className="text-center font-quicksand text-[clamp(20px,8px_+_2vw,22px)] font-bold text-darkPurple transition-all duration-300 hover:text-purple">
             {product.title}
           </h3>

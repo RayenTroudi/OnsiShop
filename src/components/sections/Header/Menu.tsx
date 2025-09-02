@@ -9,7 +9,7 @@ import { Menu as MenuType } from '@/lib/types';
 const Menu = ({ menu }: { menu: MenuType[] }) => {
   // Show actual categories if available, otherwise show "All Products"
   const menuItems = menu && menu.length > 0 ? menu : [
-    { title: 'All Products', path: '/search', items: [] }
+    { title: 'All Products', path: '/products', items: [] }
   ];
 
   // Check if this is a special category

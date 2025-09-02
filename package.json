@@ -17,7 +17,7 @@
     "db:generate": "npx prisma generate",
     "db:push": "npx prisma db push",
     "db:seed": "npx prisma db seed",
-    "db:seed-all": "npx prisma db seed && npx tsx scripts/seed-additional.ts && npx tsx scripts/add-more-products.ts && npx tsx scripts/add-missing-data.ts && npx tsx scripts/restore-media-assets.ts && npx tsx scripts/add-about-background.ts && npx tsx scripts/add-background-video.ts",
+    "db:seed-all": "npx prisma db seed && npx tsx scripts/seed-additional.ts && npx tsx scripts/add-more-products.ts && npx tsx scripts/add-missing-data.ts && npx tsx scripts/restore-media-assets.ts && npx tsx scripts/add-about-background.ts && npx tsx scripts/add-background-video.ts && npx tsx scripts/seed-reviews.ts",
     "db:backup": "npx tsx scripts/backup-database.ts",
     "db:restore": "npx tsx scripts/restore-database.ts",
     "db:studio": "npx prisma studio",
@@ -31,7 +31,7 @@
   "dependencies": {
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.0.18",
-    "@prisma/client": "^6.14.0",
+    "@prisma/client": "^6.15.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
     "bcryptjs": "^3.0.2",

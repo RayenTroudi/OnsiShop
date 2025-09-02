@@ -1,0 +1,279 @@
+import DeleteProductButton from '@/components/product/DeleteProductButton';
+import ProductRating from '@/components/product/ProductRating';
+import ProductReviews from '@/components/product/ProductReviews';
+import RelatedProducts from '@/components/product/RelatedProducts';
+import type { Metadata } from 'next';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Suspense } from 'react';
+
+// Types
+interface Product {
+  id: string;
+  name: string;
+  title: string;
+  description?: string;
+  price: number;
+  image?: string;
+  createdAt: string;
+  updatedAt: string;
+  category?: {
+    id: string;
+    name: string;
+    handle: string;
+  };
+  avgRating?: number;
+  _count: {
+    ratings: number;
+    comments: number;
+  };
+  comments: Array<{
+    id: string;
+    text: string;
+    createdAt: string;
+    user: {
+      id: string;
+      name: string;
+    };
+  }>;
+}
+
+// Fetch product data
+async function getProduct(id: string): Promise<Product | null> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/products/${id}`, {
+      cache: 'no-store', // Always fetch fresh data
+    });
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    return null;
+  }
+}
+
+export async function generateMetadata({
+  params
+}: {
+  params: { id: string };
+}): Promise<Metadata> {
+  const product = await getProduct(params.id);
+
+  if (!product) {
+    return {
+      title: 'Product Not Found',
+      description: 'The requested product could not be found.',
+    };
+  }
+
+  return {
+    title: `${product.name} - ONSI Store`,
+    description: product.description || `Buy ${product.name} at ONSI Store for $${product.price.toFixed(2)}`,
+    openGraph: {
+      title: `${product.name} - ONSI Store`,
+      description: product.description || `Buy ${product.name} at ONSI Store for $${product.price.toFixed(2)}`,
+      images: product.image ? [{ url: product.image }] : [],
+      type: 'website',
+    },
+  };
+}
+
+export default async function ProductDetailPage({ params }: { params: { id: string } }) {
+  const product = await getProduct(params.id);
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="mb-8">
+            <div className="w-24 h-24 mx-auto mb-4 text-gray-300">
+              <svg fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Product Not Found</h1>
+            <p className="text-gray-600 mb-6">The product you&apos;re looking for doesn&apos;t exist or has been removed.</p>
+            <div className="space-x-4">
+              <Link
+                href="/products"
+                className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
+              >
+                Browse All Products
+              </Link>
+              <Link
+                href="/"
+                className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Go Home
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description,
+    image: product.image,
+    offers: {
+      '@type': 'Offer',
+      price: product.price,
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+    },
+    aggregateRating: product.avgRating ? {
+      '@type': 'AggregateRating',
+      ratingValue: product.avgRating,
+      reviewCount: product._count.ratings,
+    } : undefined,
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(productJsonLd)
+        }}
+      />
+      
+      <div className="min-h-screen bg-white">
+        {/* Breadcrumb */}
+        <div className="bg-gray-50 border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <nav className="flex text-sm">
+              <Link href="/" className="text-gray-500 hover:text-gray-700">
+                Home
+              </Link>
+              <span className="mx-2 text-gray-400">/</span>
+              <Link href="/products" className="text-gray-500 hover:text-gray-700">
+                Products
+              </Link>
+              <span className="mx-2 text-gray-400">/</span>
+              <span className="text-gray-900">{product.name}</span>
+            </nav>
+          </div>
+        </div>
+
+        {/* Main Product Section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Product Image */}
+            <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+              <Image
+                src={product.image || '/images/placeholder-product.svg'}
+                alt={product.name}
+                width={600}
+                height={600}
+                className="w-full h-full object-cover"
+                priority
+              />
+            </div>
+
+            {/* Product Info */}
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  {product.name}
+                </h1>
+                {product.category && (
+                  <p className="text-lg text-gray-600 mb-4">
+                    Category: {product.category.name}
+                  </p>
+                )}
+                <div className="text-3xl font-bold text-gray-900 mb-4">
+                  ${product.price.toFixed(2)}
+                </div>
+              </div>
+
+              {/* Rating */}
+              <Suspense fallback={<div className="animate-pulse bg-gray-200 h-20 rounded-lg"></div>}>
+                <ProductRating productId={product.id} />
+              </Suspense>
+
+              {/* Description */}
+              {product.description && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
+                  <p className="text-gray-700 leading-relaxed">
+                    {product.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="space-y-4">
+                <button className="w-full bg-black text-white py-4 px-6 rounded-lg hover:bg-gray-800 transition-colors font-semibold">
+                  Add to Cart
+                </button>
+                
+                <div className="flex space-x-4">
+                  <Link
+                    href={`/products/${product.id}/edit`}
+                    className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-center"
+                  >
+                    Edit Product
+                  </Link>
+                  
+                  <DeleteProductButton productId={product.id} productName={product.name} />
+                </div>
+              </div>
+
+              {/* Product Details */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Details</h3>
+                <dl className="space-y-3">
+                  <div className="flex">
+                    <dt className="w-1/3 text-gray-600">Product ID:</dt>
+                    <dd className="w-2/3 text-gray-900 font-mono text-sm">{product.id}</dd>
+                  </div>
+                  <div className="flex">
+                    <dt className="w-1/3 text-gray-600">Created:</dt>
+                    <dd className="w-2/3 text-gray-900">
+                      {new Date(product.createdAt).toLocaleDateString()}
+                    </dd>
+                  </div>
+                  <div className="flex">
+                    <dt className="w-1/3 text-gray-600">Last Updated:</dt>
+                    <dd className="w-2/3 text-gray-900">
+                      {new Date(product.updatedAt).toLocaleDateString()}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Product Reviews Section */}
+        <section className="py-8 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <Suspense fallback={<div className="animate-pulse bg-gray-200 h-96 rounded-lg"></div>}>
+              <ProductReviews productId={product.id} />
+            </Suspense>
+          </div>
+        </section>
+
+        {/* Related Products Section */}
+        <section className="py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <Suspense fallback={<div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>}>
+              <RelatedProducts 
+                currentProductId={product.id} 
+                productTags={[]} 
+              />
+            </Suspense>
+          </div>
+        </section>
+      </div>
+    </>
+  );
+}

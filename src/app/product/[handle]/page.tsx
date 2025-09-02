@@ -13,8 +13,11 @@ import { getProduct } from '@/lib/mock-shopify';
 // components
 // import { ProductDescription } from '@/components/product/product-description';
 import ProductDescription from '@/components/product/ProductDescription';
+import ProductRating from '@/components/product/ProductRating';
+import ProductReviews from '@/components/product/ProductReviews';
 import ProductSlider from '@/components/product/ProductSlider';
 import RecommendedItems from '@/components/product/RecommendedItems';
+import RelatedProducts from '@/components/product/RelatedProducts';
 
 // types
 // import { Image } from '@/lib/shopify/types';
@@ -89,20 +92,54 @@ const ProductPage = async ({ params }: { params: { handle: string } }) => {
           __html: JSON.stringify(productJsonLd)
         }}
       />
-      <section className="flex w-full flex-col items-center justify-center py-[24px] md:py-[48px]">
-        <h2 className="sr-only">Product Information</h2>
-        <article className="flex w-full max-w-[95%] flex-col items-stretch justify-center gap-4 md:w-[1000px] md:flex-row">
-          <div className="max-w-[450px] md:w-1/2">
-            <ProductSlider product={product} />
+      <div className="min-h-screen bg-white">
+        {/* Main Product Section */}
+        <section className="flex w-full flex-col items-center justify-center py-[24px] md:py-[48px]">
+          <h2 className="sr-only">Product Information</h2>
+          <article className="flex w-full max-w-[95%] flex-col items-stretch justify-center gap-4 md:w-[1200px] md:flex-row">
+            <div className="max-w-[450px] md:w-1/2">
+              <ProductSlider product={product} />
+            </div>
+            <div className="md:w-1/2">
+              <ProductDescription product={product} />
+              {/* Product Rating Overview */}
+              <Suspense fallback={<div className="animate-pulse bg-gray-200 h-20 rounded-lg"></div>}>
+                <ProductRating productId={product.id} />
+              </Suspense>
+            </div>
+          </article>
+        </section>
+
+        {/* Product Reviews Section */}
+        <section className="py-8 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <Suspense fallback={<div className="animate-pulse bg-gray-200 h-96 rounded-lg"></div>}>
+              <ProductReviews productId={product.id} />
+            </Suspense>
           </div>
-          <div className="md:w-1/2">
-            <ProductDescription product={product} />
+        </section>
+
+        {/* Related Products Section */}
+        <section className="py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <Suspense fallback={<div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>}>
+              <RelatedProducts 
+                currentProductId={product.id} 
+                productTags={product.tags} 
+              />
+            </Suspense>
           </div>
-        </article>
-        <Suspense>
-          <RecommendedItems productId={product.id} />
-        </Suspense>
-      </section>
+        </section>
+
+        {/* Recommended Items */}
+        <section className="py-8 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <Suspense fallback={<div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>}>
+              <RecommendedItems productId={product.id} />
+            </Suspense>
+          </div>
+        </section>
+      </div>
     </>
   );
 };

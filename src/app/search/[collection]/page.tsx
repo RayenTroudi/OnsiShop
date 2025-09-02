@@ -1,6 +1,5 @@
 import { DatabaseService } from '@/lib/database';
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
 
 import Grid from '@/components/grid';
 import ProductGridItems from '@/components/layout/product-grid-items';
@@ -17,7 +16,13 @@ export async function generateMetadata({
     const db = new DatabaseService();
     const category = await db.getCategoryByHandle(params.collection);
 
-    if (!category) return notFound();
+    if (!category) {
+      // Return metadata for non-existent category instead of notFound
+      return {
+        title: `Category "${params.collection}" - Not Found`,
+        description: `The category "${params.collection}" was not found.`
+      };
+    }
 
     return {
       title: category.name,
@@ -25,7 +30,10 @@ export async function generateMetadata({
     };
   } catch (error) {
     console.error('Error generating metadata:', error);
-    return notFound();
+    return {
+      title: 'Category Not Found',
+      description: 'The requested category could not be loaded.'
+    };
   }
 }
 
@@ -44,8 +52,25 @@ export default async function CategoryPage({
     
     // Get category details
     const category = await db.getCategoryByHandle(params.collection);
+    
     if (!category) {
-      return notFound();
+      // Show a user-friendly message for non-existent categories
+      return (
+        <section className="py-12">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Category Not Found</h1>
+            <p className="text-gray-600 mb-6">
+              The category "{params.collection}" does not exist or has been removed.
+            </p>
+            <a 
+              href="/products" 
+              className="inline-block bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
+            >
+              Browse All Products
+            </a>
+          </div>
+        </section>
+      );
     }
     
     // Get products for this category
@@ -79,7 +104,20 @@ export default async function CategoryPage({
     return (
       <section>
         {products.length === 0 ? (
-          <p className="py-3 text-lg">{`No products found in this collection`}</p>
+          <div className="py-12 text-center">
+            <h2 className="font-lora text-3xl font-bold capitalize text-darkPurple mb-4">
+              {category.name}
+            </h2>
+            <p className="text-lg text-gray-600 mb-6">
+              No products found in this category yet.
+            </p>
+            <a 
+              href="/products" 
+              className="inline-block bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
+            >
+              Browse All Products
+            </a>
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center gap-[48px]">
             <h2 className="font-lora text-3xl font-bold capitalize text-darkPurple">
@@ -94,6 +132,22 @@ export default async function CategoryPage({
     );
   } catch (error) {
     console.error('Error in CategoryPage:', error);
-    return notFound();
+    // Return a user-friendly error page instead of notFound()
+    return (
+      <section className="py-12">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Something went wrong</h1>
+          <p className="text-gray-600 mb-6">
+            We encountered an error while loading this category. Please try again later.
+          </p>
+          <a 
+            href="/products" 
+            className="inline-block bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            Browse All Products
+          </a>
+        </div>
+      </section>
+    );
   }
 }

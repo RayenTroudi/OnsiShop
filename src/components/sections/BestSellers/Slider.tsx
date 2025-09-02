@@ -37,7 +37,9 @@ const Slider = ({ collection }: { collection: string }) => {
     try {
       const response = await fetch(`/api/products?collection=${collection}&limit=5`);
       if (response.ok) {
-        const products = await response.json();
+        const result = await response.json();
+        // Handle both old and new API response formats
+        const products = result.products || result || [];
         setProducts(products);
       } else {
         console.error('Failed to fetch products');

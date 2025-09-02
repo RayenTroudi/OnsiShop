@@ -8,12 +8,12 @@ import Link from 'next/link';
 import CartIconWrapper from '@/components/cart/CartIconWrapper';
 import Logo from '@/components/layout/Logo';
 import { Suspense } from 'react';
-import Menu from './Menu';
+import ClientMenu from './ClientMenu';
 import SearchIcon from './SearchIcon';
 import UserMenu from './UserMenu';
 
 // Dynamically import MobileMenu to prevent SSR issues with useSearchParams
-const MobileMenu = dynamic(() => import('./mobile-menu'), {
+const ClientMobileMenu = dynamic(() => import('./ClientMobileMenu'), {
   ssr: false,
   loading: () => (
     <div className="flex h-8 w-8 items-center justify-center">
@@ -22,12 +22,37 @@ const MobileMenu = dynamic(() => import('./mobile-menu'), {
   )
 });
 
-// Get categories from API route (safer for server components)
+// Get categories from database
 async function getCategories(): Promise<Array<{ id: string; name: string; handle: string }>> {
-  // During build time, return empty array to prevent infinite loops
-  // Categories will be fetched on the client side
-  console.log('🔍 Skipping category fetch during build/SSR');
-  return [];
+  // During build time, skip the fetch to prevent errors
+  if (process.env.NODE_ENV === 'production' && !process.env.VERCEL_URL) {
+    console.log('🔍 Skipping category fetch during build');
+    return [];
+  }
+  
+  try {
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    
+    const categories = await prisma.category.findMany({
+      select: {
+        id: true,
+        name: true,
+        handle: true,
+      },
+    });
+    
+    await prisma.$disconnect();
+    
+    return categories.map((category: any) => ({
+      id: String(category.id),
+      name: category.name,
+      handle: category.handle
+    }));
+  } catch (error) {
+    console.log('🔍 Error fetching categories:', error);
+    return [];
+  }
 }
 
 const Header = async () => {
@@ -60,7 +85,7 @@ const Header = async () => {
             </div>
           }>
             <div className="md:hidden">
-              <MobileMenu menu={menu} />
+              <ClientMobileMenu initialMenu={menu} />
             </div>
           </Suspense>
           
@@ -75,7 +100,7 @@ const Header = async () => {
           
           {/* Desktop menu */}
           <div className="hidden md:flex md:flex-1 md:justify-center">
-            <Menu menu={menu} />
+            <ClientMenu initialMenu={menu} />
           </div>
           
           {/* Right side actions */}
