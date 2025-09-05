@@ -10,12 +10,8 @@ interface ClientProvidersProps {
 function CartProviderWrapper({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
-  // While auth is loading, don't render cart provider
-  if (loading) {
-    return <div>{children}</div>;
-  }
-
-  // If user is logged out, use empty userId which will result in empty cart
+  // Always provide CartProvider, even during loading
+  // If user is logged out or loading, use empty userId which will result in empty cart
   const userId = user?.id || '';
 
   return (

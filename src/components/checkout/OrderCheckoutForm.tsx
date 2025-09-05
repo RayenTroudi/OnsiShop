@@ -18,7 +18,7 @@ interface CheckoutFormProps {
 
 export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps) {
   const { user } = useAuth();
-  const { cart, clearCart, loading } = useCart();
+  const { cart, clearCart, loading, refreshCart } = useCart();
   const router = useRouter();
   
   const [formData, setFormData] = useState<CheckoutFormData>({
@@ -41,6 +41,12 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
       }));
     }
   }, [user]);
+
+  // Refresh cart when component mounts to ensure latest data
+  useEffect(() => {
+    refreshCart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   // Debug cart state
   useEffect(() => {
@@ -114,8 +120,8 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
 
       if (response.ok && result.success) {
         // Cart is already cleared by the order API
-        // Just refresh cart to reflect the change
-        // No need to call clearCart() manually
+        // Refresh cart to reflect the change in the UI
+        await refreshCart();
         
         // Call success callback or redirect
         if (onSubmitSuccess) {

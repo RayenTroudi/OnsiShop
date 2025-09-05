@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -25,6 +26,7 @@ export default function DatabaseAddToCart({
   const [message, setMessage] = useState('');
   const [isClient, setIsClient] = useState(false);
   const { user } = useAuth();
+  const { addToCart, refreshCart } = useCart();
   const router = useRouter();
 
   useEffect(() => {
@@ -72,47 +74,23 @@ export default function DatabaseAddToCart({
     setMessage('');
 
     try {
-      // Call API directly instead of using cart context to avoid SSR issues
-      const response = await fetch('/api/cart/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // Include cookies for authentication
-        body: JSON.stringify({ 
-          productId, 
-          quantity: 1, 
-          variantId: variantId && variantId.trim() !== '' ? variantId : undefined
-        })
-      });
-      
-      const result = await response.json();
-      
-      console.log('🔍 API Response Debug:', {
-        status: response.status,
-        ok: response.ok,
-        result: result,
-        headers: Object.fromEntries(response.headers.entries())
-      });
+      // Use cart context for proper state management
+      const success = await addToCart(
+        productId, 
+        1, 
+        variantId && variantId.trim() !== '' ? variantId : undefined
+      );
         
-      if (result.success) {
+      if (success) {
         setMessage('Added to cart!');
         
-        // Dispatch custom event to update cart icon
+        // Dispatch custom event to update cart icon (for backwards compatibility)
         window.dispatchEvent(new CustomEvent('cartUpdated'));
         
         // Clear message after 2 seconds
         setTimeout(() => setMessage(''), 2000);
       } else {
-        console.log('❌ API call failed:', {
-          status: response.status,
-          result: result
-        });
-        if (response.status === 401) {
-          // Authentication failed, redirect to login
-          console.log('🚫 401 Unauthorized, redirecting to login');
-          router.push('/login');
-          return;
-        }
-        setMessage('Failed to add to cart');
+        setMessage('Failed to add to cart. Please try again.');
         setTimeout(() => setMessage(''), 3000);
       }
     } catch (error) {

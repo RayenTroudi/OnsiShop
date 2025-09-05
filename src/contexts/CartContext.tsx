@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
+import { ReactNode, createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 interface Product {
   id: string;
@@ -59,7 +59,7 @@ export function CartProvider({ children, userId }: CartProviderProps) {
   const [error, setError] = useState<string | null>(null);
 
   // Fetch cart data
-  const refreshCart = async () => {
+  const refreshCart = useCallback(async () => {
     // If no userId (user logged out), clear cart
     if (!userId) {
       setCart(null);
@@ -84,10 +84,10 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   // Add item to cart
-  const addToCart = async (productId: string, quantity = 1, variantId?: string): Promise<boolean> => {
+  const addToCart = useCallback(async (productId: string, quantity = 1, variantId?: string): Promise<boolean> => {
     // If no userId (user logged out), redirect to login
     if (!userId) {
       // Redirect to login page
@@ -139,10 +139,10 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, refreshCart]);
 
   // Remove item from cart
-  const removeFromCart = async (itemId: string): Promise<boolean> => {
+  const removeFromCart = useCallback(async (itemId: string): Promise<boolean> => {
     // If no userId (user logged out), can't modify cart
     if (!userId) {
       setError('Please log in to modify cart');
@@ -173,10 +173,10 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, refreshCart]);
 
   // Update item quantity
-  const updateQuantity = async (itemId: string, quantity: number): Promise<boolean> => {
+  const updateQuantity = useCallback(async (itemId: string, quantity: number): Promise<boolean> => {
     // If no userId (user logged out), can't modify cart
     if (!userId) {
       setError('Please log in to modify cart');
@@ -209,10 +209,10 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, refreshCart]);
 
   // Clear cart (checkout)
-  const checkout = async (): Promise<{ success: boolean; orderId?: string }> => {
+  const checkout = useCallback(async (): Promise<{ success: boolean; orderId?: string }> => {
     // If no userId (user logged out), can't checkout
     if (!userId) {
       setError('Please log in to checkout');
@@ -245,10 +245,10 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, refreshCart]);
 
   // Clear cart without checkout
-  const clearCart = async (): Promise<boolean> => {
+  const clearCart = useCallback(async (): Promise<boolean> => {
     if (!userId) return true;
     
     try {
@@ -276,7 +276,7 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, refreshCart]);
 
   // Load cart on mount and user change
   useEffect(() => {
