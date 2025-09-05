@@ -295,10 +295,6 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
                     </dd>
                   </div>
                   <div className="flex">
-                    <dt className="w-1/3 text-gray-600">Product ID:</dt>
-                    <dd className="w-2/3 text-gray-900 font-mono text-sm">{product.id}</dd>
-                  </div>
-                  <div className="flex">
                     <dt className="w-1/3 text-gray-600">Created:</dt>
                     <dd className="w-2/3 text-gray-900">
                       {new Date(product.createdAt).toLocaleDateString()}

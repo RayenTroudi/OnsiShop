@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/database';
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
+import { broadcastContentUpdate } from './stream/route';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,12 @@ export async function GET() {
       success: true,
       data: contentMap,
       items: content // Also return array format
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
     });
 
   } catch (error) {
@@ -65,6 +72,14 @@ export async function POST(request: NextRequest) {
     // Revalidate relevant pages
     revalidatePath('/');
     revalidatePath('/admin/content');
+
+    // Broadcast update to connected clients
+    const updatedContentMap = updates.reduce((acc: Record<string, string>, item: any) => {
+      acc[item.key] = item.value;
+      return acc;
+    }, {} as Record<string, string>);
+    
+    broadcastContentUpdate(updatedContentMap);
 
     return NextResponse.json({
       success: true,

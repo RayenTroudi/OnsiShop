@@ -1,57 +1,178 @@
 'use client';
 
 import { DEFAULT_CONTENT_VALUES, getContentValue } from '@/lib/content';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const HeroSection = () => {
   const [content, setContent] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchContent = async () => {
-      try {
-        const response = await fetch('/api/content');
-        const result = await response.json();
-        if (result.success) {
-          setContent(result.data || {});
+  const [isVideoLoading, setIsVideoLoading] = useState(false);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string>('');
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const nextVideoRef = useRef<HTMLVideoElement>(null);
+  
+  const fetchContent = useCallback(async () => {
+    try {
+      const response = await fetch('/api/content', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache'
         }
-      } catch (error) {
-        console.error('Error fetching content:', error);
-      } finally {
-        setIsLoading(false);
+      });
+      const result = await response.json();
+      if (result.success) {
+        setContent(result.data || {});
+      }
+    } catch (error) {
+      console.error('Error fetching content:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Smooth video transition function
+  const transitionToNewVideo = useCallback((newVideoUrl: string) => {
+    if (!videoRef.current || !nextVideoRef.current || newVideoUrl === currentVideoUrl) {
+      return;
+    }
+
+    setIsVideoLoading(true);
+    
+    // Preload new video
+    nextVideoRef.current.src = newVideoUrl;
+    nextVideoRef.current.load();
+    
+    // Wait for new video to be ready
+    const handleCanPlay = () => {
+      const nextVideo = nextVideoRef.current;
+      const currentVideo = videoRef.current;
+      
+      if (nextVideo && currentVideo) {
+        // Start playing new video
+        nextVideo.play().then(() => {
+          // Smooth transition
+          nextVideo.style.opacity = '1';
+          currentVideo.style.opacity = '0';
+          
+          // After transition, swap videos
+          setTimeout(() => {
+            if (currentVideo && nextVideo) {
+              currentVideo.src = newVideoUrl;
+              currentVideo.style.opacity = '1';
+              nextVideo.style.opacity = '0';
+              currentVideo.play();
+              setCurrentVideoUrl(newVideoUrl);
+              setIsVideoLoading(false);
+            }
+          }, 500); // Match CSS transition duration
+        }).catch(console.error);
       }
     };
 
+    nextVideoRef.current.addEventListener('canplay', handleCanPlay, { once: true });
+  }, [currentVideoUrl]);
+
+  useEffect(() => {
     fetchContent();
-  }, []);
+
+    // Use Server-Sent Events for real-time updates (better than polling)
+    let eventSource: EventSource | null = null;
+    
+    try {
+      eventSource = new EventSource('/api/content/stream');
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'content-update') {
+            setContent(data.content);
+          }
+        } catch (error) {
+          console.error('Error parsing SSE data:', error);
+        }
+      };
+      
+      eventSource.onerror = () => {
+        console.log('SSE connection error, falling back to manual refresh');
+      };
+    } catch (error) {
+      console.log('SSE not supported, using focus-based updates only');
+    }
+
+    // Fallback: refresh on focus (but don't poll continuously)
+    const handleFocus = () => {
+      fetchContent();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
+  }, [fetchContent]);
+
+  // Handle video URL changes
+  useEffect(() => {
+    const backgroundVideo = getContentValue(content, 'hero.backgroundVideo', DEFAULT_CONTENT_VALUES['hero.backgroundVideo']);
+    
+    if (backgroundVideo && backgroundVideo !== currentVideoUrl) {
+      if (currentVideoUrl === '') {
+        // Initial load
+        setCurrentVideoUrl(backgroundVideo);
+      } else {
+        // Smooth transition to new video
+        transitionToNewVideo(backgroundVideo);
+      }
+    }
+  }, [content, currentVideoUrl, transitionToNewVideo]);
   
   const title = getContentValue(content, 'hero.title', DEFAULT_CONTENT_VALUES['hero.title']);
   const subtitle = getContentValue(content, 'hero.subtitle', DEFAULT_CONTENT_VALUES['hero.subtitle']);
   const description = getContentValue(content, 'hero.description', DEFAULT_CONTENT_VALUES['hero.description']);
-  const buttonText = getContentValue(content, 'hero.buttonText', DEFAULT_CONTENT_VALUES['hero.buttonText']);
-  const backgroundVideo = getContentValue(content, 'hero.backgroundVideo', DEFAULT_CONTENT_VALUES['hero.backgroundVideo']);
 
   return (
     <section className="relative h-[500px] md:h-[600px] flex items-center justify-center text-white overflow-hidden">
-      {/* Background Video */}
+      {/* Background Videos - Dual video setup for smooth transitions */}
       <div className="absolute inset-0 z-0">
+        {/* Main video */}
         <video
+          ref={videoRef}
           autoPlay
           muted
           loop
           playsInline
           preload="auto"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-opacity duration-500"
+          style={{ opacity: currentVideoUrl ? 1 : 0 }}
+          src={currentVideoUrl}
+          onLoadStart={() => setIsVideoLoading(true)}
+          onCanPlay={() => setIsVideoLoading(false)}
           onError={(e) => {
-            // Hide video if it fails to load
-            const video = e.target as HTMLVideoElement;
-            video.style.display = 'none';
+            console.error('Video load error:', e);
+            setIsVideoLoading(false);
           }}
-        >
-          <source src={backgroundVideo} type="video/mp4" />
-          {/* Fallback for browsers that don't support video */}
-        </video>
+        />
+        
+        {/* Transition video (hidden, used for smooth transitions) */}
+        <video
+          ref={nextVideoRef}
+          muted
+          loop
+          playsInline
+          preload="auto"
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+          style={{ opacity: 0 }}
+        />
+        
+        {/* Loading overlay */}
+        {isVideoLoading && (
+          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+        
         {/* Dark overlay for better text readability */}
         <div className="absolute inset-0 bg-black/40" />
       </div>
@@ -77,22 +198,6 @@ const HeroSection = () => {
         <p className="text-lg md:text-xl mb-8 max-w-3xl mx-auto leading-relaxed text-white/90 drop-shadow-md">
           {description}
         </p>
-        
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Link 
-            href="/search" 
-            className="bg-white text-purple-900 px-8 py-3 rounded-full font-semibold text-lg hover:bg-purple-50 transition-colors duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-          >
-            {buttonText}
-          </Link>
-          
-          <Link 
-            href="/about-us" 
-            className="border-2 border-white text-white px-8 py-3 rounded-full font-semibold text-lg hover:bg-white hover:text-purple-900 transition-colors duration-300"
-          >
-            Learn More
-          </Link>
-        </div>
       </div>
       
       {/* Decorative Elements */}
