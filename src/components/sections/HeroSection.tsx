@@ -9,16 +9,12 @@ const HeroSection = () => {
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>('');
   const [videoError, setVideoError] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<string[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const nextVideoRef = useRef<HTMLVideoElement>(null);
   
-  // Debug logging helper
+  // Debug logging helper (disabled)
   const addDebugLog = useCallback((message: string) => {
-    const timestamp = new Date().toLocaleTimeString();
-    const logMessage = `[${timestamp}] ${message}`;
-    console.log(logMessage);
-    setDebugInfo(prev => [...prev.slice(-4), logMessage]); // Keep last 5 logs
+    // Debug logging disabled
   }, []);
   
   const fetchContent = useCallback(async () => {
@@ -340,20 +336,6 @@ const HeroSection = () => {
       <div className="absolute bottom-20 right-20 w-16 h-16 border-2 border-white/20 rounded-full animate-pulse delay-1000 z-10" />
       <div className="absolute top-1/2 left-20 w-12 h-12 border-2 border-white/20 rounded-full animate-pulse delay-500 z-10" />
       
-      {/* Debug Panel (only in development) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="absolute top-4 right-4 bg-black/80 text-white p-3 rounded-lg text-xs max-w-xs z-50">
-          <div className="font-bold mb-2">Video Debug Info:</div>
-          <div>Current URL: {currentVideoUrl || 'None'}</div>
-          <div>Loading: {isVideoLoading ? 'Yes' : 'No'}</div>
-          {videoError && <div className="text-red-300">Error: {videoError}</div>}
-          <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
-            {debugInfo.map((log, i) => (
-              <div key={i} className="text-gray-300 text-xs">{log}</div>
-            ))}
-          </div>
-        </div>
-      )}
     </section>
   );
 };
