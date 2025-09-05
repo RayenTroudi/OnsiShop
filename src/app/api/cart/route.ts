@@ -1,167 +1,94 @@
 import { prisma } from '@/lib/database';
-import { cookies } from 'next/headers';
+import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-// Get cart for current user/session
+// Get cart for authenticated user
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = cookies();
-    const cartId = cookieStore.get('cartId')?.value;
-    
-    if (!cartId) {
+    // Get userId from JWT token
+    const token = request.cookies.get('auth-token')?.value;
+
+    if (!token) {
       return NextResponse.json({ 
-        lines: [], 
-        totalQuantity: 0, 
-        cost: { 
-          totalAmount: { amount: '0', currencyCode: 'USD' },
-          totalTaxAmount: { amount: '0', currencyCode: 'USD' }
-        },
-        checkoutUrl: ''
+        success: true,
+        message: 'No authentication token found',
+        data: {
+          id: null,
+          userId: null,
+          items: [],
+          totalItems: 0,
+          totalAmount: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
       });
     }
 
-    const cart = await prisma.cart.findUnique({
-      where: { id: cartId },
+    let userId: string;
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+      userId = decoded.userId;
+    } catch (jwtError) {
+      return NextResponse.json({
+        success: false,
+        message: 'Invalid authentication token'
+      }, { status: 401 });
+    }
+
+    // Get cart with items and product details
+    const cart = await prisma.cart.findFirst({
+      where: { userId },
       include: {
         items: {
           include: {
             product: true
+          },
+          orderBy: {
+            createdAt: 'desc'
           }
         }
       }
     });
 
     if (!cart) {
-      return NextResponse.json({ 
-        lines: [], 
-        totalQuantity: 0, 
-        cost: { 
-          totalAmount: { amount: '0', currencyCode: 'USD' },
-          totalTaxAmount: { amount: '0', currencyCode: 'USD' }
-        },
-        checkoutUrl: ''
+      return NextResponse.json({
+        success: true,
+        message: 'No cart found for user',
+        data: {
+          id: null,
+          userId,
+          items: [],
+          totalItems: 0,
+          totalAmount: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
       });
     }
 
-    // Transform to match Shopify cart format
-    const totalQuantity = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+    // Calculate totals
+    const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
     const totalAmount = cart.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
 
-    const transformedCart = {
-      id: cart.id,
-      lines: cart.items.map(item => ({
-        id: item.id,
-        quantity: item.quantity,
-        cost: {
-          totalAmount: {
-            amount: (item.product.price * item.quantity).toString(),
-            currencyCode: 'USD'
-          }
-        },
-        merchandise: {
-          id: item.product.id,
-          title: 'Default',
-          selectedOptions: [],
-          product: {
-            id: item.product.id,
-            handle: item.product.handle,
-            title: item.product.title,
-            featuredImage: {
-              url: item.product.images ? JSON.parse(item.product.images)[0] || '/images/placeholder.jpg' : '/images/placeholder.jpg',
-              altText: item.product.title
-            }
-          }
-        }
-      })),
-      totalQuantity,
-      cost: {
-        totalAmount: {
-          amount: totalAmount.toString(),
-          currencyCode: 'USD'
-        },
-        totalTaxAmount: {
-          amount: (totalAmount * 0.1).toString(), // 10% tax
-          currencyCode: 'USD'
-        }
-      },
-      checkoutUrl: `/checkout/${cart.id}`
+    const cartWithTotals = {
+      ...cart,
+      totalItems,
+      totalAmount
     };
 
-    return NextResponse.json(transformedCart);
-  } catch (error) {
-    console.error('Error fetching cart:', error);
-    return NextResponse.json({ error: 'Failed to fetch cart' }, { status: 500 });
-  }
-}
-
-// Add item to cart
-export async function POST(request: NextRequest) {
-  try {
-    const { productId, quantity = 1, variantId } = await request.json();
-    const cookieStore = cookies();
-    let cartId = cookieStore.get('cartId')?.value;
-
-    // Create cart if it doesn't exist
-    if (!cartId) {
-      const newCart = await prisma.cart.create({
-        data: {
-          sessionId: `session_${Date.now()}`
-        }
-      });
-      cartId = newCart.id;
-      
-      // Set cart cookie
-      const response = NextResponse.json({ success: true, cartId });
-      response.cookies.set('cartId', cartId, { 
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production'
-      });
-    }
-
-    // Check if item already exists in cart
-    const existingItem = await prisma.cartItem.findUnique({
-      where: {
-        cartId_productId_variantId: {
-          cartId,
-          productId,
-          variantId: variantId || null
-        }
-      }
+    return NextResponse.json({
+      success: true,
+      message: 'Cart retrieved successfully',
+      data: cartWithTotals
     });
 
-    if (existingItem) {
-      // Update quantity
-      await prisma.cartItem.update({
-        where: { id: existingItem.id },
-        data: { quantity: existingItem.quantity + quantity }
-      });
-    } else {
-      // Create new cart item
-      await prisma.cartItem.create({
-        data: {
-          cartId,
-          productId,
-          quantity,
-          variantId
-        }
-      });
-    }
-
-    const response = NextResponse.json({ success: true });
-    if (!cookieStore.get('cartId')?.value) {
-      response.cookies.set('cartId', cartId, { 
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production'
-      });
-    }
-
-    return response;
   } catch (error) {
-    console.error('Error adding to cart:', error);
-    return NextResponse.json({ error: 'Failed to add to cart' }, { status: 500 });
+    console.error('Error fetching cart:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Failed to fetch cart'
+    }, { status: 500 });
   }
 }

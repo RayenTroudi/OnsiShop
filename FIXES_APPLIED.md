@@ -170,6 +170,61 @@ const handleCheckout = () => {
 6. **Expected:** Real order created and redirect to order confirmation
 7. **Result:** ✅ Proper checkout form flow working
 
+## ✅ Issue 4: Cart Not Tied to Authenticated Users
+
+**Problem:** The cart system was not properly tied to authenticated users. Users could see cart items even when logged out, and the system was using hardcoded demo user IDs instead of actual authentication.
+
+**Root Cause:** 
+1. The cart icon component was using `localStorage.getItem('demo-user-id')` instead of authenticated user data
+2. Cart API routes were expecting userId in request body instead of getting it from JWT tokens
+3. Cart operations didn't validate if the user was logged in
+
+**Solution:**
+
+### Backend API Authentication:
+- Updated cart API routes to use JWT authentication instead of request body userId
+- Added authentication validation using JWT tokens from cookies
+- Return 401 for unauthenticated users trying to modify cart
+- Changed cart fetch to use authenticated user ID from JWT
+
+**Files Changed:**
+- `src/app/api/cart/add/route.ts`
+- `src/app/api/cart/route.ts`
+
+### Frontend Authentication Integration:
+- Updated cart icon component to use `useAuth()` instead of localStorage
+- Modified cart context to remove userId from API requests (now handled server-side)
+- Cart automatically clears when user logs out
+- Cart refreshes when user logs in
+
+**Files Changed:**
+- `src/components/cart/database-cart-icon.tsx`
+- `src/contexts/CartContext.tsx`
+
+**Authentication Flow:**
+```typescript
+// Server-side authentication check
+const cookieStore = cookies();
+const token = cookieStore.get('token')?.value;
+
+if (!token) {
+  return NextResponse.json({
+    success: false,
+    message: 'Please log in to add items to cart'
+  }, { status: 401 });
+}
+
+const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+const userId = decoded.userId;
+```
+
+**Impact:**
+- Users now see empty cart when logged out
+- Each user has their own isolated cart data
+- Cart items persist across sessions for logged-in users
+- Secure server-side user identification
+- Clear authentication error messages
+
 ## 🎯 Summary
 
 All critical issues have been resolved:
@@ -177,5 +232,6 @@ All critical issues have been resolved:
 1. **UI/UX Issue Fixed:** Cart addition now works smoothly without React DOM conflicts
 2. **Security Issue Fixed:** Product management is now properly restricted to admin users only
 3. **Checkout Flow Fixed:** Users now see the proper checkout form instead of automatic order creation
+4. **Authentication Issue Fixed:** Cart is now properly tied to authenticated users, empty when logged out
 
-The application now provides a secure, user-friendly experience with proper role-based access control, smooth cart functionality, and a complete checkout process with customer information collection.
+The application now provides a secure, user-friendly experience with proper role-based access control, smooth cart functionality, authenticated cart management, and a complete checkout process with customer information collection.

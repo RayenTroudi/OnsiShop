@@ -1,7 +1,8 @@
 'use client';
 
-import { useCart } from '@/contexts/CartContext';
-import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 interface DatabaseAddToCartProps {
   productId: string;
@@ -22,11 +23,44 @@ export default function DatabaseAddToCart({
 }: DatabaseAddToCartProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const { addToCart } = useCart();
+  const [isClient, setIsClient] = useState(false);
+  const { user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleAddToCart = async () => {
     if (!availableForSale || stock <= 0) return;
+    if (!isClient) return;
 
+    // Debug: Check user state
+    console.log('🔍 DatabaseAddToCart Debug:', {
+      user: user,
+      isLoggedIn: !!user,
+      userId: user?.id,
+      userName: user?.name,
+      userEmail: user?.email
+    });
+
+    // Debug: Check cookies
+    if (typeof document !== 'undefined') {
+      console.log('🍪 Browser Cookies:', {
+        allCookies: document.cookie,
+        hasAuthToken: document.cookie.includes('auth-token'),
+        authTokenValue: document.cookie.split(';').find(c => c.trim().startsWith('auth-token='))?.split('=')[1]?.substring(0, 10) + '...'
+      });
+    }
+
+    // Check if user is logged in
+    if (!user) {
+      console.log('🚫 User not logged in, redirecting to login');
+      router.push('/login');
+      return;
+    }
+
+    console.log('✅ User is logged in, proceeding with add to cart');
     console.log('DatabaseAddToCart: Adding to cart', {
       productId,
       variantId,
@@ -38,19 +72,46 @@ export default function DatabaseAddToCart({
     setMessage('');
 
     try {
-      // Only pass variantId if it's actually defined and not empty
-      const success = variantId && variantId.trim() !== '' 
-        ? await addToCart(productId, 1, variantId)
-        : await addToCart(productId, 1);
+      // Call API directly instead of using cart context to avoid SSR issues
+      const response = await fetch('/api/cart/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Include cookies for authentication
+        body: JSON.stringify({ 
+          productId, 
+          quantity: 1, 
+          variantId: variantId && variantId.trim() !== '' ? variantId : undefined
+        })
+      });
+      
+      const result = await response.json();
+      
+      console.log('🔍 API Response Debug:', {
+        status: response.status,
+        ok: response.ok,
+        result: result,
+        headers: Object.fromEntries(response.headers.entries())
+      });
         
-      console.log('DatabaseAddToCart: Result', success);
-        
-      if (success) {
+      if (result.success) {
         setMessage('Added to cart!');
+        
+        // Dispatch custom event to update cart icon
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
         
         // Clear message after 2 seconds
         setTimeout(() => setMessage(''), 2000);
       } else {
+        console.log('❌ API call failed:', {
+          status: response.status,
+          result: result
+        });
+        if (response.status === 401) {
+          // Authentication failed, redirect to login
+          console.log('🚫 401 Unauthorized, redirecting to login');
+          router.push('/login');
+          return;
+        }
         setMessage('Failed to add to cart');
         setTimeout(() => setMessage(''), 3000);
       }
@@ -64,21 +125,31 @@ export default function DatabaseAddToCart({
   };
 
   const isOutOfStock = stock <= 0 || !availableForSale;
+  const isLoggedOut = !user;
 
   return (
     <div className="relative">
       <button
         onClick={handleAddToCart}
-        disabled={isOutOfStock || isLoading}
+        disabled={isOutOfStock || isLoading || !isClient}
         className={`${className} ${
-          isOutOfStock 
+          isOutOfStock || !isClient
             ? 'cursor-not-allowed opacity-50' 
             : 'hover:opacity-80 transition-opacity'
         }`}
       >
         {children || (
           <span>
-            {isLoading ? 'Adding...' : isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+            {isLoading 
+              ? 'Adding...' 
+              : isOutOfStock 
+                ? 'Out of Stock' 
+                : !isClient
+                  ? 'Loading...'
+                  : isLoggedOut
+                    ? 'Login to Add to Cart'
+                    : 'Add to Cart'
+            }
           </span>
         )}
       </button>

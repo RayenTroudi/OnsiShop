@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/database';
+import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -11,8 +12,38 @@ export async function POST(request: NextRequest) {
   let variantId: string | undefined = undefined;
   
   try {
+    // Get userId from JWT token
+    const token = request.cookies.get('auth-token')?.value;
+    
+    console.log('🍪 Cart Add API Debug:', {
+      hasToken: !!token,
+      tokenLength: token?.length || 0,
+      authToken: token ? `${token.substring(0, 10)}...` : 'none',
+      userAgent: request.headers.get('user-agent') || 'unknown',
+      jwtSecret: process.env.JWT_SECRET ? 'SET' : 'MISSING'
+    });
+
+    if (!token) {
+      console.log('🚫 No auth token found in cart add API');
+      return NextResponse.json({
+        success: false,
+        message: 'Please log in to add items to cart'
+      }, { status: 401 });
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+      userId = decoded.userId;
+      console.log('✅ Token verified successfully, userId:', userId);
+    } catch (jwtError) {
+      console.log('❌ JWT verification failed:', jwtError);
+      return NextResponse.json({
+        success: false,
+        message: 'Invalid authentication token'
+      }, { status: 401 });
+    }
+
     const body = await request.json();
-    userId = body.userId;
     productId = body.productId;
     quantity = body.quantity || 1;
     variantId = body.variantId;
@@ -30,7 +61,7 @@ export async function POST(request: NextRequest) {
       variantId = undefined;
     }
 
-    if (!userId || !productId) {
+    if (!productId) {
       console.log('🚨 Cart Add Validation Failed:', {
         userId: !!userId,
         productId: !!productId,
@@ -38,7 +69,7 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json({
         success: false,
-        message: 'User ID and Product ID are required'
+        message: 'Product ID is required'
       }, { status: 400 });
     }
 

@@ -50,7 +50,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 interface CartProviderProps {
   children: ReactNode;
-  userId: string; // In real app, get this from auth context
+  userId: string; // Empty string when user is logged out
 }
 
 export function CartProvider({ children, userId }: CartProviderProps) {
@@ -60,13 +60,17 @@ export function CartProvider({ children, userId }: CartProviderProps) {
 
   // Fetch cart data
   const refreshCart = async () => {
-    if (!userId) return;
+    // If no userId (user logged out), clear cart
+    if (!userId) {
+      setCart(null);
+      return;
+    }
     
     try {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`/api/cart/user/${userId}`);
+      const response = await fetch(`/api/cart`);
       const result = await response.json();
       
       if (result.success) {
@@ -84,6 +88,13 @@ export function CartProvider({ children, userId }: CartProviderProps) {
 
   // Add item to cart
   const addToCart = async (productId: string, quantity = 1, variantId?: string): Promise<boolean> => {
+    // If no userId (user logged out), redirect to login
+    if (!userId) {
+      // Redirect to login page
+      window.location.href = '/login';
+      return false;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -98,7 +109,7 @@ export function CartProvider({ children, userId }: CartProviderProps) {
       const response = await fetch('/api/cart/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, productId, quantity, variantId })
+        body: JSON.stringify({ productId, quantity, variantId })
       });
       
       const result = await response.json();
@@ -113,6 +124,11 @@ export function CartProvider({ children, userId }: CartProviderProps) {
         await refreshCart();
         return true;
       } else {
+        if (response.status === 401) {
+          // Authentication failed, redirect to login
+          window.location.href = '/login';
+          return false;
+        }
         setError(result.message);
         return false;
       }
@@ -127,6 +143,12 @@ export function CartProvider({ children, userId }: CartProviderProps) {
 
   // Remove item from cart
   const removeFromCart = async (itemId: string): Promise<boolean> => {
+    // If no userId (user logged out), can't modify cart
+    if (!userId) {
+      setError('Please log in to modify cart');
+      return false;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -155,6 +177,12 @@ export function CartProvider({ children, userId }: CartProviderProps) {
 
   // Update item quantity
   const updateQuantity = async (itemId: string, quantity: number): Promise<boolean> => {
+    // If no userId (user logged out), can't modify cart
+    if (!userId) {
+      setError('Please log in to modify cart');
+      return false;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -185,6 +213,12 @@ export function CartProvider({ children, userId }: CartProviderProps) {
 
   // Clear cart (checkout)
   const checkout = async (): Promise<{ success: boolean; orderId?: string }> => {
+    // If no userId (user logged out), can't checkout
+    if (!userId) {
+      setError('Please log in to checkout');
+      return { success: false };
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -215,7 +249,7 @@ export function CartProvider({ children, userId }: CartProviderProps) {
 
   // Clear cart without checkout
   const clearCart = async (): Promise<boolean> => {
-    if (!cart) return true;
+    if (!cart || !userId) return true;
     
     try {
       setLoading(true);

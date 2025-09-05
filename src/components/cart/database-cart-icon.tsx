@@ -1,21 +1,71 @@
 'use client';
 
-import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import CartModal from './database-cart-modal';
 
+interface CartData {
+  id: string | null;
+  userId: string | null;
+  items: any[];
+  totalItems: number;
+  totalAmount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function DatabaseCartIcon() {
   const [isOpen, setIsOpen] = useState(false);
-  const [userId, setUserId] = useState('');
-  const { cart, refreshCart } = useCart();
-  
-  useEffect(() => {
-    const storedUserId = localStorage.getItem('demo-user-id') || 'demo-user-123';
-    setUserId(storedUserId);
-  }, []);
+  const [cart, setCart] = useState<CartData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
 
   const openCart = () => setIsOpen(true);
   const closeCart = () => setIsOpen(false);
+
+  // Fetch cart data directly from API
+  const fetchCart = async () => {
+    if (!user) {
+      setCart(null);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/cart', {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setCart(result.data);
+        }
+      } else {
+        setCart(null);
+      }
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+      setCart(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch cart when user changes
+  useEffect(() => {
+    fetchCart();
+  }, [user]);
+
+  // Listen for cart updates from add to cart buttons
+  useEffect(() => {
+    const handleCartUpdate = () => {
+      fetchCart();
+    };
+
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    return () => window.removeEventListener('cartUpdated', handleCartUpdate);
+  }, [user]);
 
   return (
     <>
@@ -45,8 +95,8 @@ export default function DatabaseCartIcon() {
           cart={cart} 
           isOpen={isOpen} 
           onClose={closeCart}
-          onCartUpdate={refreshCart}
-          userId={userId}
+          onCartUpdate={fetchCart}
+          userId={user?.id || ''}
         />
       )}
     </>
