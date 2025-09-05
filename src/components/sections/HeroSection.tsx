@@ -225,11 +225,33 @@ const HeroSection = () => {
   const title = getContentValue(content, 'hero.title', DEFAULT_CONTENT_VALUES['hero.title']);
   const subtitle = getContentValue(content, 'hero.subtitle', DEFAULT_CONTENT_VALUES['hero.subtitle']);
   const description = getContentValue(content, 'hero.description', DEFAULT_CONTENT_VALUES['hero.description']);
+  const backgroundImage = getContentValue(content, 'hero.backgroundImage', DEFAULT_CONTENT_VALUES['hero.backgroundImage'] || '');
 
   return (
     <section className="relative h-[500px] md:h-[600px] flex items-center justify-center text-white overflow-hidden">
-      {/* Background Videos - Dual video setup for smooth transitions */}
+      {/* Background Images and Videos - Layered setup */}
       <div className="absolute inset-0 z-0">
+        {/* Background Image Layer (fallback when no video or video fails) */}
+        {backgroundImage && (
+          <>
+            <div 
+              className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-opacity duration-500"
+              style={{
+                backgroundImage: `url('${backgroundImage}')`,
+                opacity: currentVideoUrl && !videoError ? 0.3 : 1 // Dim when video is playing, full opacity when no video
+              }}
+            />
+            {/* Hidden img tag for accessibility and SEO */}
+            <img 
+              src={backgroundImage} 
+              alt="winter collection" 
+              className="sr-only" 
+              aria-hidden="true"
+            />
+          </>
+        )}
+        
+        {/* Background Videos - Dual video setup for smooth transitions */}
         {/* Main video */}
         <video
           ref={videoRef}
@@ -239,7 +261,7 @@ const HeroSection = () => {
           playsInline
           preload="metadata" // Changed from "auto" to reduce bandwidth
           className="w-full h-full object-cover transition-opacity duration-500"
-          style={{ opacity: currentVideoUrl ? 1 : 0 }}
+          style={{ opacity: currentVideoUrl && !videoError ? 1 : 0 }}
           src={currentVideoUrl || undefined}
           onLoadStart={() => {
             addDebugLog('Main video loading started');
@@ -288,8 +310,10 @@ const HeroSection = () => {
         <div className="absolute inset-0 bg-black/40" />
       </div>
       
-      {/* Fallback gradient background (shown if video fails to load) */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-br from-purple-900 via-purple-700 to-pink-600" />
+      {/* Fallback gradient background (shown if no video and no image) */}
+      {!backgroundImage && (!currentVideoUrl || videoError) && (
+        <div className="absolute inset-0 z-0 bg-gradient-to-br from-purple-900 via-purple-700 to-pink-600" />
+      )}
       
       {/* Background Pattern */}
       <div className="absolute inset-0 z-10 opacity-20" style={{

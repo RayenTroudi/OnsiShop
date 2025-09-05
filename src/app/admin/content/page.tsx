@@ -14,6 +14,7 @@ const DEFAULT_CONTENT = {
   'hero.description': 'Shop our collection of high-quality clothing for men and women. From casual wear to formal attire, we have everything you need to look your best.',
   'hero.buttonText': 'Shop Now',
   'hero.backgroundVideo': '/videos/clothing-shoot.mp4',
+  'hero.backgroundImage': '/images/background-image-1756043891412-0nifzaa2fwm.PNG',
   'about.title': 'About Our Store',
   'about.description': 'We are passionate about bringing you the finest clothing at affordable prices.',
   'about.backgroundImage': '/images/about-background.jpg',
@@ -32,6 +33,8 @@ export default function ContentManagerPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingHeroImage, setIsUploadingHeroImage] = useState(false);
+  const [isUploadingPromotionImage, setIsUploadingPromotionImage] = useState(false);
   const [activeTab, setActiveTab] = useState('content');
   const [message, setMessage] = useState('');
 
@@ -206,6 +209,10 @@ export default function ContentManagerPage() {
   };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    // Prevent any default browser behavior
+    event.preventDefault();
+    event.stopPropagation();
+    
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -227,23 +234,45 @@ export default function ContentManagerPage() {
 
     try {
       setIsUploadingImage(true);
+      
+      // Create FormData with explicit headers
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append('image', file, file.name);
 
       const response = await fetch('/api/admin/upload-image', {
         method: 'POST',
         body: formData,
+        // Don't set Content-Type header, let browser set it with boundary
       });
 
       const result = await response.json();
 
       if (result.success) {
         // Update the about.backgroundImage content
-        setContent(prev => ({
-          ...prev,
+        const updatedContent = {
+          ...content,
           'about.backgroundImage': result.imageUrl
-        }));
-        showMessage('Background image uploaded successfully!');
+        };
+        setContent(updatedContent);
+        
+        // Automatically save to database
+        try {
+          const saveResponse = await fetch('/api/content', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: updatedContent })
+          });
+
+          const saveResult = await saveResponse.json();
+          
+          if (saveResult.success) {
+            showMessage('Background image uploaded and saved successfully!');
+          } else {
+            showMessage(`Image uploaded but failed to save: ${saveResult.message}`, 'error');
+          }
+        } catch (saveError) {
+          showMessage('Image uploaded but failed to save to database', 'error');
+        }
       } else {
         showMessage(result.error || 'Failed to upload image', 'error');
       }
@@ -257,9 +286,166 @@ export default function ContentManagerPage() {
     }
   };
 
+  const handleHeroImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    // Prevent any default browser behavior
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (10MB max)
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      showMessage('File too large. Maximum size is 10MB.', 'error');
+      event.target.value = '';
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      showMessage('Invalid file type. Only JPEG, PNG, WebP, and GIF files are allowed.', 'error');
+      event.target.value = '';
+      return;
+    }
+
+    try {
+      setIsUploadingHeroImage(true);
+      
+      // Create FormData with explicit headers
+      const formData = new FormData();
+      formData.append('image', file, file.name);
+
+      const response = await fetch('/api/admin/upload-image', {
+        method: 'POST',
+        body: formData,
+        // Don't set Content-Type header, let browser set it with boundary
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Update the hero.backgroundImage content
+        const updatedContent = {
+          ...content,
+          'hero.backgroundImage': result.imageUrl
+        };
+        setContent(updatedContent);
+        
+        // Automatically save to database
+        try {
+          const saveResponse = await fetch('/api/content', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: updatedContent })
+          });
+
+          const saveResult = await saveResponse.json();
+          
+          if (saveResult.success) {
+            showMessage('Hero background image uploaded and saved successfully!');
+          } else {
+            showMessage(`Image uploaded but failed to save: ${saveResult.message}`, 'error');
+          }
+        } catch (saveError) {
+          showMessage('Image uploaded but failed to save to database', 'error');
+        }
+      } else {
+        showMessage(result.error || 'Failed to upload image', 'error');
+      }
+    } catch (error) {
+      console.error('Error uploading hero image:', error);
+      showMessage('Error uploading hero image', 'error');
+    } finally {
+      setIsUploadingHeroImage(false);
+      // Reset file input
+      event.target.value = '';
+    }
+  };
+
+  const handlePromotionImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    // Prevent any default browser behavior
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (10MB max)
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      showMessage('File too large. Maximum size is 10MB.', 'error');
+      event.target.value = '';
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      showMessage('Invalid file type. Only JPEG, PNG, WebP, and GIF files are allowed.', 'error');
+      event.target.value = '';
+      return;
+    }
+
+    try {
+      setIsUploadingPromotionImage(true);
+      
+      // Create FormData with explicit headers
+      const formData = new FormData();
+      formData.append('image', file, file.name);
+
+      const response = await fetch('/api/admin/upload-image', {
+        method: 'POST',
+        body: formData,
+        // Don't set Content-Type header, let browser set it with boundary
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Update the promotion.backgroundImage content
+        const updatedContent = {
+          ...content,
+          'promotion.backgroundImage': result.imageUrl
+        };
+        setContent(updatedContent);
+        
+        // Automatically save to database
+        try {
+          const saveResponse = await fetch('/api/content', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: updatedContent })
+          });
+
+          const saveResult = await saveResponse.json();
+          
+          if (saveResult.success) {
+            showMessage('Promotion background image uploaded and saved successfully!');
+          } else {
+            showMessage(`Image uploaded but failed to save: ${saveResult.message}`, 'error');
+          }
+        } catch (saveError) {
+          showMessage('Image uploaded but failed to save to database', 'error');
+        }
+      } else {
+        showMessage(result.error || 'Failed to upload image', 'error');
+      }
+    } catch (error) {
+      console.error('Error uploading promotion image:', error);
+      showMessage('Error uploading promotion image', 'error');
+    } finally {
+      setIsUploadingPromotionImage(false);
+      // Reset file input
+      event.target.value = '';
+    }
+  };
+
   const contentKeys = Object.keys(content);
   const heroKeys = contentKeys.filter(key => key.startsWith('hero.'));
   const aboutKeys = contentKeys.filter(key => key.startsWith('about.'));
+  const promotionKeys = contentKeys.filter(key => key.startsWith('promotion.'));
   const footerKeys = contentKeys.filter(key => key.startsWith('footer.'));
   const contactKeys = contentKeys.filter(key => key.startsWith('contact.'));
 
@@ -331,6 +517,7 @@ export default function ContentManagerPage() {
             { key: 'hero', label: 'Hero Section' },
             { key: 'videos', label: 'Video Management' },
             { key: 'images', label: 'Image Management' },
+            { key: 'promotion', label: 'Promotions' },
             { key: 'about', label: 'About' },
             { key: 'footer', label: 'Footer' },
             { key: 'contact', label: 'Contact' },
@@ -460,9 +647,75 @@ export default function ContentManagerPage() {
               </div>
             </div>
 
+            {/* Background Image Upload Section */}
+            <div className="mb-6 p-4 bg-green-50 rounded-lg">
+              <h3 className="text-lg font-medium mb-3">Background Image</h3>
+              <div className="space-y-4">
+                {content['hero.backgroundImage'] && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Current Background Image</label>
+                    <div className="relative w-full max-w-md">
+                      <img 
+                        src={content['hero.backgroundImage']} 
+                        alt="Hero background"
+                        className="w-full h-32 object-cover rounded-lg border"
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement;
+                          img.src = '/images/placeholder.jpg';
+                        }}
+                      />
+                      <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
+                        Preview
+                      </div>
+                    </div>
+                    <div className="mt-2 text-sm text-gray-600">
+                      {content['hero.backgroundImage']}
+                    </div>
+                  </div>
+                )}
+                
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Upload New Background Image
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                      onChange={handleHeroImageUpload}
+                      disabled={isUploadingHeroImage}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                    />
+                    {isUploadingHeroImage && (
+                      <div className="flex items-center text-sm text-green-600">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600 mr-2"></div>
+                        Uploading...
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Supports JPEG, PNG, WebP, GIF. Max size: 10MB
+                  </p>
+                </div>
+                
+                {content['hero.backgroundImage'] && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Image URL (editable)</label>
+                    <input
+                      type="text"
+                      value={content['hero.backgroundImage'] || ''}
+                      onChange={(e) => updateContentValue('hero.backgroundImage', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="/images/your-image.jpg"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Text Content */}
             <div className="space-y-4">
-              {heroKeys.filter(key => key !== 'hero.backgroundVideo').map((key) => (
+              {heroKeys.filter(key => key !== 'hero.backgroundVideo' && key !== 'hero.backgroundImage').map((key) => (
                 <div key={key}>
                   <label className="block text-sm font-medium mb-1">
                     {key.replace('hero.', '')}
@@ -577,13 +830,13 @@ export default function ContentManagerPage() {
                   {content['hero.backgroundVideo'] && (
                     <div className="flex gap-2">
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                           const videoUrl = content['hero.backgroundVideo'];
                           if (videoUrl) {
-                            const link = document.createElement('a');
-                            link.href = videoUrl;
-                            link.target = '_blank';
-                            link.click();
+                            // Use window.open instead of creating/clicking a link to prevent downloads
+                            window.open(videoUrl, '_blank', 'noopener,noreferrer');
                           }
                         }}
                         className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
@@ -626,6 +879,124 @@ export default function ContentManagerPage() {
             <h2 className="text-xl font-semibold mb-4">Image Management</h2>
             <p className="text-gray-600 mb-6">Manage background images and other image content for your website</p>
             
+            {/* Hero Background Image */}
+            <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+              <h3 className="text-lg font-semibold mb-4 text-blue-800">🏆 Hero Section Background Image</h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Current Image Preview */}
+                <div>
+                  <label className="block text-sm font-medium mb-3 text-gray-700">Current Hero Background Image</label>
+                  {content['hero.backgroundImage'] ? (
+                    <div className="space-y-3">
+                      <div className="relative">
+                        <img 
+                          src={content['hero.backgroundImage']} 
+                          alt="winter collection"
+                          className="w-full h-40 object-cover rounded-lg border-2 border-blue-200 shadow-sm"
+                          onError={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2Yjc4OGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub3QgZm91bmQ8L3RleHQ+PC9zdmc+';
+                          }}
+                        />
+                        <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
+                          Preview
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-600 bg-white p-2 rounded border">
+                        <strong>File:</strong> {content['hero.backgroundImage']}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full h-40 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        <div className="text-4xl mb-2">🖼️</div>
+                        <div>No hero background image set</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Upload Controls */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700">
+                      Upload New Hero Background Image
+                    </label>
+                    <div className="border-2 border-dashed border-blue-300 rounded-lg p-4 bg-white">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                        onChange={handleHeroImageUpload}
+                        disabled={isUploadingHeroImage}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                        multiple={false}
+                        capture={false}
+                        autoComplete="off"
+                        onClick={(e) => {
+                          // Clear any previous value to ensure change event fires
+                          const target = e.target as HTMLInputElement;
+                          target.value = '';
+                        }}
+                      />
+                      <div className="mt-2 text-xs text-gray-500">
+                        <div>• Supported formats: JPEG, PNG, WebP, GIF</div>
+                        <div>• Maximum file size: 10MB</div>
+                        <div>• Recommended resolution: 1920x1080 or higher</div>
+                      </div>
+                    </div>
+                    
+                    {isUploadingHeroImage && (
+                      <div className="mt-3 flex items-center justify-center text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
+                        Uploading hero image... Please wait
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700">
+                      Or set hero image URL manually
+                    </label>
+                    <input
+                      type="text"
+                      value={content['hero.backgroundImage'] || ''}
+                      onChange={(e) => updateContentValue('hero.backgroundImage', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="/images/your-hero-image.jpg"
+                    />
+                    <div className="mt-1 text-xs text-gray-500">
+                      Enter the path to an image file in your public/images folder
+                    </div>
+                  </div>
+
+                  {content['hero.backgroundImage'] && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const imageUrl = content['hero.backgroundImage'];
+                          if (imageUrl) {
+                            // Use window.open instead of creating/clicking a link to prevent downloads
+                            window.open(imageUrl, '_blank', 'noopener,noreferrer');
+                          }
+                        }}
+                        className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
+                      >
+                        View Full Size
+                      </button>
+                      <button
+                        onClick={() => updateContentValue('hero.backgroundImage', '')}
+                        className="flex-1 px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm"
+                      >
+                        Remove Image
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* About Background Image */}
             <div className="mb-8 p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
               <h3 className="text-lg font-semibold mb-4 text-green-800">🖼️ About Section Background Image</h3>
@@ -711,13 +1082,13 @@ export default function ContentManagerPage() {
                   {content['about.backgroundImage'] && (
                     <div className="flex gap-2">
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                           const imageUrl = content['about.backgroundImage'];
                           if (imageUrl) {
-                            const link = document.createElement('a');
-                            link.href = imageUrl;
-                            link.target = '_blank';
-                            link.click();
+                            // Use window.open instead of creating/clicking a link to prevent downloads
+                            window.open(imageUrl, '_blank', 'noopener,noreferrer');
                           }
                         }}
                         className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
@@ -860,6 +1231,179 @@ export default function ContentManagerPage() {
                   />
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Promotion Section Tab */}
+        {activeTab === 'promotion' && (
+          <div className="border rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Promotion Section</h2>
+            <p className="text-gray-600 mb-6">Manage the promotional banner content and background image</p>
+            
+            {/* Background Image Management */}
+            <div className="mb-8 p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+              <h3 className="text-lg font-semibold mb-4 text-green-800">🎯 Promotion Background Image</h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Current Image Preview */}
+                <div>
+                  <label className="block text-sm font-medium mb-3 text-gray-700">Current Promotion Background</label>
+                  {content['promotion.backgroundImage'] ? (
+                    <div className="space-y-3">
+                      <div className="relative">
+                        <img 
+                          src={content['promotion.backgroundImage']} 
+                          alt="promotion background"
+                          className="w-full h-40 object-cover rounded-lg border-2 border-green-200 shadow-sm"
+                          onError={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2Yjc4OGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub3QgZm91bmQ8L3RleHQ+PC9zdmc+';
+                          }}
+                        />
+                        <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
+                          Preview
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-600 bg-white p-2 rounded border">
+                        <strong>File:</strong> {content['promotion.backgroundImage']}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full h-40 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        <div className="text-4xl mb-2">🖼️</div>
+                        <div>No promotion background image set</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Upload Controls */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700">
+                      Upload New Promotion Background
+                    </label>
+                    <div className="border-2 border-dashed border-green-300 rounded-lg p-4 bg-white">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                        onChange={handlePromotionImageUpload}
+                        disabled={isUploadingPromotionImage}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"
+                      />
+                      <div className="mt-2 text-xs text-gray-500">
+                        <div>• Supported formats: JPEG, PNG, WebP, GIF</div>
+                        <div>• Maximum file size: 10MB</div>
+                        <div>• Recommended resolution: 1920x1080 or higher</div>
+                      </div>
+                    </div>
+                    
+                    {isUploadingPromotionImage && (
+                      <div className="mt-3 flex items-center justify-center text-sm text-green-600 bg-green-50 p-3 rounded-lg">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600 mr-3"></div>
+                        Uploading image... Please wait
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700">
+                      Or set promotion image URL manually
+                    </label>
+                    <input
+                      type="text"
+                      value={content['promotion.backgroundImage'] || ''}
+                      onChange={(e) => updateContentValue('promotion.backgroundImage', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      placeholder="/images/your-promotion-image.jpg"
+                    />
+                    <div className="mt-1 text-xs text-gray-500">
+                      Enter the path to an image file in your public/images folder
+                    </div>
+                  </div>
+
+                  {content['promotion.backgroundImage'] && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const imageUrl = content['promotion.backgroundImage'];
+                          if (imageUrl) {
+                            // Use window.open instead of creating/clicking a link to prevent downloads
+                            window.open(imageUrl, '_blank', 'noopener,noreferrer');
+                          }
+                        }}
+                        className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
+                      >
+                        🔗 Open Image
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm('Are you sure you want to remove the promotion background image?')) {
+                            updateContentValue('promotion.backgroundImage', '');
+                          }
+                        }}
+                        className="flex-1 px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm"
+                      >
+                        🗑️ Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Text Content */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold mb-4">Promotion Text Content</h3>
+              {[
+                { key: 'promotion.title', label: 'Title', placeholder: 'Stay Warm,\\nStay Stylish' },
+                { key: 'promotion.subtitle', label: 'Subtitle', placeholder: 'Stay cozy and fashionable this winter with our winter collection!' },
+                { key: 'promotion.buttonText', label: 'Button Text', placeholder: 'View Collection' },
+                { key: 'promotion.buttonLink', label: 'Button Link', placeholder: '/search/winter-2024' }
+              ].map(({ key, label, placeholder }) => (
+                <div key={key}>
+                  <label className="block text-sm font-medium mb-1">
+                    {label}
+                  </label>
+                  {key === 'promotion.title' || key === 'promotion.subtitle' ? (
+                    <textarea
+                      value={content[key] || ''}
+                      onChange={(e) => updateContentValue(key, e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder={placeholder}
+                      rows={key === 'promotion.title' ? 2 : 3}
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      value={content[key] || ''}
+                      onChange={(e) => updateContentValue(key, e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder={placeholder}
+                    />
+                  )}
+                  {key === 'promotion.title' && (
+                    <div className="mt-1 text-xs text-gray-500">
+                      Use \\n for line breaks in the title
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Tips */}
+            <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+              <h4 className="text-md font-semibold mb-2 text-green-800">💡 Promotion Tips</h4>
+              <ul className="text-sm text-green-700 space-y-1">
+                <li>• Use high-quality images that represent your promotion or product</li>
+                <li>• Keep titles short and impactful</li>
+                <li>• Make button text action-oriented (e.g., "Shop Now", "View Collection")</li>
+                <li>• Test your button links to ensure they work correctly</li>
+                <li>• Use consistent branding colors and fonts</li>
+              </ul>
             </div>
           </div>
         )}

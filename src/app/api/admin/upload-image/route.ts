@@ -49,6 +49,12 @@ export async function POST(request: NextRequest) {
       success: true, 
       imageUrl: imageUrl,
       message: 'Image uploaded successfully' 
+    }, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+      }
     });
 
   } catch (error) {

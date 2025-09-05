@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
 // Get cart for authenticated user
 export async function GET(request: NextRequest) {
   try {
@@ -34,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     let userId: string;
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
       userId = decoded.userId;
       console.log('✅ Cart GET token verified, userId:', userId);
     } catch (jwtError) {

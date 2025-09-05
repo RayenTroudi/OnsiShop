@@ -49,6 +49,12 @@ export const DEFAULT_CONTENT_VALUES = {
   'hero.description': 'Shop our collection of high-quality clothing for men and women. From casual wear to formal attire, we have everything you need to look your best.',
   'hero.buttonText': 'Shop Now',
   'hero.backgroundVideo': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', // Default external video
+  'hero.backgroundImage': '/images/placeholder.jpg',
+  'promotion.title': 'Stay Warm,\nStay Stylish',
+  'promotion.subtitle': 'Stay cozy and fashionable this winter with our winter collection!',
+  'promotion.buttonText': 'View Collection',
+  'promotion.buttonLink': '/search/winter-2024',
+  'promotion.backgroundImage': '/images/placeholder.jpg',
   'about.title': 'Perfect blend of Japanese and Western fashion',
   'about.description': 'We strive to create pieces that are both unique and timeless and take pride in offering high-quality clothing that is both comfortable and stylish.',
   'about.buttonText': 'About Us',
