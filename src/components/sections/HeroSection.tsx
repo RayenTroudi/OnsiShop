@@ -8,11 +8,22 @@ const HeroSection = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>('');
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const nextVideoRef = useRef<HTMLVideoElement>(null);
   
+  // Debug logging helper
+  const addDebugLog = useCallback((message: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    const logMessage = `[${timestamp}] ${message}`;
+    console.log(logMessage);
+    setDebugInfo(prev => [...prev.slice(-4), logMessage]); // Keep last 5 logs
+  }, []);
+  
   const fetchContent = useCallback(async () => {
     try {
+      addDebugLog('Fetching content...');
       const response = await fetch('/api/content', {
         cache: 'no-store',
         headers: {
@@ -21,14 +32,19 @@ const HeroSection = () => {
       });
       const result = await response.json();
       if (result.success) {
+        addDebugLog('Content updated successfully');
         setContent(result.data || {});
+        setVideoError(null);
       }
     } catch (error) {
-      console.error('Error fetching content:', error);
+      const errorMsg = `Error fetching content: ${error}`;
+      console.error(errorMsg);
+      addDebugLog(errorMsg);
+      setVideoError(errorMsg);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [addDebugLog]);
 
   // Smooth video transition function
   const transitionToNewVideo = useCallback((newVideoUrl: string) => {
@@ -36,41 +52,86 @@ const HeroSection = () => {
       return;
     }
 
+    addDebugLog(`Starting video transition to: ${newVideoUrl}`);
     setIsVideoLoading(true);
+    setVideoError(null);
     
-    // Preload new video
-    nextVideoRef.current.src = newVideoUrl;
-    nextVideoRef.current.load();
+    const nextVideo = nextVideoRef.current;
+    const currentVideo = videoRef.current;
     
-    // Wait for new video to be ready
+    // Clear any existing event listeners
+    nextVideo.removeEventListener('canplay', null as any);
+    nextVideo.removeEventListener('error', null as any);
+    
+    // Set up error handling for the new video
+    const handleError = (e: Event) => {
+      const errorMsg = `Failed to load new video: ${newVideoUrl}`;
+      addDebugLog(errorMsg);
+      setVideoError(errorMsg);
+      setIsVideoLoading(false);
+      // Keep using current video if new one fails
+    };
+    
+    // Set up success handling
     const handleCanPlay = () => {
-      const nextVideo = nextVideoRef.current;
-      const currentVideo = videoRef.current;
+      addDebugLog('New video ready, starting transition');
       
-      if (nextVideo && currentVideo) {
-        // Start playing new video
-        nextVideo.play().then(() => {
-          // Smooth transition
-          nextVideo.style.opacity = '1';
-          currentVideo.style.opacity = '0';
+      // Remove event listeners to prevent multiple calls
+      nextVideo.removeEventListener('canplay', handleCanPlay);
+      nextVideo.removeEventListener('error', handleError);
+      
+      // Start playing new video
+      nextVideo.play().then(() => {
+        // Smooth transition
+        nextVideo.style.opacity = '1';
+        currentVideo.style.opacity = '0';
+        
+        // After transition, swap videos and cleanup
+        setTimeout(() => {
+          // Update the main video source
+          currentVideo.src = newVideoUrl;
+          currentVideo.load(); // Force reload
           
-          // After transition, swap videos
-          setTimeout(() => {
-            if (currentVideo && nextVideo) {
-              currentVideo.src = newVideoUrl;
-              currentVideo.style.opacity = '1';
-              nextVideo.style.opacity = '0';
-              currentVideo.play();
-              setCurrentVideoUrl(newVideoUrl);
-              setIsVideoLoading(false);
-            }
-          }, 500); // Match CSS transition duration
-        }).catch(console.error);
-      }
+          // Wait for main video to be ready
+          const handleMainVideoReady = () => {
+            currentVideo.style.opacity = '1';
+            nextVideo.style.opacity = '0';
+            currentVideo.play();
+            setCurrentVideoUrl(newVideoUrl);
+            setIsVideoLoading(false);
+            addDebugLog('Video transition complete');
+            
+            // Cleanup
+            currentVideo.removeEventListener('canplay', handleMainVideoReady);
+          };
+          
+          currentVideo.addEventListener('canplay', handleMainVideoReady, { once: true });
+        }, 500); // Match CSS transition duration
+      }).catch((error) => {
+        const errorMsg = `Video play failed: ${error}`;
+        addDebugLog(errorMsg);
+        setVideoError(errorMsg);
+        setIsVideoLoading(false);
+      });
     };
 
-    nextVideoRef.current.addEventListener('canplay', handleCanPlay, { once: true });
-  }, [currentVideoUrl]);
+    // Add event listeners
+    nextVideo.addEventListener('canplay', handleCanPlay, { once: true });
+    nextVideo.addEventListener('error', handleError, { once: true });
+    
+    // Start loading the new video
+    nextVideo.src = newVideoUrl;
+    nextVideo.load();
+    
+    // Timeout fallback to prevent infinite loading
+    setTimeout(() => {
+      if (isVideoLoading) {
+        addDebugLog('Video loading timeout, falling back');
+        setIsVideoLoading(false);
+      }
+    }, 10000); // 10 second timeout
+    
+  }, [currentVideoUrl, isVideoLoading, addDebugLog]);
 
   useEffect(() => {
     fetchContent();
@@ -117,16 +178,49 @@ const HeroSection = () => {
   useEffect(() => {
     const backgroundVideo = getContentValue(content, 'hero.backgroundVideo', DEFAULT_CONTENT_VALUES['hero.backgroundVideo']);
     
+    // Validate video URL
     if (backgroundVideo && backgroundVideo !== currentVideoUrl) {
+      // Skip if the URL looks like a local file path (VS Code development issue)
+      if (backgroundVideo.includes('\\') || backgroundVideo.startsWith('file://') || backgroundVideo.includes('src/')) {
+        const warningMsg = `Skipping invalid video URL that looks like local path: ${backgroundVideo}`;
+        addDebugLog(warningMsg);
+        setVideoError(warningMsg);
+        return;
+      }
+      
+      // Handle different types of video URLs
+      let validVideoUrl = backgroundVideo;
+      
+      // If it's a database media ID route, use it directly
+      if (backgroundVideo.startsWith('/api/media/')) {
+        validVideoUrl = backgroundVideo;
+      }
+      // If it's an external URL, use it directly
+      else if (backgroundVideo.startsWith('http')) {
+        validVideoUrl = backgroundVideo;
+      }
+      // If it's a relative path to public folder
+      else if (backgroundVideo.startsWith('/videos/')) {
+        validVideoUrl = backgroundVideo;
+      }
+      // If it's just a filename, assume it's in videos folder
+      else if (!backgroundVideo.startsWith('/')) {
+        validVideoUrl = `/videos/${backgroundVideo}`;
+      }
+      
+      addDebugLog(`Video URL change detected: ${currentVideoUrl} -> ${validVideoUrl}`);
+      
       if (currentVideoUrl === '') {
         // Initial load
-        setCurrentVideoUrl(backgroundVideo);
+        addDebugLog('Initial video load');
+        setCurrentVideoUrl(validVideoUrl);
       } else {
         // Smooth transition to new video
-        transitionToNewVideo(backgroundVideo);
+        addDebugLog('Transitioning to new video');
+        transitionToNewVideo(validVideoUrl);
       }
     }
-  }, [content, currentVideoUrl, transitionToNewVideo]);
+  }, [content, currentVideoUrl, transitionToNewVideo, addDebugLog]);
   
   const title = getContentValue(content, 'hero.title', DEFAULT_CONTENT_VALUES['hero.title']);
   const subtitle = getContentValue(content, 'hero.subtitle', DEFAULT_CONTENT_VALUES['hero.subtitle']);
@@ -143,15 +237,26 @@ const HeroSection = () => {
           muted
           loop
           playsInline
-          preload="auto"
+          preload="metadata" // Changed from "auto" to reduce bandwidth
           className="w-full h-full object-cover transition-opacity duration-500"
           style={{ opacity: currentVideoUrl ? 1 : 0 }}
-          src={currentVideoUrl}
-          onLoadStart={() => setIsVideoLoading(true)}
-          onCanPlay={() => setIsVideoLoading(false)}
-          onError={(e) => {
-            console.error('Video load error:', e);
+          src={currentVideoUrl || undefined}
+          onLoadStart={() => {
+            addDebugLog('Main video loading started');
+            setIsVideoLoading(true);
+          }}
+          onCanPlay={() => {
+            addDebugLog('Main video ready');
             setIsVideoLoading(false);
+          }}
+          onError={(e) => {
+            const errorMsg = `Main video load error: ${currentVideoUrl}`;
+            addDebugLog(errorMsg);
+            setVideoError(errorMsg);
+            setIsVideoLoading(false);
+          }}
+          onLoadedData={() => {
+            addDebugLog('Main video data loaded');
           }}
         />
         
@@ -161,15 +266,21 @@ const HeroSection = () => {
           muted
           loop
           playsInline
-          preload="auto"
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+          preload="none" // Only load when needed
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 pointer-events-none"
           style={{ opacity: 0 }}
+          onError={(e) => {
+            addDebugLog('Transition video error');
+          }}
         />
         
         {/* Loading overlay */}
         {isVideoLoading && (
-          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
+            <div className="flex flex-col items-center space-y-2">
+              <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <p className="text-white text-sm">Loading video...</p>
+            </div>
           </div>
         )}
         
@@ -204,6 +315,21 @@ const HeroSection = () => {
       <div className="absolute top-10 left-10 w-20 h-20 border-2 border-white/20 rounded-full animate-pulse z-10" />
       <div className="absolute bottom-20 right-20 w-16 h-16 border-2 border-white/20 rounded-full animate-pulse delay-1000 z-10" />
       <div className="absolute top-1/2 left-20 w-12 h-12 border-2 border-white/20 rounded-full animate-pulse delay-500 z-10" />
+      
+      {/* Debug Panel (only in development) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="absolute top-4 right-4 bg-black/80 text-white p-3 rounded-lg text-xs max-w-xs z-50">
+          <div className="font-bold mb-2">Video Debug Info:</div>
+          <div>Current URL: {currentVideoUrl || 'None'}</div>
+          <div>Loading: {isVideoLoading ? 'Yes' : 'No'}</div>
+          {videoError && <div className="text-red-300">Error: {videoError}</div>}
+          <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+            {debugInfo.map((log, i) => (
+              <div key={i} className="text-gray-300 text-xs">{log}</div>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 };

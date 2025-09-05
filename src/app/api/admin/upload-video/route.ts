@@ -1,6 +1,5 @@
-import { writeFile } from 'fs/promises';
+import { prisma } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
-import path from 'path';
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,35 +19,53 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Validate file size (max 50MB)
-    const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+    // Validate file size (max 20MB for database storage)
+    const maxSize = 20 * 1024 * 1024; // 20MB in bytes
     if (file.size > maxSize) {
       return NextResponse.json({ 
         success: false, 
-        error: 'File too large. Maximum size is 50MB.' 
+        error: 'File too large. Maximum size is 20MB for database storage.' 
       }, { status: 400 });
     }
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    
+    // Convert to base64 for database storage
+    const base64Data = buffer.toString('base64');
+    const dataUrl = `data:${file.type};base64,${base64Data}`;
 
-    // Generate unique filename
+    // Generate unique filename for reference
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
-    const fileExtension = path.extname(file.name);
-    const filename = `hero-video-${timestamp}-${randomString}${fileExtension}`;
-    
-    // Save to public/videos directory
-    const filePath = path.join(process.cwd(), 'public', 'videos', filename);
-    await writeFile(filePath, buffer);
+    const filename = `hero-video-${timestamp}-${randomString}.${file.type.split('/')[1]}`;
 
-    // Return the public URL
-    const videoUrl = `/videos/${filename}`;
+    // Store in database
+    const mediaAsset = await (prisma as any).mediaAsset.create({
+      data: {
+        filename,
+        url: dataUrl, // Store the complete data URL
+        type: file.type,
+        section: 'hero-background',
+        alt: 'Hero background video'
+      }
+    });
+
+    console.log('✅ Video stored in database:', {
+      id: mediaAsset.id,
+      filename,
+      size: `${Math.round(file.size / 1024)} KB`,
+      type: file.type
+    });
+
+    // Return the database asset ID (we'll serve it via API)
+    const videoUrl = `/api/media/${mediaAsset.id}`;
 
     return NextResponse.json({ 
       success: true, 
       videoUrl: videoUrl,
-      message: 'Video uploaded successfully' 
+      assetId: mediaAsset.id,
+      message: 'Video uploaded and stored in database successfully' 
     });
 
   } catch (error) {

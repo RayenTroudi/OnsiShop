@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/database';
+import { initializeDefaultVideo } from '@/lib/video-utils';
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { broadcastContentUpdate } from './stream/route';
@@ -8,6 +9,9 @@ export const dynamic = 'force-dynamic';
 // GET /api/content - Fetch all site content
 export async function GET() {
   try {
+    // Initialize default video if needed
+    await initializeDefaultVideo();
+    
     const content = await (prisma as any).siteContent.findMany({
       select: {
         key: true,
