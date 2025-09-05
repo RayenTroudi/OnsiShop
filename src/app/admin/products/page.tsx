@@ -165,13 +165,47 @@ export default function ProductsPage() {
                         <td className="whitespace-nowrap px-6 py-4">
                           <div className="flex items-center">
                             <div className="h-10 w-10 flex-shrink-0">
-                              {product.images && JSON.parse(product.images).length > 0 ? (
-                                <img
-                                  className="h-10 w-10 rounded-lg object-cover"
-                                  src={JSON.parse(product.images)[0]}
-                                  alt={product.title}
-                                />
-                              ) : (
+                              {product.images && (() => {
+                                try {
+                                  let parsed = JSON.parse(product.images);
+                                  
+                                  // Handle double-encoded JSON arrays
+                                  if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'string' && parsed[0].startsWith('[')) {
+                                    try {
+                                      parsed = JSON.parse(parsed[0]);
+                                    } catch (e) {
+                                      // If parsing fails, use the original
+                                    }
+                                  }
+                                  
+                                  const firstImage = Array.isArray(parsed) ? parsed[0] : parsed;
+                                  const isValidUrl = firstImage && 
+                                                   typeof firstImage === 'string' && 
+                                                   (firstImage.startsWith('data:') || firstImage.startsWith('http') || firstImage.startsWith('/')) &&
+                                                   !firstImage.includes('[') && 
+                                                   !firstImage.includes(']') &&
+                                                   firstImage.trim() !== '';
+                                  
+                                  console.log('🖼️ Product image check:', product.id, 'Image type:', Array.isArray(parsed) ? 'array' : typeof parsed, 'First image valid:', isValidUrl);
+                                  
+                                  if (isValidUrl) {
+                                    return (
+                                      <img
+                                        className="h-10 w-10 rounded-lg object-cover"
+                                        src={firstImage}
+                                        alt={product.title}
+                                        onError={(e) => {
+                                          console.error('❌ Image load error for product:', product.id);
+                                          (e.target as HTMLImageElement).style.display = 'none';
+                                        }}
+                                      />
+                                    );
+                                  }
+                                } catch (e) {
+                                  console.error('❌ Error parsing product images for product:', product.id, e);
+                                }
+                                return null;
+                              })() || (
                                 <div className="h-10 w-10 rounded-lg bg-gray-200 flex items-center justify-center">
                                   <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -211,14 +245,20 @@ export default function ProductsPage() {
                           <div className="flex items-center justify-end space-x-2">
                             <Link
                               href={`/admin/products/${product.id}/edit`}
-                              className="text-indigo-600 hover:text-indigo-900"
+                              className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
                             >
+                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
                               Edit
                             </Link>
                             <button
                               onClick={() => handleDelete(product.id)}
-                              className="text-red-600 hover:text-red-900"
+                              className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
                             >
+                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
                               Delete
                             </button>
                           </div>

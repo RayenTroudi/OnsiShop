@@ -187,8 +187,26 @@ export class DatabaseService {
   // Transform database product to Shopify format
   transformToShopifyProduct(product: any) {
     const tags = product.tags ? JSON.parse(product.tags) : [];
-    const images = product.images ? JSON.parse(product.images) : [];
-    const variants = product.variants ? JSON.parse(product.variants) : [];
+    let images = [];
+    let variants = [];
+    
+    // Safely parse images
+    try {
+      const parsedImages = product.images ? JSON.parse(product.images) : [];
+      images = Array.isArray(parsedImages) ? parsedImages : [];
+    } catch (e) {
+      console.warn('Failed to parse images for product:', product.id, e);
+      images = [];
+    }
+    
+    // Safely parse variants
+    try {
+      const parsedVariants = product.variants ? JSON.parse(product.variants) : [];
+      variants = Array.isArray(parsedVariants) ? parsedVariants : [];
+    } catch (e) {
+      console.warn('Failed to parse variants for product:', product.id, e);
+      variants = [];
+    }
 
     return {
       id: product.id,
@@ -228,12 +246,38 @@ export class DatabaseService {
         width: 400,
         height: 400
       },
-      images: images.map((image: string) => ({
-        url: image,
-        altText: product.title,
-        width: 400,
-        height: 400
-      })),
+      images: images
+        .filter((image: string) => {
+          // Filter out invalid images
+          if (!image || typeof image !== 'string') return false;
+          
+          // Allow data URLs (base64 images) - they don't need file existence check
+          if (image.startsWith('data:')) return true;
+          
+          // For local file uploads, check if file exists
+          if (image.startsWith('/uploads/')) {
+            try {
+              const fs = require('fs');
+              const path = require('path');
+              const filePath = path.join(process.cwd(), 'public', image);
+              return fs.existsSync(filePath);
+            } catch (error) {
+              console.warn('Error checking file existence for:', image, error);
+              return false;
+            }
+          }
+          
+          // Allow external URLs (http/https)
+          if (image.startsWith('http')) return true;
+          
+          return false;
+        })
+        .map((image: string) => ({
+          url: image,
+          altText: product.title,
+          width: 400,
+          height: 400
+        })),
       variants: variants.map((variant: any) => ({
         id: variant.id,
         title: variant.title,

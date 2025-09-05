@@ -11,12 +11,29 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
   const [uploading, setUploading] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
 
+  // Ensure images is always an array and filter out malformed URLs
+  const safeImages = Array.isArray(images) ? images.filter(img => {
+    // Allow data URLs (base64) and regular URLs
+    const isValid = !img || (typeof img === 'string' && 
+      (img.startsWith('data:') || img.startsWith('http') || img.startsWith('/')) &&
+      !img.includes('[') && !img.includes(']') && 
+      img !== 'undefined' && img !== 'null');
+    if (!isValid) {
+      console.warn('🚫 Filtering out malformed image in ImageUpload:', img);
+    }
+    console.log('🖼️ Processing image URL:', img?.substring(0, 50) + '...', 'Valid:', isValid);
+    return isValid;
+  }) : [];
+
+  console.log('🔍 ImageUpload received images:', images);
+  console.log('🛡️ Safe images after filtering:', safeImages);
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files) return;
 
     setUploading(true);
-    const newImages = [...images];
+    const newImages = [...safeImages];
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -33,12 +50,22 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
 
         if (response.ok) {
           const result = await response.json();
-          newImages.push(result.url);
-          console.log('Image uploaded successfully:', result.url);
+          // Validate the returned URL (should be a data URL for base64 images)
+          if (result.url && typeof result.url === 'string' && 
+              (result.url.startsWith('data:') || result.url.startsWith('http') || result.url.startsWith('/')) &&
+              !result.url.includes('[') && !result.url.includes(']') && 
+              result.url.trim() !== '') {
+            newImages.push(result.url);
+            console.log('Image uploaded successfully as base64:', result.url.substring(0, 50) + '...');
+          } else {
+            console.error('Invalid URL returned from upload:', result.url?.substring(0, 100));
+            alert(`Upload failed for ${file.name}: Invalid URL returned`);
+          }
         } else {
           const error = await response.json();
           console.error('Upload failed for file:', file.name, error);
-          alert(`Upload failed for ${file.name}: ${error.error || 'Unknown error'}`);
+          const errorMessage = error.details ? `${error.error}: ${error.details}` : (error.error || 'Unknown error');
+          alert(`Upload failed for ${file.name}: ${errorMessage}`);
         }
       } catch (error) {
         console.error('Upload error:', error);
@@ -54,18 +81,29 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
   };
 
   const handleImageChange = (index: number, value: string) => {
-    const newImages = [...images];
-    newImages[index] = value;
+    // Sanitize the value to prevent malformed URLs
+    const sanitizedValue = value.trim();
+    
+    // Skip processing if the value contains invalid characters or is not a valid URL format
+    if (sanitizedValue.includes('[') || sanitizedValue.includes(']') ||
+        (!sanitizedValue.startsWith('data:') && !sanitizedValue.startsWith('http') && 
+         !sanitizedValue.startsWith('/') && sanitizedValue !== '')) {
+      console.warn('Invalid URL format detected:', sanitizedValue.substring(0, 50));
+      return;
+    }
+    
+    const newImages = [...safeImages];
+    newImages[index] = sanitizedValue;
     onImagesChange(newImages);
   };
 
   const removeImage = (index: number) => {
-    const newImages = images.filter((_, i) => i !== index);
+    const newImages = safeImages.filter((_, i) => i !== index);
     onImagesChange(newImages);
   };
 
   const addImageField = () => {
-    onImagesChange([...images, '']);
+    onImagesChange([...safeImages, '']);
   };
 
   return (
@@ -84,8 +122,8 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
               <p className="mb-2 text-sm text-gray-500">
                 <span className="font-semibold">Click to upload</span> or drag and drop
               </p>
-              <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-              <p className="text-xs text-gray-400 mt-1">You can select multiple images at once</p>
+              <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
+              <p className="text-xs text-gray-400 mt-1">Images will be stored in database as base64</p>
             </div>
             <input
               type="file"
@@ -106,17 +144,17 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
       </div>
 
       {/* Show uploaded images */}
-      {images.length > 0 ? (
+      {safeImages.length > 0 && safeImages.some(img => img.trim() !== '') ? (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Uploaded Images ({images.length})
+            Uploaded Images ({safeImages.filter(img => img.trim() !== '').length})
           </label>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {images.map((image, index) => (
+            {safeImages.map((image, index) => (
               <div key={index} className="relative group">
                 <div className="aspect-square w-full">
                   <img
-                    src={image}
+                    src={typeof image === 'string' && image.trim() ? image : '/images/placeholder.jpg'}
                     alt={`Product image ${index + 1}`}
                     className="w-full h-full object-cover rounded-md border"
                     onError={(e) => {
@@ -157,23 +195,23 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
         {showUrlInput && (
           <div className="mt-3">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Enter image URLs manually
+              Enter image URLs manually (http/https URLs or data URLs)
             </label>
-            {images.map((image, index) => (
+            {safeImages.map((image, index) => (
               <div key={index} className="flex items-center space-x-4 mb-3">
                 <div className="flex-1">
                   <input
                     type="url"
                     value={image}
                     onChange={(e) => handleImageChange(index, e.target.value)}
-                    placeholder="https://example.com/image.jpg"
+                    placeholder="https://example.com/image.jpg or data:image/jpeg;base64,..."
                     className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
                   />
                 </div>
                 {image && (
                   <div className="w-16 h-16 flex-shrink-0">
                     <img
-                      src={image}
+                      src={typeof image === 'string' && image.trim() ? image : '/images/placeholder.jpg'}
                       alt={`Preview ${index + 1}`}
                       className="w-full h-full object-cover rounded-md"
                       onError={(e) => {
@@ -182,7 +220,7 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
                     />
                   </div>
                 )}
-                {images.length > 1 && (
+                {safeImages.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeImage(index)}

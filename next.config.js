@@ -5,7 +5,8 @@ module.exports = {
     ignoreDuringBuilds: true
   },
   images: {
-    // unoptimized: true,
+    // Enable unoptimized for base64 data URLs
+    unoptimized: true,
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
@@ -20,7 +21,9 @@ module.exports = {
         protocol: 'https',
         hostname: 'res.cloudinary.com'
       }
-    ]
+    ],
+    // Add better error handling for missing images and support for data URLs
+    dangerouslyAllowSVG: true
   },
   // Disable static optimization for admin and auth pages
   experimental: {
