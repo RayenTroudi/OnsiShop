@@ -18,7 +18,7 @@ interface CheckoutFormProps {
 
 export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps) {
   const { user } = useAuth();
-  const { cart, clearCart } = useCart();
+  const { cart, clearCart, loading } = useCart();
   const router = useRouter();
   
   const [formData, setFormData] = useState<CheckoutFormData>({
@@ -41,6 +41,16 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
       }));
     }
   }, [user]);
+
+  // Debug cart state
+  useEffect(() => {
+    console.log('🛒 Checkout Form Debug:', {
+      loading,
+      hasCart: !!cart,
+      cartItemCount: cart?.items?.length || 0,
+      cartItems: cart?.items || []
+    });
+  }, [cart, loading]);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<CheckoutFormData> = {};
@@ -103,8 +113,9 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
       const result = await response.json();
 
       if (response.ok && result.success) {
-        // Clear the cart
-        await clearCart();
+        // Cart is already cleared by the order API
+        // Just refresh cart to reflect the change
+        // No need to call clearCart() manually
         
         // Call success callback or redirect
         if (onSubmitSuccess) {
@@ -123,6 +134,17 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
     }
   };
 
+  // Show loading state while cart is loading
+  if (loading) {
+    return (
+      <div className="max-w-md mx-auto mt-8 p-6 text-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading your cart...</p>
+      </div>
+    );
+  }
+
+  // Show empty cart message only after loading is complete
   if (!cart || cart.items.length === 0) {
     return (
       <div className="max-w-md mx-auto mt-8 p-6 bg-gray-50 rounded-lg text-center">

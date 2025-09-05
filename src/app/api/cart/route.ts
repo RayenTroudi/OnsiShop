@@ -10,7 +10,13 @@ export async function GET(request: NextRequest) {
     // Get userId from JWT token
     const token = request.cookies.get('auth-token')?.value;
 
+    console.log('🛒 Cart GET API Debug:', {
+      hasToken: !!token,
+      tokenLength: token?.length || 0
+    });
+
     if (!token) {
+      console.log('🚫 No auth token found in cart GET API');
       return NextResponse.json({ 
         success: true,
         message: 'No authentication token found',
@@ -30,7 +36,9 @@ export async function GET(request: NextRequest) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
       userId = decoded.userId;
+      console.log('✅ Cart GET token verified, userId:', userId);
     } catch (jwtError) {
+      console.log('❌ Cart GET JWT verification failed:', jwtError);
       return NextResponse.json({
         success: false,
         message: 'Invalid authentication token'
@@ -52,7 +60,14 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    console.log('🛒 Cart query result:', {
+      userId,
+      hasCart: !!cart,
+      itemCount: cart?.items?.length || 0
+    });
+
     if (!cart) {
+      console.log('🛒 No cart found for user, returning empty cart');
       return NextResponse.json({
         success: true,
         message: 'No cart found for user',

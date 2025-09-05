@@ -193,7 +193,7 @@ export default function DatabaseCartModal({
                     const product = item.product;
                     const imageUrl = product.image || 
                       (product.images ? JSON.parse(product.images)[0] : null) ||
-                      '/images/placeholder.jpg';
+                      '/images/placeholder-product.svg';
                     const subtotal = product.price * item.quantity;
 
                     return (

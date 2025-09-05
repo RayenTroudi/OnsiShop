@@ -249,17 +249,27 @@ export function CartProvider({ children, userId }: CartProviderProps) {
 
   // Clear cart without checkout
   const clearCart = async (): Promise<boolean> => {
-    if (!cart || !userId) return true;
+    if (!userId) return true;
     
     try {
       setLoading(true);
+      setError(null);
       
-      // Remove all items one by one
-      for (const item of cart.items) {
-        await removeFromCart(item.id);
+      const response = await fetch('/api/cart/clear', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        await refreshCart(); // Refresh to show empty cart
+        return true;
+      } else {
+        setError(result.message || 'Failed to clear cart');
+        return false;
       }
       
-      return true;
     } catch (err) {
       setError('Failed to clear cart');
       return false;

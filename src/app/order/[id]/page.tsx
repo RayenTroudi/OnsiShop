@@ -222,7 +222,7 @@ export default function OrderPage({ params }: OrderPageProps) {
               {order.items.map((item, index) => {
                 const imageUrl = item.product.image || 
                   (item.product.images ? JSON.parse(item.product.images)[0] : null) ||
-                  '/images/placeholder.jpg';
+                  '/images/placeholder-product.svg';
 
                 return (
                   <div key={index} className="flex items-center space-x-4">

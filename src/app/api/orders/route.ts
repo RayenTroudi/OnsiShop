@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/database';
+import { sendCustomerConfirmationEmail, sendOrderNotificationEmail } from '@/lib/email';
 import jwt from 'jsonwebtoken';
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -8,8 +8,7 @@ export const dynamic = 'force-dynamic';
 // Get orders for authenticated user
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('token')?.value;
+    const token = request.cookies.get('auth-token')?.value;
 
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -40,34 +39,40 @@ export async function GET(request: NextRequest) {
 // Create new order
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('token')?.value;
-    const cartId = cookieStore.get('cartId')?.value;
+    console.log('🛒 Order creation started...');
+    const token = request.cookies.get('auth-token')?.value;
+    const cartId = request.cookies.get('cartId')?.value;
+
+    console.log('🍪 Order POST Debug:', { 
+      hasToken: !!token, 
+      tokenLength: token?.length,
+      hasCartId: !!cartId 
+    });
 
     if (!token) {
+      console.log('❌ Order creation failed: No token');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
     const userId = decoded.userId;
+    console.log('✅ Order creation token verified, userId:', userId);
 
     const { fullName, email, phone, shippingAddress } = await request.json();
+    console.log('📝 Order data received:', { fullName, email, phone, shippingAddress });
 
     // Validate required fields
     if (!fullName || !email || !phone || !shippingAddress) {
+      console.log('❌ Order creation failed: Missing required fields');
       return NextResponse.json(
         { error: 'All fields are required' },
         { status: 400 }
       );
     }
 
-    // Get cart items
-    if (!cartId) {
-      return NextResponse.json({ error: 'No cart found' }, { status: 400 });
-    }
-
-    const cart = await prisma.cart.findUnique({
-      where: { id: cartId },
+    // Get cart items for the authenticated user
+    const cart = await prisma.cart.findFirst({
+      where: { userId },
       include: {
         items: {
           include: {
@@ -78,8 +83,14 @@ export async function POST(request: NextRequest) {
     });
 
     if (!cart || cart.items.length === 0) {
+      console.log('❌ Order creation failed: Cart is empty', { 
+        cartExists: !!cart, 
+        itemCount: cart?.items?.length || 0 
+      });
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
     }
+
+    console.log('✅ Cart found with items:', cart.items.length);
 
     // Calculate total amount
     const totalAmount = cart.items.reduce(
@@ -136,19 +147,51 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // Clear the cart
+      // Clear the cart items but keep the cart
       await tx.cartItem.deleteMany({
-        where: { cartId }
-      });
-
-      await tx.cart.delete({
-        where: { id: cartId }
+        where: { cartId: cart.id }
       });
 
       return newOrder;
     });
 
-    // Clear cart cookie
+    // Send email notifications
+    try {
+      const orderEmailData = {
+        orderId: order.id,
+        customerName: fullName,
+        customerEmail: email,
+        customerPhone: phone,
+        shippingAddress,
+        items: cart.items.map(item => ({
+          name: item.product.name || item.product.title || 'Product',
+          quantity: item.quantity,
+          price: item.product.price
+        })),
+        totalAmount
+      };
+
+      // Send notification email to store owner
+      const notificationResult = await sendOrderNotificationEmail(orderEmailData);
+      if (notificationResult.success) {
+        console.log('📧 Order notification email sent successfully');
+      } else {
+        console.error('❌ Failed to send order notification email:', notificationResult.error);
+      }
+
+      // Send confirmation email to customer
+      const confirmationResult = await sendCustomerConfirmationEmail(orderEmailData);
+      if (confirmationResult.success) {
+        console.log('📧 Customer confirmation email sent successfully');
+      } else {
+        console.error('❌ Failed to send customer confirmation email:', confirmationResult.error);
+      }
+    } catch (emailError) {
+      console.error('❌ Email sending error:', emailError);
+      // Don't fail the order creation if email fails
+    }
+
+    // Clear cart cookie (though we're not using it anymore)
     const response = NextResponse.json({ 
       success: true, 
       orderId: order.id,
