@@ -162,7 +162,7 @@ export default function EditProductPage() {
         
         console.log('🖼️ Parsed product images:', productImages);
         
-        // Ensure we always have at least one empty string for the form
+        // Ensure we always have at least one empty string for the form only if no valid images
         if (productImages.length === 0) {
           productImages = [''];
         }
@@ -222,6 +222,13 @@ export default function EditProductPage() {
     setIsLoading(true);
 
     try {
+      // Filter and validate images before sending
+      const validImages = formData.images.filter(img => {
+        const isValid = img && img.trim() !== '' && !img.includes('[') && !img.includes(']');
+        console.log('🔍 Image validation:', img?.substring(0, 50) + '...', 'Valid:', isValid);
+        return isValid;
+      });
+
       const productData = {
         id: productId,
         title: formData.title,
@@ -230,14 +237,15 @@ export default function EditProductPage() {
         price: formData.price,
         compareAtPrice: formData.compareAtPrice || null,
         categoryId: formData.categoryId || null,
-        images: JSON.stringify(formData.images.filter(img => {
-          const isValid = img && img.trim() !== '' && !img.includes('[') && !img.includes(']');
-          console.log('🔍 Image validation:', img, 'Valid:', isValid);
-          return isValid;
-        })),
+        images: validImages, // Send as array, not stringified
         tags: formData.tags,
         availableForSale: formData.availableForSale,
       };
+
+      console.log('� Sending product data with images:', {
+        ...productData,
+        images: validImages.map(img => img?.substring(0, 50) + '...')
+      });
 
       const response = await fetch('/api/admin/products', {
         method: 'PUT',
@@ -506,17 +514,8 @@ export default function EditProductPage() {
               <ImageUpload 
                 images={formData.images}
                 onImagesChange={(newImages) => {
-                  console.log('🖼️ ImageUpload onChange:', newImages);
-                  // Additional validation before setting
-                  const safeImages = Array.isArray(newImages) ? newImages.filter(img => {
-                    const isValid = !img || (typeof img === 'string' && !img.includes('[') && !img.includes(']'));
-                    if (!isValid) {
-                      console.warn('🚫 Rejected malformed image URL:', img);
-                    }
-                    return isValid;
-                  }) : [];
-                  
-                  setFormData(prev => ({ ...prev, images: safeImages }));
+                  console.log('🖼️ ImageUpload onChange received:', newImages.map(img => img?.substring(0, 50) + '...'));
+                  setFormData(prev => ({ ...prev, images: newImages }));
                 }}
               />
             </div>

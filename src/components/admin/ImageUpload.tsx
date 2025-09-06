@@ -13,12 +13,12 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
 
   // Ensure images is always an array and filter out malformed URLs
   const safeImages = Array.isArray(images) ? images.filter(img => {
-    // Allow data URLs (base64) and regular URLs
-    const isValid = !img || (typeof img === 'string' && 
+    // Allow data URLs (base64) and regular URLs, but exclude empty strings
+    const isValid = img && typeof img === 'string' && img.trim() !== '' &&
       (img.startsWith('data:') || img.startsWith('http') || img.startsWith('/')) &&
       !img.includes('[') && !img.includes(']') && 
-      img !== 'undefined' && img !== 'null');
-    if (!isValid) {
+      img !== 'undefined' && img !== 'null';
+    if (!isValid && img) {
       console.warn('🚫 Filtering out malformed image in ImageUpload:', img);
     }
     console.log('🖼️ Processing image URL:', img?.substring(0, 50) + '...', 'Valid:', isValid);
@@ -56,7 +56,7 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
               !result.url.includes('[') && !result.url.includes(']') && 
               result.url.trim() !== '') {
             newImages.push(result.url);
-            console.log('Image uploaded successfully as base64:', result.url.substring(0, 50) + '...');
+            console.log('✅ Image uploaded successfully as base64:', result.url.substring(0, 50) + '...');
           } else {
             console.error('Invalid URL returned from upload:', result.url?.substring(0, 100));
             alert(`Upload failed for ${file.name}: Invalid URL returned`);
@@ -73,6 +73,7 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
       }
     }
 
+    console.log('📤 Sending updated images to parent:', newImages);
     onImagesChange(newImages);
     setUploading(false);
     
