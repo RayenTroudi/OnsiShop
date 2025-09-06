@@ -1,9 +1,11 @@
+import { DatabaseService } from '@/lib/database';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
+const db = new DatabaseService();
 
 export const dynamic = 'force-dynamic';
 
@@ -68,8 +70,11 @@ export async function GET(
     // Remove ratings array and add calculated rating
     const { ratings: _, ...productData } = product;
     
+    // Transform to Shopify format with proper image structure
+    const transformedProduct = db.transformToShopifyProduct(productData);
+    
     const productWithRating = {
-      ...productData,
+      ...transformedProduct,
       avgRating: avgRating ? Math.round(avgRating * 10) / 10 : null,
     };
 

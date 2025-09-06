@@ -88,9 +88,28 @@ export default function CartDemoPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product) => {
             const productData = product as any;
-            const imageUrl = productData.image || 
-              (product.images ? JSON.parse(product.images)[0] : null) ||
-              '/images/placeholder.jpg';
+            const imageUrl = (() => {
+              // Handle both legacy and Shopify format
+              if (productData.image) {
+                return productData.image;
+              }
+              if (productData.images && Array.isArray(productData.images) && productData.images.length > 0) {
+                return productData.images[0].url;
+              }
+              if (productData.featuredImage?.url) {
+                return productData.featuredImage.url;
+              }
+              // Legacy handling for JSON string format
+              if (product.images && typeof product.images === 'string') {
+                try {
+                  const parsed = JSON.parse(product.images);
+                  return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : null;
+                } catch (e) {
+                  return null;
+                }
+              }
+              return '/images/placeholder.jpg';
+            })();
 
             return (
               <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -115,7 +134,12 @@ export default function CartDemoPage() {
                   
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-xl font-bold text-purple">
-                      ${product.price.toFixed(2)}
+                      ${(() => {
+                        const price = (product as any).price || 
+                                     parseFloat((product as any).priceRange?.minVariantPrice?.amount) || 
+                                     0;
+                        return price.toFixed(2);
+                      })()}
                     </span>
                     <span className="text-sm text-gray-500">
                       Stock: {productData.stock || 0}

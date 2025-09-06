@@ -1,7 +1,9 @@
+import { DatabaseService } from '@/lib/database';
 import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
+const db = new DatabaseService();
 
 export const dynamic = 'force-dynamic';
 
@@ -92,7 +94,7 @@ export async function GET(request: NextRequest) {
       prisma.product.count({ where }),
     ]);
 
-    // Calculate average ratings for each product
+    // Calculate average ratings for each product and transform to Shopify format
     const productsWithRatings = products.map((product) => {
       const ratings = product.ratings;
       const avgRating = ratings.length > 0
@@ -102,8 +104,11 @@ export async function GET(request: NextRequest) {
       // Remove ratings array from response and add avgRating
       const { ratings: _, ...productWithoutRatings } = product;
       
+      // Transform to Shopify format with proper image structure
+      const transformedProduct = db.transformToShopifyProduct(productWithoutRatings);
+      
       return {
-        ...productWithoutRatings,
+        ...transformedProduct,
         avgRating: avgRating ? Math.round(avgRating * 10) / 10 : null,
       };
     });

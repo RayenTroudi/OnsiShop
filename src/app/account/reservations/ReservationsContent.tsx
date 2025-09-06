@@ -195,39 +195,74 @@ export default function ReservationsContent() {
                     {reservation.items.map((item, index) => (
                       <div key={index} className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center">
-                          {item.product.image ? (
-                            <img
-                              src={item.product.image}
-                              alt={item.product.name || item.product.title}
-                              className="w-full h-full object-cover rounded-md"
-                            />
-                          ) : (
-                            <svg
-                              className="w-6 h-6 text-gray-400"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                              />
-                            </svg>
-                          )}
+                          {(() => {
+                            // Handle both legacy and Shopify format
+                            if (item.product.image) {
+                              return (
+                                <img
+                                  src={item.product.image}
+                                  alt={item.product.name || item.product.title}
+                                  className="w-full h-full object-cover rounded-md"
+                                />
+                              );
+                            }
+                            if ((item.product as any).images && Array.isArray((item.product as any).images) && (item.product as any).images.length > 0) {
+                              return (
+                                <img
+                                  src={(item.product as any).images[0].url}
+                                  alt={item.product.name || item.product.title}
+                                  className="w-full h-full object-cover rounded-md"
+                                />
+                              );
+                            }
+                            if ((item.product as any).featuredImage?.url) {
+                              return (
+                                <img
+                                  src={(item.product as any).featuredImage.url}
+                                  alt={item.product.name || item.product.title}
+                                  className="w-full h-full object-cover rounded-md"
+                                />
+                              );
+                            }
+                            // Fallback placeholder
+                            return (
+                              <svg
+                                className="w-6 h-6 text-gray-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                              </svg>
+                            );
+                          })()}
                         </div>
                         <div className="flex-1">
                           <h5 className="font-medium text-gray-900">
                             {item.product.name || item.product.title}
                           </h5>
                           <p className="text-sm text-gray-500">
-                            Quantity: {item.quantity} × ${item.product.price.toFixed(2)}
+                            Quantity: {item.quantity} × ${(() => {
+                              const price = (item.product as any).price || 
+                                           parseFloat((item.product as any).priceRange?.minVariantPrice?.amount) || 
+                                           0;
+                              return price.toFixed(2);
+                            })()}
                           </p>
                         </div>
                         <div className="text-right">
                           <span className="font-medium text-gray-900">
-                            ${(item.quantity * item.product.price).toFixed(2)}
+                            ${(() => {
+                              const price = (item.product as any).price || 
+                                           parseFloat((item.product as any).priceRange?.minVariantPrice?.amount) || 
+                                           0;
+                              return (item.quantity * price).toFixed(2);
+                            })()}
                           </span>
                         </div>
                       </div>

@@ -90,7 +90,10 @@ const ProductCard = ({
         <a
           href={'/products/' + product.id}
           onMouseEnter={() => {
-            setActiveImage('hover');
+            // Only change to hover image if a second image exists
+            if (product.images?.[1]?.url) {
+              setActiveImage('hover');
+            }
             clearTimeout(timeoutId.current);
           }}
           onMouseLeave={() => setActiveImage('main')}
@@ -111,16 +114,19 @@ const ProductCard = ({
                 'opacity-100': activeImage === 'main'
               })}
             />
-            <Image
-              src={product.images?.[1]?.url || '/images/placeholder-product.svg'}
-              alt="product image"
-              fill
-              sizes="(min-width: 768px) 280px, 180px"
-              className={clsx('object-cover transition-all duration-500 will-change-transform', {
-                'opacity-0': activeImage !== 'hover',
-                'opacity-100': activeImage === 'hover'
-              })}
-            />
+            {/* Only show hover image if a second image exists */}
+            {product.images?.[1]?.url && (
+              <Image
+                src={product.images[1].url}
+                alt="product image"
+                fill
+                sizes="(min-width: 768px) 280px, 180px"
+                className={clsx('object-cover transition-all duration-500 will-change-transform', {
+                  'opacity-0': activeImage !== 'hover',
+                  'opacity-100': activeImage === 'hover'
+                })}
+              />
+            )}
             {colorVariants.map((variant, i) => {
               return (
                 <Image

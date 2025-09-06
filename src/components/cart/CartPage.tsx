@@ -88,10 +88,35 @@ export default function CartPage() {
         <div className="divide-y divide-gray-200">
           {cart.items.map((item) => {
             const product = item.product;
-            const subtotal = product.price * item.quantity;
-            const imageUrl = product.image || 
-              (product.images ? JSON.parse(product.images)[0] : null) ||
-              '/images/placeholder.jpg';
+            const subtotal = (() => {
+              const price = (product as any).price || 
+                           parseFloat((product as any).priceRange?.minVariantPrice?.amount) || 
+                           0;
+              return price * item.quantity;
+            })();
+            
+            const imageUrl = (() => {
+              // Handle both legacy and Shopify format
+              if (product.image) {
+                return product.image;
+              }
+              if ((product as any).images && Array.isArray((product as any).images) && (product as any).images.length > 0) {
+                return (product as any).images[0].url;
+              }
+              if ((product as any).featuredImage?.url) {
+                return (product as any).featuredImage.url;
+              }
+              // Legacy handling for JSON string format
+              if (product.images && typeof product.images === 'string') {
+                try {
+                  const parsed = JSON.parse(product.images);
+                  return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : null;
+                } catch (e) {
+                  return null;
+                }
+              }
+              return '/images/placeholder.jpg';
+            })();
 
             return (
               <div key={item.id} className="p-6 flex items-center space-x-4">
@@ -117,7 +142,12 @@ export default function CartPage() {
                     </p>
                   )}
                   <p className="text-lg font-semibold text-purple mt-2">
-                    ${product.price.toFixed(2)}
+                    ${(() => {
+                      const price = (product as any).price || 
+                                   parseFloat((product as any).priceRange?.minVariantPrice?.amount) || 
+                                   0;
+                      return price.toFixed(2);
+                    })()}
                   </p>
                   <p className="text-sm text-gray-500">
                     Stock: {product.stock} available

@@ -165,30 +165,11 @@ export default function ProductsPage() {
                         <td className="whitespace-nowrap px-6 py-4">
                           <div className="flex items-center">
                             <div className="h-10 w-10 flex-shrink-0">
-                              {product.images && (() => {
-                                try {
-                                  let parsed = JSON.parse(product.images);
-                                  
-                                  // Handle double-encoded JSON arrays
-                                  if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'string' && parsed[0].startsWith('[')) {
-                                    try {
-                                      parsed = JSON.parse(parsed[0]);
-                                    } catch (e) {
-                                      // If parsing fails, use the original
-                                    }
-                                  }
-                                  
-                                  const firstImage = Array.isArray(parsed) ? parsed[0] : parsed;
-                                  const isValidUrl = firstImage && 
-                                                   typeof firstImage === 'string' && 
-                                                   (firstImage.startsWith('data:') || firstImage.startsWith('http') || firstImage.startsWith('/')) &&
-                                                   !firstImage.includes('[') && 
-                                                   !firstImage.includes(']') &&
-                                                   firstImage.trim() !== '';
-                                  
-                                  console.log('🖼️ Product image check:', product.id, 'Image type:', Array.isArray(parsed) ? 'array' : typeof parsed, 'First image valid:', isValidUrl);
-                                  
-                                  if (isValidUrl) {
+                              {(() => {
+                                // Check for Shopify format first
+                                if ((product as any).images && Array.isArray((product as any).images) && (product as any).images.length > 0) {
+                                  const firstImage = (product as any).images[0].url;
+                                  if (firstImage) {
                                     return (
                                       <img
                                         className="h-10 w-10 rounded-lg object-cover"
@@ -201,17 +182,74 @@ export default function ProductsPage() {
                                       />
                                     );
                                   }
-                                } catch (e) {
-                                  console.error('❌ Error parsing product images for product:', product.id, e);
                                 }
-                                return null;
-                              })() || (
-                                <div className="h-10 w-10 rounded-lg bg-gray-200 flex items-center justify-center">
-                                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                  </svg>
-                                </div>
-                              )}
+
+                                // Check for featuredImage
+                                if ((product as any).featuredImage?.url) {
+                                  return (
+                                    <img
+                                      className="h-10 w-10 rounded-lg object-cover"
+                                      src={(product as any).featuredImage.url}
+                                      alt={product.title}
+                                      onError={(e) => {
+                                        console.error('❌ Image load error for product:', product.id);
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
+                                  );
+                                }
+
+                                // Legacy format handling
+                                if (product.images) {
+                                  try {
+                                    let parsed = JSON.parse(product.images);
+                                    
+                                    // Handle double-encoded JSON arrays
+                                    if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'string' && parsed[0].startsWith('[')) {
+                                      try {
+                                        parsed = JSON.parse(parsed[0]);
+                                      } catch (e) {
+                                        // If parsing fails, use the original
+                                      }
+                                    }
+                                    
+                                    const firstImage = Array.isArray(parsed) ? parsed[0] : parsed;
+                                    const isValidUrl = firstImage && 
+                                                     typeof firstImage === 'string' && 
+                                                     (firstImage.startsWith('data:') || firstImage.startsWith('http') || firstImage.startsWith('/')) &&
+                                                     !firstImage.includes('[') && 
+                                                     !firstImage.includes(']') &&
+                                                     firstImage.trim() !== '';
+                                    
+                                    console.log('🖼️ Product image check:', product.id, 'Image type:', Array.isArray(parsed) ? 'array' : typeof parsed, 'First image valid:', isValidUrl);
+                                    
+                                    if (isValidUrl) {
+                                      return (
+                                        <img
+                                          className="h-10 w-10 rounded-lg object-cover"
+                                          src={firstImage}
+                                          alt={product.title}
+                                          onError={(e) => {
+                                            console.error('❌ Image load error for product:', product.id);
+                                            (e.target as HTMLImageElement).style.display = 'none';
+                                          }}
+                                        />
+                                      );
+                                    }
+                                  } catch (e) {
+                                    console.error('❌ Error parsing product images for product:', product.id, e);
+                                  }
+                                }
+
+                                // Fallback placeholder
+                                return (
+                                  <div className="h-10 w-10 rounded-lg bg-gray-200 flex items-center justify-center">
+                                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                  </div>
+                                );
+                              })()}
                             </div>
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900">{product.title}</div>
@@ -225,12 +263,22 @@ export default function ProductsPage() {
                           </span>
                         </td>
                         <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                          ${product.price.toFixed(2)}
-                          {product.compareAtPrice && (
-                            <span className="ml-2 text-xs text-gray-500 line-through">
-                              ${product.compareAtPrice.toFixed(2)}
-                            </span>
-                          )}
+                          ${(() => {
+                            const price = (product as any).price || 
+                                         parseFloat((product as any).priceRange?.minVariantPrice?.amount) || 
+                                         0;
+                            return price.toFixed(2);
+                          })()}
+                          {(() => {
+                            const comparePrice = (product as any).compareAtPrice || 
+                                                parseFloat((product as any).compareAtPriceRange?.minVariantPrice?.amount) || 
+                                                0;
+                            return comparePrice && (
+                              <span className="ml-2 text-xs text-gray-500 line-through">
+                                ${comparePrice.toFixed(2)}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="whitespace-nowrap px-6 py-4">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${

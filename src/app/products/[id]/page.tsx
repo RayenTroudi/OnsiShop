@@ -100,13 +100,31 @@ export async function generateMetadata({
     };
   }
 
+  const price = (product as any).price || 
+               parseFloat((product as any).priceRange?.minVariantPrice?.amount) || 
+               0;
+
+  // Get the correct image URL
+  const imageUrl = (() => {
+    if (product.image) {
+      return product.image;
+    }
+    if ((product as any).images && Array.isArray((product as any).images) && (product as any).images.length > 0) {
+      return (product as any).images[0].url;
+    }
+    if ((product as any).featuredImage?.url) {
+      return (product as any).featuredImage.url;
+    }
+    return null;
+  })();
+
   return {
     title: `${product.name} - ONSI Store`,
-    description: product.description || `Buy ${product.name} at ONSI Store for $${product.price.toFixed(2)}`,
+    description: product.description || `Buy ${product.name} at ONSI Store for $${price.toFixed(2)}`,
     openGraph: {
       title: `${product.name} - ONSI Store`,
-      description: product.description || `Buy ${product.name} at ONSI Store for $${product.price.toFixed(2)}`,
-      images: product.image ? [{ url: product.image }] : [],
+      description: product.description || `Buy ${product.name} at ONSI Store for $${price.toFixed(2)}`,
+      images: imageUrl ? [{ url: imageUrl }] : [],
       type: 'website',
     },
   };
@@ -153,17 +171,31 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
     '@type': 'Product',
     name: product.name,
     description: product.description,
-    image: product.image,
+    image: (() => {
+      // Handle both legacy and Shopify format
+      if (product.image) {
+        return product.image;
+      }
+      if ((product as any).images && Array.isArray((product as any).images) && (product as any).images.length > 0) {
+        return (product as any).images[0].url;
+      }
+      if ((product as any).featuredImage?.url) {
+        return (product as any).featuredImage.url;
+      }
+      return null;
+    })(),
     offers: {
       '@type': 'Offer',
-      price: product.price,
+      price: (product as any).price || 
+             parseFloat((product as any).priceRange?.minVariantPrice?.amount) || 
+             0,
       priceCurrency: 'USD',
       availability: 'https://schema.org/InStock',
     },
     aggregateRating: product.avgRating ? {
       '@type': 'AggregateRating',
       ratingValue: product.avgRating,
-      reviewCount: product._count.ratings,
+      reviewCount: (product as any)._count?.ratings || 0,
     } : undefined,
   };
 
@@ -200,7 +232,19 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
             {/* Product Image */}
             <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
               <Image
-                src={product.image || '/images/placeholder-product.svg'}
+                src={(() => {
+                  // Handle both legacy and Shopify format
+                  if (product.image) {
+                    return product.image;
+                  }
+                  if ((product as any).images && Array.isArray((product as any).images) && (product as any).images.length > 0) {
+                    return (product as any).images[0].url;
+                  }
+                  if ((product as any).featuredImage?.url) {
+                    return (product as any).featuredImage.url;
+                  }
+                  return '/images/placeholder-product.svg';
+                })()}
                 alt={product.name}
                 width={600}
                 height={600}
@@ -213,7 +257,7 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
             <div className="space-y-6">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {product.name}
+                  {product.title || product.name}
                 </h1>
                 {product.category && (
                   <p className="text-lg text-gray-600 mb-4">
@@ -221,7 +265,12 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
                   </p>
                 )}
                 <div className="text-3xl font-bold text-gray-900 mb-4">
-                  ${product.price.toFixed(2)}
+                  ${(() => {
+                    const price = (product as any).price || 
+                                 parseFloat((product as any).priceRange?.minVariantPrice?.amount) || 
+                                 0;
+                    return price.toFixed(2);
+                  })()}
                 </div>
               </div>
 
@@ -248,16 +297,24 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
                   <div className="flex space-x-3">
                     <DatabaseAddToCart 
                       productId={product.id} 
-                      availableForSale={product.stock > 0}
-                      stock={product.stock}
+                      availableForSale={(() => {
+                        const stock = (product as any).stock;
+                        const availableForSale = (product as any).availableForSale;
+                        return typeof stock === 'number' ? stock > 0 : (availableForSale !== false);
+                      })()}
+                      stock={(product as any).stock || 1}
                       className="flex-1 bg-purple text-white py-3 px-6 rounded-lg hover:bg-darkPurple transition-colors font-semibold text-center"
                     >
                       Add to Cart
                     </DatabaseAddToCart>
                     <BuyNowButton
                       productId={product.id}
-                      availableForSale={product.stock > 0}
-                      stock={product.stock}
+                      availableForSale={(() => {
+                        const stock = (product as any).stock;
+                        const availableForSale = (product as any).availableForSale;
+                        return typeof stock === 'number' ? stock > 0 : (availableForSale !== false);
+                      })()}
+                      stock={(product as any).stock || 1}
                       className="flex-1 bg-orange-500 text-white py-3 px-6 rounded-lg hover:bg-orange-600 transition-colors font-semibold text-center"
                     >
                       Buy Now
@@ -287,11 +344,27 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
                   <div className="flex">
                     <dt className="w-1/3 text-gray-600">Stock:</dt>
                     <dd className="w-2/3 text-gray-900">
-                      {product.stock > 0 ? (
-                        <span className="text-green-600">{product.stock} available</span>
-                      ) : (
-                        <span className="text-red-600">Out of stock</span>
-                      )}
+                      {(() => {
+                        // Handle both legacy and Shopify format
+                        const stock = (product as any).stock;
+                        const availableForSale = (product as any).availableForSale;
+                        
+                        if (typeof stock === 'number') {
+                          return stock > 0 ? (
+                            <span className="text-green-600">{stock} available</span>
+                          ) : (
+                            <span className="text-red-600">Out of stock</span>
+                          );
+                        } else if (typeof availableForSale === 'boolean') {
+                          return availableForSale ? (
+                            <span className="text-green-600">In stock</span>
+                          ) : (
+                            <span className="text-red-600">Out of stock</span>
+                          );
+                        } else {
+                          return <span className="text-gray-500">Stock status unknown</span>;
+                        }
+                      })()}
                     </dd>
                   </div>
                   <div className="flex">

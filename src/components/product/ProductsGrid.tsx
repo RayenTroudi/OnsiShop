@@ -186,7 +186,19 @@ export default function ProductsGrid({ category = '', search = '', sort = 'newes
               {/* Product Image */}
               <div className="aspect-square bg-gray-100 relative overflow-hidden">
                 <Image
-                  src={product.image || '/images/placeholder-product.svg'}
+                  src={(() => {
+                    // Handle both legacy and Shopify format
+                    if (product.image) {
+                      return product.image;
+                    }
+                    if ((product as any).images && Array.isArray((product as any).images) && (product as any).images.length > 0) {
+                      return (product as any).images[0].url;
+                    }
+                    if ((product as any).featuredImage?.url) {
+                      return (product as any).featuredImage.url;
+                    }
+                    return '/images/placeholder-product.svg';
+                  })()}
                   alt={product.name || product.title}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -225,13 +237,26 @@ export default function ProductsGrid({ category = '', search = '', sort = 'newes
                 {/* Price */}
                 <div className="flex items-center space-x-2">
                   <span className="text-lg font-bold text-gray-900">
-                    ${product.price.toFixed(2)}
+                    ${(() => {
+                      const price = (product as any).price || 
+                                   parseFloat((product as any).priceRange?.minVariantPrice?.amount) || 
+                                   0;
+                      return price.toFixed(2);
+                    })()}
                   </span>
-                  {product.compareAtPrice && product.compareAtPrice > product.price && (
-                    <span className="text-sm text-gray-500 line-through">
-                      ${product.compareAtPrice.toFixed(2)}
-                    </span>
-                  )}
+                  {(() => {
+                    const price = (product as any).price || 
+                                 parseFloat((product as any).priceRange?.minVariantPrice?.amount) || 
+                                 0;
+                    const comparePrice = (product as any).compareAtPrice || 
+                                        parseFloat((product as any).compareAtPriceRange?.minVariantPrice?.amount) || 
+                                        0;
+                    return comparePrice && comparePrice > price && (
+                      <span className="text-sm text-gray-500 line-through">
+                        ${comparePrice.toFixed(2)}
+                      </span>
+                    );
+                  })()}
                 </div>
               </div>
             </div>

@@ -1,7 +1,9 @@
+import { DatabaseService } from '@/lib/database';
 import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
+const db = new DatabaseService();
 
 export const dynamic = 'force-dynamic';
 
@@ -97,14 +99,11 @@ export async function GET(request: NextRequest) {
       // Remove ratings array from response and add calculated fields
       const { ratings: _, ...productData } = product;
       
+      // Transform to Shopify format with proper image structure
+      const transformedProduct = db.transformToShopifyProduct(productData);
+      
       return {
-        id: productData.id,
-        name: productData.name,
-        title: productData.title,
-        handle: productData.handle,
-        price: productData.price,
-        compareAtPrice: productData.compareAtPrice,
-        image: productData.image,
+        ...transformedProduct,
         avgRating: avgRating ? Math.round(avgRating * 10) / 10 : null,
         ratingCount: productData._count.ratings,
       };
