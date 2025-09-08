@@ -202,3 +202,16 @@ model Rating {
   @@index([productId])
   @@index([userId])
 }
+
+model Translation {
+  id        String   @id @default(cuid())
+  key       String
+  language  String
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([key, language])
+  @@index([language])
+  @@index([key])
+}

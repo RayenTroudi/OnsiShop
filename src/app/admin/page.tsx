@@ -2,15 +2,18 @@
 
 export const dynamic = 'force-dynamic';
 
+import { useTranslation } from '@/contexts/TranslationContext';
 import type { AdminCategory, AdminProduct } from '@/lib/admin/database';
 import { db } from '@/lib/admin/database';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 export default function AdminDashboard() {
+  const { t } = useTranslation();
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [contentCount, setContentCount] = useState(0);
+  const [translationCount, setTranslationCount] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -23,6 +26,9 @@ export default function AdminDashboard() {
     
     // Fetch content count
     fetchContentCount();
+    
+    // Fetch translation count
+    fetchTranslationCount();
     
     setIsLoaded(true);
   }, []);
@@ -39,10 +45,22 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchTranslationCount = async () => {
+    try {
+      const response = await fetch('/api/translations?language=fr');
+      const result = await response.json();
+      if (response.ok && result) {
+        setTranslationCount(Object.keys(result).length);
+      }
+    } catch (error) {
+      console.error('Error fetching translation count:', error);
+    }
+  };
+
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg text-gray-600">Loading dashboard...</div>
+        <div className="text-lg text-gray-600">{t('common_loading')}</div>
       </div>
     );
   }
@@ -50,7 +68,7 @@ export default function AdminDashboard() {
   return (
     <div className="px-4 py-6 sm:px-0">
       {/* Dashboard Stats */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5 mb-8">
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
@@ -63,7 +81,7 @@ export default function AdminDashboard() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Total Products</dt>
+                  <dt className="text-sm font-medium text-gray-500 truncate">{t('admin_total_products')}</dt>
                   <dd className="text-lg font-medium text-gray-900">{products.length}</dd>
                 </dl>
               </div>
@@ -83,7 +101,7 @@ export default function AdminDashboard() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Categories</dt>
+                  <dt className="text-sm font-medium text-gray-500 truncate">{t('nav_categories')}</dt>
                   <dd className="text-lg font-medium text-gray-900">{categories.length}</dd>
                 </dl>
               </div>
@@ -103,7 +121,7 @@ export default function AdminDashboard() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Content Items</dt>
+                  <dt className="text-sm font-medium text-gray-500 truncate">{t('admin_content_items')}</dt>
                   <dd className="text-lg font-medium text-gray-900">{contentCount}</dd>
                 </dl>
               </div>
@@ -123,10 +141,30 @@ export default function AdminDashboard() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Available Products</dt>
+                  <dt className="text-sm font-medium text-gray-500 truncate">{t('admin_available_products')}</dt>
                   <dd className="text-lg font-medium text-gray-900">
                     {products.filter(p => p.availableForSale).length}
                   </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                  </svg>
+                </div>
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">{t('admin_translation_keys')}</dt>
+                  <dd className="text-lg font-medium text-gray-900">{translationCount}</dd>
                 </dl>
               </div>
             </div>
@@ -137,7 +175,7 @@ export default function AdminDashboard() {
       {/* Quick Actions */}
       <div className="bg-white shadow rounded-lg mb-8">
         <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Quick Actions</h3>
+          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">{t('admin_quick_actions')}</h3>
           <div className="flex flex-wrap gap-4">
             <Link
               href="/admin/products/new"
@@ -146,7 +184,7 @@ export default function AdminDashboard() {
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              Add Product
+              {t('admin_add_product')}
             </Link>
             <Link
               href="/admin/categories/new"
@@ -155,7 +193,7 @@ export default function AdminDashboard() {
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
               </svg>
-              Add Category
+              {t('admin_add_category')}
             </Link>
             <Link
               href="/admin/content"
@@ -164,7 +202,7 @@ export default function AdminDashboard() {
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              Manage Content
+              {t('admin_manage_content')}
             </Link>
             <Link
               href="/admin/products"
@@ -173,7 +211,7 @@ export default function AdminDashboard() {
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
-              Manage Products
+              {t('admin_manage_products')}
             </Link>
             <Link
               href="/admin/categories"
@@ -182,7 +220,16 @@ export default function AdminDashboard() {
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
               </svg>
-              Manage Categories
+              {t('admin_manage_categories')}
+            </Link>
+            <Link
+              href="/admin/translations"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+              </svg>
+              {t('admin_manage_translations')}
             </Link>
           </div>
         </div>
@@ -191,25 +238,25 @@ export default function AdminDashboard() {
       {/* Recent Products */}
       <div className="bg-white shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Recent Products</h3>
+          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">{t('admin_recent_products')}</h3>
           {products.length === 0 ? (
-            <p className="text-gray-500">No products yet. Create your first product to get started!</p>
+            <p className="text-gray-500">{t('admin_no_products_yet')}</p>
           ) : (
             <div className="overflow-hidden">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Product
+                      {t('nav_products')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Category
+                      {t('admin_category')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Price
+                      {t('product_price')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                      {t('admin_status')}
                     </th>
                   </tr>
                 </thead>
@@ -284,7 +331,7 @@ export default function AdminDashboard() {
                             ? 'bg-green-100 text-green-800' 
                             : 'bg-red-100 text-red-800'
                         }`}>
-                          {product.availableForSale ? 'Available' : 'Unavailable'}
+                          {product.availableForSale ? t('product_in_stock') : t('product_out_of_stock')}
                         </span>
                       </td>
                     </tr>

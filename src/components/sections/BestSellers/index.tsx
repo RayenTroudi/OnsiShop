@@ -6,6 +6,9 @@ import { useEffect, useState } from 'react';
 // clsx
 import clsx from 'clsx';
 
+// translation
+import { useTranslation } from '@/contexts/TranslationContext';
+
 // components
 import Slider from './Slider';
 
@@ -16,6 +19,7 @@ interface Category {
 }
 
 const BestSellers = () => {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCollection, setActiveCollection] = useState<string>('');
 
@@ -66,7 +70,7 @@ const BestSellers = () => {
   return (
     <section className="flex w-full flex-col items-center justify-center gap-[24px] pb-[32px] pt-[24px] md:gap-[48px] md:pb-[64px] md:pt-[48px]">
       <div className="flex w-full max-w-[95%] flex-col items-center justify-center gap-2 font-lora font-medium text-veryDarkPurple md:w-[904px] md:flex-row md:justify-between md:gap-0">
-        <h2 className="text-[clamp(28px,20px_+_2vw,40px)]">Best Sellers</h2>
+        <h2 className="text-[clamp(28px,20px_+_2vw,40px)]">{t('section_best_sellers')}</h2>
         <div className="flex gap-4 text-[clamp(20px,10px_+_2vw,26px)] md:gap-8">
           {categories.map((category) => (
             <button

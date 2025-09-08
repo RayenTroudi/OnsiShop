@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from '@/contexts/TranslationContext';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -12,6 +13,7 @@ interface User {
 }
 
 export default function UserMenu() {
+  const { t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -89,13 +91,13 @@ export default function UserMenu() {
       <Link 
         href="/login" 
         className="flex h-full items-center justify-center [&>*]:transition-all [&>*]:duration-300 hover:[&>*]:opacity-50"
-        title="Login"
+        title={t('nav_login')}
       >
         <Image 
           src="/images/profile.png" 
           width="36" 
           height="36" 
-          alt="Login" 
+          alt={t('nav_login')} 
           className="transition-all duration-300"
         />
       </Link>
@@ -113,7 +115,7 @@ export default function UserMenu() {
           src="/images/profile.png" 
           width="36" 
           height="36" 
-          alt="User Menu" 
+          alt={t('menu_profile')} 
           className="transition-all duration-300"
         />
       </button>
@@ -126,21 +128,21 @@ export default function UserMenu() {
           href="/orders"
           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
         >
-          📦 My Orders
+          📦 {t('nav_orders')}
         </Link>
         {user.isAdmin && (
           <Link
             href="/admin"
             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           >
-            🛠️ Admin Dashboard
+            🛠️ {t('menu_admin')}
           </Link>
         )}
         <button
           onClick={handleLogout}
           className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
         >
-          🚪 Logout
+          🚪 {t('nav_logout')}
         </button>
       </div>
     </div>

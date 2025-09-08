@@ -9,6 +9,7 @@ import CartIconWrapper from '@/components/cart/CartIconWrapper';
 import Logo from '@/components/layout/Logo';
 import { Suspense } from 'react';
 import ClientMenu from './ClientMenu';
+import LanguageSelector from './LanguageSelector';
 import SearchIcon from './SearchIcon';
 import UserMenu from './UserMenu';
 
@@ -104,7 +105,10 @@ const Header = async () => {
           </div>
           
           {/* Right side actions */}
-          <div className="flex h-full items-center justify-end space-x-4 md:w-32 xl:w-40">
+          <div className="flex h-full items-center justify-end space-x-4 md:w-40 xl:w-48">
+            <div className="flex h-full items-center justify-center">
+              <LanguageSelector />
+            </div>
             <div className="flex h-full items-center justify-center">
               <SearchIcon />
             </div>

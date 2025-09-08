@@ -2,6 +2,7 @@
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
+import { TranslationProvider } from '@/contexts/TranslationContext';
 
 interface ClientProvidersProps {
   children: React.ReactNode;
@@ -23,10 +24,12 @@ function CartProviderWrapper({ children }: { children: React.ReactNode }) {
 
 export default function ClientProviders({ children }: ClientProvidersProps) {
   return (
-    <AuthProvider>
-      <CartProviderWrapper>
-        {children}
-      </CartProviderWrapper>
-    </AuthProvider>
+    <TranslationProvider defaultLanguage="fr">
+      <AuthProvider>
+        <CartProviderWrapper>
+          {children}
+        </CartProviderWrapper>
+      </AuthProvider>
+    </TranslationProvider>
   );
 }
