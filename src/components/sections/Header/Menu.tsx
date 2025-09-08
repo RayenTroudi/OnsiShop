@@ -27,12 +27,12 @@ const Menu = ({ menu }: { menu: MenuType[] }) => {
     { title: 'All Products', path: '/products', items: [] }
   ];
 
-  // Check if this is a special category
-  const getItemVariant = (title: string) => {
-    if (title.toLowerCase().includes('best sellers') || title.toLowerCase().includes('bestsellers')) {
+  // Check if this is a special category - use original title, not translated
+  const getItemVariant = (originalTitle: string) => {
+    if (originalTitle.toLowerCase().includes('best sellers') || originalTitle.toLowerCase().includes('bestsellers')) {
       return 'featured';
     }
-    if (title.toLowerCase().includes('new') || title.toLowerCase().includes('arrivals')) {
+    if (originalTitle.toLowerCase().includes('new') || originalTitle.toLowerCase().includes('arrivals')) {
       return 'new';
     }
     return 'default';
@@ -76,7 +76,7 @@ const Menu = ({ menu }: { menu: MenuType[] }) => {
         <nav className="hidden h-full md:flex md:items-center">
           <ul className="flex h-full items-center gap-1 lg:gap-2 xl:gap-3">
             {menuItems.map((item: MenuType, index) => {
-              const variant = getItemVariant(item.title);
+              const variant = getItemVariant(item.title); // Use original title for variant detection
               const styles = getItemStyles(variant);
               
               return (
