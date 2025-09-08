@@ -1,6 +1,7 @@
 'use client';
 
 import { useCart } from '@/contexts/CartContext';
+import { useTranslation } from '@/contexts/TranslationContext';
 import { useState } from 'react';
 
 interface AddToCartButtonProps {
@@ -17,6 +18,7 @@ export default function AddToCartButton({
   disabled = false 
 }: AddToCartButtonProps) {
   const { addToCart } = useCart();
+  const { t } = useTranslation();
   const [isAdding, setIsAdding] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [justAdded, setJustAdded] = useState(false);
@@ -36,7 +38,7 @@ export default function AddToCartButton({
       }, 2000);
     } catch (error) {
       console.error('Error adding to cart:', error);
-      alert('Failed to add item to cart. Please try again.');
+      alert(t('product_add_to_cart_error'));
     } finally {
       setIsAdding(false);
     }
@@ -50,7 +52,7 @@ export default function AddToCartButton({
       {/* Quantity Selector */}
       <div className="flex items-center space-x-4">
         <label htmlFor="quantity" className="text-sm font-medium text-gray-700">
-          Quantity:
+          {t('product_quantity')}:
         </label>
         <div className="flex items-center border border-gray-300 rounded-md">
           <button
@@ -80,7 +82,7 @@ export default function AddToCartButton({
           </button>
         </div>
         <span className="text-sm text-gray-500">
-          {stock > 0 ? `${stock} available` : 'Out of stock'}
+          {stock > 0 ? `${stock} ${t('product_available')}` : t('product_out_of_stock')}
         </span>
       </div>
 
@@ -104,21 +106,21 @@ export default function AddToCartButton({
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            Adding...
+            {t('product_adding_to_cart')}
           </span>
         ) : isOutOfStock ? (
-          'Out of Stock'
+          t('product_out_of_stock')
         ) : justAdded ? (
-          '✓ Added to Cart!'
+          `✓ ${t('product_added_to_cart')}`
         ) : (
-          'Add to Cart'
+          t('product_add_to_cart')
         )}
       </button>
 
       {/* Stock Warning */}
       {stock > 0 && stock <= 5 && (
         <p className="text-sm text-orange-600">
-          ⚠️ Only {stock} left in stock!
+          ⚠️ {t('product_only_left_in_stock').replace('{stock}', stock.toString())}
         </p>
       )}
     </div>

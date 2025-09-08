@@ -1,15 +1,18 @@
 'use client';
 
+import { useTranslation } from '@/contexts/TranslationContext';
+
 export default function Error({ reset }: { reset: () => void }) {
+  const { t } = useTranslation();
+  
   return (
     <div className="mx-auto my-16 flex max-w-xl flex-col gap-2">
-      <h2 className="text-xl font-bold text-veryDarkPurple">Error!</h2>
+      <h2 className="text-xl font-bold text-veryDarkPurple">{t('error_title')}</h2>
       <p className="my-2 text-darkPurple">
-        There was an issue with our storefront. This could be a temporary issue, please try your
-        action again.
+        {t('error_message')}
       </p>
       <button className="btn text-[20px]" onClick={() => reset()}>
-        Try Again
+        {t('error_try_again')}
       </button>
     </div>
   );

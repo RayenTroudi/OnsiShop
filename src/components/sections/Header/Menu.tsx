@@ -4,9 +4,24 @@ import Link from 'next/link';
 
 import SubMenu from './SubMenu';
 
+import { useTranslation } from '@/contexts/TranslationContext';
 import { Menu as MenuType } from '@/lib/types';
 
 const Menu = ({ menu }: { menu: MenuType[] }) => {
+  const { t } = useTranslation();
+  
+  // Translation key mapping for menu items
+  const getTranslatedTitle = (title: string) => {
+    const titleMap: Record<string, string> = {
+      'Best Sellers': 'nav_best_sellers',
+      'New Arrivals': 'nav_new_arrivals', 
+      'Clothing': 'nav_clothing',
+      'Accessories': 'nav_accessories'
+    };
+    const translationKey = titleMap[title];
+    return translationKey ? t(translationKey) : title;
+  };
+
   // Show actual categories if available, otherwise show "All Products"
   const menuItems = menu && menu.length > 0 ? menu : [
     { title: 'All Products', path: '/products', items: [] }
@@ -111,7 +126,7 @@ const Menu = ({ menu }: { menu: MenuType[] }) => {
                     
                     {/* Text with optional badge */}
                     <span className={styles.text}>
-                      {item.title}
+                      {getTranslatedTitle(item.title)}
                       {styles.badge && (
                         <span className="ml-2 inline-flex h-2 w-2 rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 animate-pulse" />
                       )}

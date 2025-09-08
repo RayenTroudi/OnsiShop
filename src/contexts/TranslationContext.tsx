@@ -10,7 +10,7 @@ interface TranslationProviderProps {
   defaultLanguage?: Language;
 }
 
-export function TranslationProvider({ children, defaultLanguage = 'fr' }: TranslationProviderProps) {
+export function TranslationProvider({ children, defaultLanguage = 'en' }: TranslationProviderProps) {
   const [language, setLanguage] = useState<Language>(defaultLanguage);
   const [translations, setTranslations] = useState<TranslationResponse>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +40,8 @@ export function TranslationProvider({ children, defaultLanguage = 'fr' }: Transl
     
     const fetchTranslations = async () => {
       setIsLoading(true);
+      console.log(`🔄 Fetching translations for language: ${language}`);
+      
       try {
         const response = await fetch(`/api/translations?language=${language}`, {
           cache: 'no-store',
@@ -51,6 +53,14 @@ export function TranslationProvider({ children, defaultLanguage = 'fr' }: Transl
           const data = await response.json();
           setTranslations(data);
           console.log(`✅ Loaded ${Object.keys(data).length} translations for ${language}`);
+          
+          // Debug: log some key translations
+          const debugKeys = ['hero_title', 'promo_title', 'about_title'];
+          debugKeys.forEach(key => {
+            if (data[key]) {
+              console.log(`🔍 ${key}: "${data[key]}"`);
+            }
+          });
         } else {
           console.error('Failed to fetch translations:', response.status, response.statusText);
           // Fallback to empty object but don't reset existing translations
@@ -77,8 +87,13 @@ export function TranslationProvider({ children, defaultLanguage = 'fr' }: Transl
     if (translation) {
       return translation;
     }
-    // Return the key as fallback instead of empty string
-    console.log(`⚠️ Missing translation for key: ${key} (language: ${language})`);
+    
+    // Only show warnings if we're not loading and have completed initialization
+    // This reduces noise during initial SSR/hydration
+    if (!isLoading && isInitialized && Object.keys(translations).length > 0) {
+      console.log(`⚠️ Missing translation for key: ${key} (language: ${language})`);
+    }
+    
     return key;
   };
 

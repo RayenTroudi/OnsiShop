@@ -10,6 +10,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const language = searchParams.get('language') as Language;
 
+    console.log(`🔍 Translation API called for language: ${language}`);
+
     if (!language) {
       return NextResponse.json(
         { error: 'Language parameter is required' },
@@ -25,52 +27,32 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Use raw query to avoid Prisma type issues
-    const translations = await prisma.$queryRaw`
-      SELECT key, text 
-      FROM Translation 
-      WHERE language = ${language}
-    ` as Array<{ key: string; text: string }>;
+    console.log(`📊 Querying database for language: ${language}`);
+
+    // Use Prisma to get translations for the requested language
+    const translations = await (prisma as any).Translation.findMany({
+      where: {
+        language: language
+      },
+      select: {
+        key: true,
+        text: true
+      }
+    });
+
+    console.log(`📊 Found ${translations.length} translations for language: ${language}`);
 
     // Convert to key-value pairs
     const translationsMap: Record<string, string> = {};
-    translations.forEach((translation) => {
+    translations.forEach((translation: { key: string; text: string }) => {
       translationsMap[translation.key] = translation.text;
     });
 
-    // If not French, also get French fallbacks for missing keys
-    if (language !== 'fr') {
-      const usedKeys = translations.map(t => t.key);
-      const keyPlaceholders = usedKeys.map(() => '?').join(',');
-      
-      let frenchTranslations: Array<{ key: string; text: string }> = [];
-      
-      if (usedKeys.length > 0) {
-        frenchTranslations = await prisma.$queryRaw`
-          SELECT key, text 
-          FROM Translation 
-          WHERE language = 'fr' 
-          AND key NOT IN (${usedKeys.join(',')})
-        ` as Array<{ key: string; text: string }>;
-      } else {
-        frenchTranslations = await prisma.$queryRaw`
-          SELECT key, text 
-          FROM Translation 
-          WHERE language = 'fr'
-        ` as Array<{ key: string; text: string }>;
-      }
-
-      // Add French fallbacks
-      frenchTranslations.forEach((translation) => {
-        if (!translationsMap[translation.key]) {
-          translationsMap[translation.key] = translation.text;
-        }
-      });
-    }
+    console.log(`📊 Returning ${Object.keys(translationsMap).length} translations as map`);
 
     return NextResponse.json(translationsMap);
   } catch (error) {
-    console.error('Error fetching translations:', error);
+    console.error('❌ Error fetching translations:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -98,34 +80,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if translation exists
-    const existing = await prisma.$queryRaw`
-      SELECT id FROM Translation 
-      WHERE key = ${key} AND language = ${language}
-    ` as Array<{ id: string }>;
-
-    let result;
-    if (existing.length > 0) {
-      // Update existing
-      result = await prisma.$executeRaw`
-        UPDATE Translation 
-        SET text = ${text}, updatedAt = datetime('now') 
-        WHERE key = ${key} AND language = ${language}
-      `;
-    } else {
-      // Create new
-      result = await prisma.$executeRaw`
-        INSERT INTO Translation (id, key, language, text, createdAt, updatedAt) 
-        VALUES (lower(hex(randomblob(12))), ${key}, ${language}, ${text}, datetime('now'), datetime('now'))
-      `;
-    }
+    // Use Prisma upsert
+    const result = await (prisma as any).Translation.upsert({
+      where: {
+        key_language: {
+          key: key,
+          language: language
+        }
+      },
+      update: {
+        text: text
+      },
+      create: {
+        key: key,
+        language: language,
+        text: text
+      }
+    });
 
     return NextResponse.json({ 
       success: true, 
       key, 
       language, 
       text,
-      action: existing.length > 0 ? 'updated' : 'created'
+      action: result.createdAt === result.updatedAt ? 'created' : 'updated'
     });
   } catch (error) {
     console.error('Error saving translation:', error);

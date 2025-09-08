@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useTranslation } from '@/contexts/TranslationContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -19,6 +20,7 @@ interface CheckoutFormProps {
 export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps) {
   const { user } = useAuth();
   const { cart, clearCart, loading, refreshCart } = useCart();
+  const { t } = useTranslation();
   const router = useRouter();
   
   const [formData, setFormData] = useState<CheckoutFormData>({
@@ -62,21 +64,21 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
     const newErrors: Partial<CheckoutFormData> = {};
 
     if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
+      newErrors.fullName = t('checkout_full_name_required');
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t('checkout_email_required');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = t('checkout_email_invalid');
     }
 
     if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
+      newErrors.phone = t('checkout_phone_required');
     }
 
     if (!formData.shippingAddress.trim()) {
-      newErrors.shippingAddress = 'Shipping address is required';
+      newErrors.shippingAddress = t('checkout_address_required');
     }
 
     setErrors(newErrors);

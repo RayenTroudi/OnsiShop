@@ -1,9 +1,15 @@
+'use client';
+
+import { useTranslation } from '@/contexts/TranslationContext';
+
 const CopyRight = () => {
+  const { t } = useTranslation();
+  
   return (
     <p className="text-center text-darkPurple">
-      Copyright © 2023 Rashid Shamloo
+      {t('footer_copyright')}
       <br />
-      All Rights Reserved
+      {t('footer_all_rights_reserved')}
     </p>
   );
 };

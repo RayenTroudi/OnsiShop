@@ -2,12 +2,14 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useTranslation } from '@/contexts/TranslationContext';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function CartPage() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const { 
     cart, 
     loading, 
@@ -46,7 +48,7 @@ export default function CartPage() {
     return (
       <div className="max-w-4xl mx-auto p-6">
         <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Loading cart...</div>
+          <div className="text-lg">{t('cart_loading')}</div>
         </div>
       </div>
     );
@@ -65,14 +67,14 @@ export default function CartPage() {
   if (!cart || cart.items.length === 0) {
     return (
       <div className="max-w-4xl mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
+        <h1 className="text-3xl font-bold mb-8">{t('cart_title')}</h1>
         <div className="text-center py-12">
-          <div className="text-gray-500 text-lg">Your cart is empty</div>
+          <div className="text-gray-500 text-lg">{t('cart_empty')}</div>
           <a 
             href="/"
             className="mt-4 inline-block bg-purple text-white px-6 py-2 rounded hover:bg-purple/80"
           >
-            Continue Shopping
+            {t('cart_continue_shopping')}
           </a>
         </div>
       </div>
@@ -81,7 +83,7 @@ export default function CartPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
+      <h1 className="text-3xl font-bold mb-8">{t('cart_title')}</h1>
       
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         {/* Cart Items */}
@@ -150,7 +152,7 @@ export default function CartPage() {
                     })()}
                   </p>
                   <p className="text-sm text-gray-500">
-                    Stock: {product.stock} available
+                    {t('cart_stock')}: {product.stock} {t('cart_available')}
                   </p>
                 </div>
 
@@ -202,10 +204,10 @@ export default function CartPage() {
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm text-gray-600">
-                Total Items: {cart.totalItems}
+                {t('cart_total_items')}: {cart.totalItems}
               </p>
               <p className="text-2xl font-bold text-gray-900">
-                Total: ${cart.totalAmount.toFixed(2)}
+                {t('cart_total')}: ${cart.totalAmount.toFixed(2)}
               </p>
             </div>
             
@@ -214,14 +216,14 @@ export default function CartPage() {
                 href="/"
                 className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
               >
-                Continue Shopping
+                {t('cart_continue_shopping')}
               </a>
               <button
                 onClick={handleCheckout}
                 disabled={cart.items.length === 0}
                 className="px-6 py-2 bg-purple text-white rounded-md hover:bg-purple/80 disabled:opacity-50"
               >
-                {!user ? 'Login to Checkout' : 'Checkout'}
+                {!user ? t('cart_login_to_checkout') : t('cart_checkout')}
               </button>
             </div>
           </div>

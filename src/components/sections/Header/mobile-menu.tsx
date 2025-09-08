@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Fragment, useEffect, useState } from 'react';
 
+import { useTranslation } from '@/contexts/TranslationContext';
 import { Menu } from '@/lib/types';
 import { Spin as Hamburger } from 'hamburger-react';
 import SearchWrapper from './SearchWrapper';
@@ -13,7 +14,20 @@ export default function MobileMenu({ menu }: { menu: Menu[] }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useTranslation();
   const closeMobileMenu = () => setIsOpen(false);
+
+  // Translation key mapping for menu items
+  const getTranslatedTitle = (title: string) => {
+    const titleMap: Record<string, string> = {
+      'Best Sellers': 'nav_best_sellers',
+      'New Arrivals': 'nav_new_arrivals', 
+      'Clothing': 'nav_clothing',
+      'Accessories': 'nav_accessories'
+    };
+    const translationKey = titleMap[title];
+    return translationKey ? t(translationKey) : title;
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -87,9 +101,9 @@ export default function MobileMenu({ menu }: { menu: Menu[] }) {
                           >
                             <span className="flex items-center">
                               <span className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-purple to-darkPurple text-sm font-bold text-white">
-                                {item.title.charAt(0)}
+                                {getTranslatedTitle(item.title).charAt(0)}
                               </span>
-                              {item.title}
+                              {getTranslatedTitle(item.title)}
                             </span>
                             <div className="h-1.5 w-1.5 rounded-full bg-purple opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                           </Link>
@@ -102,7 +116,7 @@ export default function MobileMenu({ menu }: { menu: Menu[] }) {
                                     onClick={closeMobileMenu}
                                     className="block rounded-lg px-4 py-3 text-base font-medium text-darkPurple transition-all duration-300 hover:bg-lightPurple/40 hover:text-purple active:scale-95"
                                   >
-                                    {subItem.title}
+                                    {getTranslatedTitle(subItem.title)}
                                   </Link>
                                 </li>
                               ))}

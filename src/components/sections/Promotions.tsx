@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from '@/contexts/TranslationContext';
 import { useEffect, useState } from 'react';
 // next
 import Image from 'next/image';
@@ -9,23 +10,18 @@ import { Parallax, ParallaxProvider } from 'react-scroll-parallax';
 
 interface PromotionContent {
   backgroundImage: string;
-  title: string;
-  subtitle: string;
-  buttonText: string;
   buttonLink: string;
 }
 
 const Promotions = () => {
+  const { t } = useTranslation();
   const [content, setContent] = useState<PromotionContent>({
     backgroundImage: '/images/placeholder.jpg',
-    title: 'Stay Warm,\nStay Stylish',
-    subtitle: 'Stay cozy and fashionable this winter with our winter collection!',
-    buttonText: 'View Collection',
     buttonLink: '/search/winter-2024'
   });
 
   useEffect(() => {
-    // Load promotion content from database
+    // Load promotion content from database (only background image and link)
     const fetchContent = async () => {
       try {
         // Add cache busting to force fresh data
@@ -45,9 +41,6 @@ const Promotions = () => {
           if (result.success && result.data) {
             const newContent = {
               backgroundImage: result.data['promotion.backgroundImage'] || '/images/placeholder.jpg',
-              title: result.data['promotion.title'] || 'Stay Warm,\nStay Stylish',
-              subtitle: result.data['promotion.subtitle'] || 'Stay cozy and fashionable this winter with our winter collection!',
-              buttonText: result.data['promotion.buttonText'] || 'View Collection',
               buttonLink: result.data['promotion.buttonLink'] || '/search/winter-2024'
             };
             
@@ -72,9 +65,6 @@ const Promotions = () => {
         
         setContent(prevContent => ({
           backgroundImage: updatedContent['promotion.backgroundImage'] || prevContent.backgroundImage,
-          title: updatedContent['promotion.title'] || prevContent.title,
-          subtitle: updatedContent['promotion.subtitle'] || prevContent.subtitle,
-          buttonText: updatedContent['promotion.buttonText'] || prevContent.buttonText,
           buttonLink: updatedContent['promotion.buttonLink'] || prevContent.buttonLink
         }));
       } catch (error) {
@@ -122,18 +112,18 @@ const Promotions = () => {
         </div>
         <div className="absolute right-[5%] top-[50%] flex w-[65%] max-w-[610px] flex-col items-center justify-center gap-[16px] rounded-[16px] bg-white/30 p-[16px] text-center -translate-y-1/2 md:gap-[32px] md:p-[32px]">
           <h3 className="font-lora text-[clamp(24px,14px_+_2vw,60px)] font-bold leading-[1.5] text-white drop-shadow-md">
-            {content.title.split('\n').map((line, i) => (
+            {t('promo_title').split('\n').map((line: string, i: number) => (
               <span key={i}>
                 {line}
-                {i < content.title.split('\n').length - 1 && <br />}
+                {i < t('promo_title').split('\n').length - 1 && <br />}
               </span>
             ))}
           </h3>
           <p className="text-[clamp(18px,10px_+_2vw,32px)] font-semibold text-veryDarkPurple drop-shadow-md">
-            {content.subtitle}
+            {t('promo_subtitle')}
           </p>
           <a className="btn text-[clamp(16px,8px_+_2vw,22px)]" href={content.buttonLink}>
-            {content.buttonText}
+            {t('promo_button')}
           </a>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 
 // data
+import { useTranslation } from '@/contexts/TranslationContext';
 import clothingImages from '@/data/clothing-images.json';
 import clsx from 'clsx';
 import Image from 'next/image';
@@ -19,6 +20,19 @@ const SubMenu = ({
   items: { title: string; path: string }[];
   parent: string;
 }) => {
+  const { t } = useTranslation();
+  
+  // Translation key mapping for menu items
+  const getTranslatedTitle = (title: string) => {
+    const titleMap: Record<string, string> = {
+      'Best Sellers': 'nav_best_sellers',
+      'New Arrivals': 'nav_new_arrivals', 
+      'Clothing': 'nav_clothing',
+      'Accessories': 'nav_accessories'
+    };
+    const translationKey = titleMap[title];
+    return translationKey ? t(translationKey) : title;
+  };
   return (
     <div
       className="pointer-events-none absolute left-0 right-0 top-[79px] z-40 flex items-center justify-center border-t border-purple bg-white/70 py-[24px] opacity-0 backdrop-blur-lg transition-all duration-500"
@@ -26,10 +40,10 @@ const SubMenu = ({
     >
       <div className="flex w-full max-w-[670px] items-stretch justify-between">
         <nav className="flex flex-col items-start justify-start gap-6">
-          <h3 className="sr-only">{parent} Sub Menu</h3>
+          <h3 className="sr-only">{getTranslatedTitle(parent)} Sub Menu</h3>
           {items.map((item, i) => (
             <Link href={item.path} key={i} className="hover-line">
-              {item.title}
+              {getTranslatedTitle(item.title)}
             </Link>
           ))}
         </nav>

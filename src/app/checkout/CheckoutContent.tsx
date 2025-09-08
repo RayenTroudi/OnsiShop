@@ -2,11 +2,13 @@
 
 import OrderCheckoutForm from '@/components/checkout/OrderCheckoutForm';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/TranslationContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function CheckoutContent() {
   const { user, loading } = useAuth();
+  const { t } = useTranslation();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
@@ -35,15 +37,15 @@ export default function CheckoutContent() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="max-w-md mx-auto text-center p-6">
-          <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
+          <h1 className="text-2xl font-bold mb-4">{t('checkout_auth_required')}</h1>
           <p className="text-gray-600 mb-6">
-            Please log in to continue with your checkout.
+            {t('checkout_login_prompt')}
           </p>
           <button
             onClick={() => router.push('/login?redirect=/checkout')}
             className="px-6 py-3 bg-purple text-white rounded-md hover:bg-purple/80"
           >
-            Go to Login
+            {t('checkout_go_to_login')}
           </button>
         </div>
       </div>

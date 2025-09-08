@@ -1,9 +1,11 @@
 'use client';
 
+import { useTranslation } from '@/contexts/TranslationContext';
 import { DEFAULT_CONTENT_VALUES, getContentValue } from '@/lib/content';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const HeroSection = () => {
+  const { t } = useTranslation();
   const [content, setContent] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
@@ -240,7 +242,7 @@ const HeroSection = () => {
             {/* Hidden img tag for accessibility and SEO */}
             <img 
               src={backgroundImage} 
-              alt="winter collection" 
+              alt={t('hero_alt_text')} 
               className="sr-only" 
               aria-hidden="true"
             />
@@ -297,7 +299,7 @@ const HeroSection = () => {
           <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
             <div className="flex flex-col items-center space-y-2">
               <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              <p className="text-white text-sm">Loading video...</p>
+              <p className="text-white text-sm">{t('loading_video')}</p>
             </div>
           </div>
         )}
@@ -319,15 +321,15 @@ const HeroSection = () => {
       {/* Content */}
       <div className="relative z-20 max-w-4xl mx-auto px-4 text-center">
         <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent drop-shadow-lg">
-          {title}
+          {t('hero_title')}
         </h1>
         
         <h2 className="text-xl md:text-2xl font-medium mb-6 text-purple-100 drop-shadow-md">
-          {subtitle}
+          {t('hero_subtitle')}
         </h2>
         
         <p className="text-lg md:text-xl mb-8 max-w-3xl mx-auto leading-relaxed text-white/90 drop-shadow-md">
-          {description}
+          {t('hero_description')}
         </p>
       </div>
       

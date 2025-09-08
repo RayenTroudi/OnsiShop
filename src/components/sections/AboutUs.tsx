@@ -1,26 +1,22 @@
-import { DEFAULT_CONTENT_VALUES, getContentValue } from '@/lib/content';
+'use client';
 
-const AboutUs = async () => {
-  // Use default content values for now to avoid API calls during SSR
-  // TODO: Implement proper content management with static generation
-  const content = {};
-  
-  const title = getContentValue(content, 'about.title', DEFAULT_CONTENT_VALUES['about.title']);
-  const description = getContentValue(content, 'about.description', DEFAULT_CONTENT_VALUES['about.description']);
-  const buttonText = getContentValue(content, 'about.buttonText', DEFAULT_CONTENT_VALUES['about.buttonText']);
+import { useTranslation } from '@/contexts/TranslationContext';
+
+const AboutUs = () => {
+  const { t } = useTranslation();
 
   return (
     <section className="flex items-center justify-center border-t-[1px] border-purple bg-lightPurple py-[48px] md:py-[64px]">
-      <h2 className="sr-only">About us</h2>
+      <h2 className="sr-only">{t('section_about_us_title')}</h2>
       <div className="flex max-w-[95%] flex-col items-center justify-center gap-[32px] text-center md:max-w-[700px]">
         <h3 className="font-lora text-[clamp(28px,18px_+_2vw,40px)] font-semibold text-veryDarkPurple">
-          {title}
+          {t('about_title')}
         </h3>
         <p className="max-w-[90%] font-lora text-[clamp(20px,14px_+_2vw,24px)] font-medium leading-relaxed text-darkPurple md:max-w-none md:leading-normal">
-          {description}
+          {t('about_description')}
         </p>
         <a href="/about-us" className="btn-very-dark mt-2 text-[clamp(18px,10px_+_2vw,22px)]">
-          {buttonText}
+          {t('about_button_text')}
         </a>
       </div>
     </section>
