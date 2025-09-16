@@ -186,6 +186,25 @@ export default function ContentAdmin() {
       return;
     }
 
+    // Check file size before upload
+    const fileSizeMB = newMediaFile.size / (1024 * 1024);
+    const isVideo = newMediaFile.type.startsWith('video/');
+    const isImage = newMediaFile.type.startsWith('image/');
+    
+    let maxSizeMB: number;
+    if (isVideo) {
+      maxSizeMB = 5; // Reduced from 50MB to 5MB for database storage
+    } else if (isImage) {
+      maxSizeMB = 5; // Reduced to 5MB for better performance
+    } else {
+      maxSizeMB = 5;
+    }
+
+    if (fileSizeMB > maxSizeMB) {
+      alert(`File too large. Maximum size is ${maxSizeMB}MB for ${newMediaFile.type.split('/')[0]} files.\nCurrent file size: ${Math.round(fileSizeMB * 100) / 100}MB\n\nPlease compress your file or use a smaller file.`);
+      return;
+    }
+
     const formData = new FormData();
     formData.append('file', newMediaFile);
     formData.append('section', newMediaSection);
@@ -205,11 +224,38 @@ export default function ContentAdmin() {
         setNewMediaAlt('');
         alert('Media uploaded successfully!');
       } else {
-        throw new Error('Failed to upload media');
+        // Try to parse error response
+        let errorMessage = 'Failed to upload media';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+          if (errorData.details) {
+            errorMessage += `\n\nDetails: ${errorData.details}`;
+          }
+        } catch (parseError) {
+          // If response is not JSON, handle common HTTP status codes
+          if (response.status === 413) {
+            errorMessage = `File too large for server. The server has a request size limit.\n\nFile size: ${Math.round(fileSizeMB * 100) / 100}MB\n\nPlease use a smaller file (under 5MB recommended).`;
+          } else if (response.status === 400) {
+            errorMessage = 'Invalid file or request. Please check the file type and try again.';
+          } else if (response.status === 500) {
+            errorMessage = 'Server error occurred while processing the file. Please try again or use a smaller file.';
+          }
+        }
+        
+        alert(errorMessage);
       }
     } catch (error) {
       console.error('Error uploading media:', error);
-      alert('Error uploading media');
+      let errorMessage = 'Network error occurred while uploading media.';
+      
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        errorMessage = 'Network error: Could not connect to server. Please check your internet connection and try again.';
+      } else if (error instanceof SyntaxError && error.message.includes('JSON')) {
+        errorMessage = `Server returned an invalid response. This usually means the file is too large.\n\nFile size: ${Math.round(fileSizeMB * 100) / 100}MB\n\nPlease try with a smaller file (under 5MB).`;
+      }
+      
+      alert(errorMessage);
     }
   };
 
@@ -365,12 +411,32 @@ export default function ContentAdmin() {
             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
               <h3 className="text-lg font-medium mb-3">Upload New Media</h3>
               <div className="space-y-3">
-                <input
-                  type="file"
-                  accept="image/*,video/*"
-                  onChange={(e) => setNewMediaFile(e.target.files?.[0] || null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
+                <div>
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    onChange={(e) => setNewMediaFile(e.target.files?.[0] || null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <div className="mt-1 text-xs text-gray-500">
+                    <div>• Images: JPEG, PNG, GIF, WebP (max 5MB)</div>
+                    <div>• Videos: MP4, WebM, OGG (max 5MB)</div>
+                    <div>• For larger files, consider compressing before upload</div>
+                  </div>
+                  {newMediaFile && (
+                    <div className="mt-2 p-2 bg-blue-50 rounded text-sm">
+                      <div className="font-medium text-blue-800">Selected File:</div>
+                      <div className="text-blue-700">
+                        {newMediaFile.name} ({Math.round(newMediaFile.size / (1024 * 1024) * 100) / 100}MB)
+                      </div>
+                      {newMediaFile.size > 5 * 1024 * 1024 && (
+                        <div className="text-red-600 font-medium mt-1">
+                          ⚠️ File is too large. Please use a file under 5MB.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <input
                   type="text"
                   placeholder="Section (hero, about, footer, etc.)"
@@ -387,8 +453,8 @@ export default function ContentAdmin() {
                 />
                 <button
                   onClick={uploadMedia}
-                  disabled={!newMediaFile}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  disabled={!newMediaFile || newMediaFile.size > 5 * 1024 * 1024}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Upload
                 </button>
