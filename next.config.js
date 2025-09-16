@@ -42,6 +42,26 @@ module.exports = {
   generateBuildId: async () => {
     return process.env.BUILD_ID || 'development';
   },
+<<<<<<< HEAD
   // Render deployment: use standalone output for production
   output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
+=======
+  // Railway specific configurations
+  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
+  // Ensure proper handling of SQLite in production
+  serverRuntimeConfig: {
+    PROJECT_ROOT: __dirname
+  },
+  // Webpack configuration for Railway
+  webpack: (config) => {
+    // Handle SQLite better files
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      path: false,
+      crypto: false,
+    };
+    return config;
+  }
+>>>>>>> 6766384bb9efae24503b2e9a1e7be4df72a077b6
 };
