@@ -43,10 +43,13 @@ export function TranslationProvider({ children, defaultLanguage = 'en' }: Transl
       console.log(`🔄 Fetching translations for language: ${language}`);
       
       try {
-        const response = await fetch(`/api/translations?language=${language}`, {
+        const timestamp = Date.now(); // Add timestamp for cache busting
+        const response = await fetch(`/api/translations?language=${language}&t=${timestamp}`, {
           cache: 'no-store',
           headers: {
-            'Cache-Control': 'no-cache',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
           }
         });
         if (response.ok) {
@@ -54,11 +57,13 @@ export function TranslationProvider({ children, defaultLanguage = 'en' }: Transl
           setTranslations(data);
           console.log(`✅ Loaded ${Object.keys(data).length} translations for ${language}`);
           
-          // Debug: log some key translations
-          const debugKeys = ['hero_title', 'promo_title', 'about_title'];
+          // Debug: log some key translations including auth keys
+          const debugKeys = ['hero_title', 'promo_title', 'about_title', 'auth_sign_in', 'auth_create_new_account', 'common_or', 'auth_demo_credentials'];
           debugKeys.forEach(key => {
             if (data[key]) {
               console.log(`🔍 ${key}: "${data[key]}"`);
+            } else {
+              console.warn(`⚠️ Missing translation for debug key: ${key}`);
             }
           });
         } else {
