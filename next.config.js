@@ -41,5 +41,22 @@ module.exports = {
   // Skip static generation for problematic pages
   generateBuildId: async () => {
     return process.env.BUILD_ID || 'development';
+  },
+  // Railway specific configurations
+  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
+  // Ensure proper handling of SQLite in production
+  serverRuntimeConfig: {
+    PROJECT_ROOT: __dirname
+  },
+  // Webpack configuration for Railway
+  webpack: (config) => {
+    // Handle SQLite better files
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      path: false,
+      crypto: false,
+    };
+    return config;
   }
 };
