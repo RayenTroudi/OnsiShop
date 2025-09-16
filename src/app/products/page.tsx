@@ -1,20 +1,12 @@
+'use client';
+
 import Loading from '@/components/common/Loading';
 import ProductsFilter from '@/components/product/ProductsFilter';
 import ProductsGrid from '@/components/product/ProductsGrid';
+import { useAuth } from '@/contexts/AuthContext';
 import { PlusIcon } from '@heroicons/react/24/outline';
-import { Metadata } from 'next';
 import Link from 'next/link';
-import { Suspense } from 'react';
-
-export const metadata: Metadata = {
-  title: 'All Products - ONSI Store',
-  description: 'Browse our complete collection of clothing and accessories',
-  openGraph: {
-    title: 'All Products - ONSI Store',
-    description: 'Browse our complete collection of clothing and accessories',
-    type: 'website',
-  },
-};
+import { Suspense, useEffect } from 'react';
 
 interface ProductsPageProps {
   searchParams: {
@@ -25,11 +17,17 @@ interface ProductsPageProps {
   };
 }
 
-export default async function ProductsPage({ searchParams }: ProductsPageProps) {
+export default function ProductsPage({ searchParams }: ProductsPageProps) {
+  const { user, loading } = useAuth();
   const category = searchParams.category || '';
   const search = searchParams.search || '';
   const sort = searchParams.sort || 'newest';
   const page = parseInt(searchParams.page || '1');
+
+  // Set document title
+  useEffect(() => {
+    document.title = 'All Products - ONSI Store';
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
@@ -43,13 +41,15 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                 Discover our complete collection of premium clothing and accessories
               </p>
             </div>
-            <Link
-              href="/products/create"
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center space-x-2"
-            >
-              <PlusIcon className="w-5 h-5" />
-              <span>Add Product</span>
-            </Link>
+{user?.isAdmin && (
+              <Link
+                href="/products/create"
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center space-x-2"
+              >
+                <PlusIcon className="w-5 h-5" />
+                <span>Add Product</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>

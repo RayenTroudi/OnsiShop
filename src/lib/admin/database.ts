@@ -177,27 +177,6 @@ export class AdminDatabase {
         handle: 'accessories',
         description: 'Fashion accessories'
       });
-
-      this.addProduct({
-        handle: 'sample-t-shirt',
-        title: 'Sample T-Shirt',
-        description: 'A comfortable cotton t-shirt',
-        price: 29.99,
-        category: 'clothing',
-        images: ['/images/placeholder-product.jpg'],
-        variants: [{
-          id: 'variant_1',
-          title: 'Medium / Black',
-          price: 29.99,
-          availableForSale: true,
-          selectedOptions: [
-            { name: 'Size', value: 'Medium' },
-            { name: 'Color', value: 'Black' }
-          ]
-        }],
-        tags: ['cotton', 'casual'],
-        availableForSale: true
-      });
     }
   }
 }

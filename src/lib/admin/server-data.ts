@@ -30,29 +30,6 @@ function initializeServerData() {
   if (serverProducts.length === 0) {
     serverProducts = [
       {
-        id: 'sample_product_1',
-        handle: 'sample-t-shirt',
-        title: 'Sample T-Shirt',
-        description: 'A comfortable cotton t-shirt perfect for everyday wear.',
-        price: 29.99,
-        category: 'clothing',
-        images: ['https://via.placeholder.com/400x400/4F46E5/FFFFFF?text=T-Shirt'],
-        variants: [{
-          id: 'variant_1',
-          title: 'Medium / Black',
-          price: 29.99,
-          availableForSale: true,
-          selectedOptions: [
-            { name: 'Size', value: 'Medium' },
-            { name: 'Color', value: 'Black' }
-          ]
-        }],
-        tags: ['cotton', 'casual', 'comfortable'],
-        availableForSale: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
         id: 'sample_product_2',
         handle: 'denim-jacket',
         title: 'Classic Denim Jacket',

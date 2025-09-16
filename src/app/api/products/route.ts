@@ -121,9 +121,46 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/products - Create a new product
+// POST /api/products - Create a new product (Admin only)
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
+    const { cookies } = await import('next/headers');
+    const jwt = await import('jsonwebtoken');
+    
+    const cookieStore = cookies();
+    const token = cookieStore.get('token')?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      );
+    }
+
+    // Check if user is admin
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { role: true }
+    });
+
+    if (!user || user.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Admin access required' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { name, title, description, price, image, categoryId } = body;
 
