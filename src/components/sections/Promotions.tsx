@@ -11,13 +11,19 @@ import { Parallax, ParallaxProvider } from 'react-scroll-parallax';
 interface PromotionContent {
   backgroundImage: string;
   buttonLink: string;
+  title: string;
+  subtitle: string;
+  buttonText: string;
 }
 
 const Promotions = () => {
   const { t } = useTranslation();
   const [content, setContent] = useState<PromotionContent>({
     backgroundImage: '/images/placeholder.jpg',
-    buttonLink: '/search/winter-2024'
+    buttonLink: '/search/winter-2024',
+    title: 'have fun',
+    subtitle: 'very nice collection',
+    buttonText: 'check'
   });
 
   useEffect(() => {
@@ -41,7 +47,10 @@ const Promotions = () => {
           if (result.success && result.data) {
             const newContent = {
               backgroundImage: result.data['promotion.backgroundImage'] || '/images/placeholder.jpg',
-              buttonLink: result.data['promotion.buttonLink'] || '/search/winter-2024'
+              buttonLink: result.data['promotion.buttonLink'] || '/search/winter-2024',
+              title: result.data['promotion.title'] || 'have fun',
+              subtitle: result.data['promotion.subtitle'] || 'very nice collection',
+              buttonText: result.data['promotion.buttonText'] || 'check'
             };
             
             console.log('Setting promotion content:', newContent);
@@ -60,13 +69,21 @@ const Promotions = () => {
     
     eventSource.onmessage = (event) => {
       try {
-        const updatedContent = JSON.parse(event.data);
-        console.log('Received content update:', updatedContent);
+        const message = JSON.parse(event.data);
+        console.log('Received SSE message:', message);
         
-        setContent(prevContent => ({
-          backgroundImage: updatedContent['promotion.backgroundImage'] || prevContent.backgroundImage,
-          buttonLink: updatedContent['promotion.buttonLink'] || prevContent.buttonLink
-        }));
+        if (message.type === 'content-update' && message.content) {
+          const updatedContent = message.content;
+          console.log('Processing content update:', updatedContent);
+          
+          setContent(prevContent => ({
+            backgroundImage: updatedContent['promotion.backgroundImage'] || prevContent.backgroundImage,
+            buttonLink: updatedContent['promotion.buttonLink'] || prevContent.buttonLink,
+            title: updatedContent['promotion.title'] || prevContent.title,
+            subtitle: updatedContent['promotion.subtitle'] || prevContent.subtitle,
+            buttonText: updatedContent['promotion.buttonText'] || prevContent.buttonText
+          }));
+        }
       } catch (error) {
         console.error('Error processing content update:', error);
       }
@@ -112,18 +129,18 @@ const Promotions = () => {
         </div>
         <div className="absolute right-[5%] top-[50%] flex w-[65%] max-w-[610px] flex-col items-center justify-center gap-[16px] rounded-[16px] bg-white/30 p-[16px] text-center -translate-y-1/2 md:gap-[32px] md:p-[32px]">
           <h3 className="font-lora text-[clamp(24px,14px_+_2vw,60px)] font-bold leading-[1.5] text-white drop-shadow-md">
-            {t('promo_title').split('\n').map((line: string, i: number) => (
+            {content.title.split('\n').map((line: string, i: number) => (
               <span key={i}>
                 {line}
-                {i < t('promo_title').split('\n').length - 1 && <br />}
+                {i < content.title.split('\n').length - 1 && <br />}
               </span>
             ))}
           </h3>
           <p className="text-[clamp(18px,10px_+_2vw,32px)] font-semibold text-veryDarkPurple drop-shadow-md">
-            {t('promo_subtitle')}
+            {content.subtitle}
           </p>
           <a className="btn text-[clamp(16px,8px_+_2vw,22px)]" href={content.buttonLink}>
-            {t('promo_button')}
+            {content.buttonText}
           </a>
         </div>
       </div>
