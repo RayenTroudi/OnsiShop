@@ -1,8 +1,8 @@
+import { broadcastContentUpdate } from '@/lib/content-stream';
 import { prisma } from '@/lib/database';
 import { initializeDefaultVideo } from '@/lib/video-utils';
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
-import { broadcastContentUpdate } from './stream/route';
 
 export const dynamic = 'force-dynamic';
 

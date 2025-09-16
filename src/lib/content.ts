@@ -64,8 +64,3 @@ export const DEFAULT_CONTENT_VALUES = {
   'contact.phone': '+1 (555) 123-4567',
   'contact.address': '123 Fashion Street, Style City, SC 12345'
 } as const;
-<<<<<<< HEAD
-
-/// test
-=======
->>>>>>> 6766384bb9efae24503b2e9a1e7be4df72a077b6
