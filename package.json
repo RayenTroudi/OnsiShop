@@ -25,9 +25,9 @@
     "db:reset": "npx prisma migrate reset --force",
     "db:setup": "npx prisma generate && npx prisma db push && pnpm db:seed-all",
     "db:init": "npx prisma generate && npx prisma db push && npx prisma db seed",
-    "railway:build": "prisma generate && prisma db push && next build",
-    "railway:start": "next start",
-    "railway:deploy": "prisma generate && prisma db push && prisma db seed && next build",
+    "render:build": "prisma generate && prisma db push && next build",
+    "render:start": "next start",
+    "render:deploy": "prisma generate && prisma db push && prisma db seed && next build",
     "postinstall": "npx prisma generate"
   },
   "prisma": {
