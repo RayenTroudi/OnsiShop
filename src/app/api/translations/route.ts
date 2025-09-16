@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     console.log(`📊 Querying database for language: ${language}`);
 
     // Use Prisma to get translations for the requested language
-    const translations = await (prisma as any).Translation.findMany({
+    const translations = await prisma.translation.findMany({
       where: {
         language: language
       },
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Use Prisma upsert
-    const result = await (prisma as any).Translation.upsert({
+    const result = await prisma.translation.upsert({
       where: {
         key_language: {
           key: key,
@@ -126,32 +126,32 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Batch update/create translations using raw SQL
+    // Batch update/create translations using Prisma upsert
     const results = [];
     
     for (const { key, language, text } of translations) {
-      // Check if exists
-      const existing = await prisma.$queryRaw`
-        SELECT id FROM Translation 
-        WHERE key = ${key} AND language = ${language}
-      ` as Array<{ id: string }>;
-
-      if (existing.length > 0) {
-        // Update existing
-        await prisma.$executeRaw`
-          UPDATE Translation 
-          SET text = ${text}, updatedAt = datetime('now') 
-          WHERE key = ${key} AND language = ${language}
-        `;
-        results.push({ key, language, action: 'updated' });
-      } else {
-        // Create new
-        await prisma.$executeRaw`
-          INSERT INTO Translation (id, key, language, text, createdAt, updatedAt) 
-          VALUES (lower(hex(randomblob(12))), ${key}, ${language}, ${text}, datetime('now'), datetime('now'))
-        `;
-        results.push({ key, language, action: 'created' });
-      }
+      const result = await prisma.translation.upsert({
+        where: {
+          key_language: {
+            key: key,
+            language: language
+          }
+        },
+        update: {
+          text: text
+        },
+        create: {
+          key: key,
+          language: language,
+          text: text
+        }
+      });
+      
+      results.push({ 
+        key, 
+        language, 
+        action: result.createdAt.getTime() === result.updatedAt.getTime() ? 'created' : 'updated' 
+      });
     }
 
     return NextResponse.json({ 
@@ -184,21 +184,24 @@ export async function DELETE(request: NextRequest) {
     let result;
     if (language) {
       // Delete specific language
-      result = await prisma.$executeRaw`
-        DELETE FROM Translation 
-        WHERE key = ${key} AND language = ${language}
-      `;
+      result = await prisma.translation.deleteMany({
+        where: {
+          key: key,
+          language: language
+        }
+      });
     } else {
       // Delete all languages for this key
-      result = await prisma.$executeRaw`
-        DELETE FROM Translation 
-        WHERE key = ${key}
-      `;
+      result = await prisma.translation.deleteMany({
+        where: {
+          key: key
+        }
+      });
     }
 
     return NextResponse.json({ 
       message: 'Translation(s) deleted successfully',
-      count: result,
+      count: result.count,
       key,
       language: language || 'all'
     });
