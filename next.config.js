@@ -42,6 +42,9 @@ module.exports = {
   generateBuildId: async () => {
     return process.env.BUILD_ID || 'development';
   },
-  // Render deployment: use standalone output for production
-  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined
+  // Vercel deployment optimizations
+  experimental: {
+    ...module.exports.experimental,
+    serverComponentsExternalPackages: ["@prisma/client", "prisma"]
+  }
 };
