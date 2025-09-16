@@ -1,11 +1,13 @@
 import { PrismaClient } from '@prisma/client';
+import { getDatabaseConnection } from './db-connection';
 
-// Prevent multiple instances of Prisma Client in development
+// Use the enhanced connection utility for better PostgreSQL support
+export const prisma = getDatabaseConnection();
+
+// Keep the global reference for backward compatibility
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
-
-export const prisma = globalForPrisma.prisma ?? new PrismaClient();
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
@@ -124,13 +126,22 @@ export class DatabaseService {
     images?: string[];
     variants?: any[];
   }) {
+    // Prepare data for PostgreSQL
+    const preparedData: any = { ...data };
+    
+    // Handle JSON fields properly for PostgreSQL
+    if (data.tags) {
+      preparedData.tags = Array.isArray(data.tags) ? JSON.stringify(data.tags) : data.tags;
+    }
+    if (data.images) {
+      preparedData.images = Array.isArray(data.images) ? JSON.stringify(data.images) : data.images;
+    }
+    if (data.variants) {
+      preparedData.variants = Array.isArray(data.variants) ? JSON.stringify(data.variants) : data.variants;
+    }
+
     return await prisma.product.create({
-      data: {
-        ...data,
-        tags: data.tags ? JSON.stringify(data.tags) : null,
-        images: data.images ? JSON.stringify(data.images) : null,
-        variants: data.variants ? JSON.stringify(data.variants) : null,
-      },
+      data: preparedData,
       include: {
         category: true
       }
@@ -149,14 +160,23 @@ export class DatabaseService {
     images?: string[];
     variants?: any[];
   }) {
+    // Prepare data for PostgreSQL
+    const preparedData: any = { ...data };
+    
+    // Handle JSON fields properly for PostgreSQL
+    if (data.tags !== undefined) {
+      preparedData.tags = data.tags ? (Array.isArray(data.tags) ? JSON.stringify(data.tags) : data.tags) : null;
+    }
+    if (data.images !== undefined) {
+      preparedData.images = data.images ? (Array.isArray(data.images) ? JSON.stringify(data.images) : data.images) : null;
+    }
+    if (data.variants !== undefined) {
+      preparedData.variants = data.variants ? (Array.isArray(data.variants) ? JSON.stringify(data.variants) : data.variants) : null;
+    }
+
     return await prisma.product.update({
       where: { id },
-      data: {
-        ...data,
-        tags: data.tags ? JSON.stringify(data.tags) : undefined,
-        images: data.images ? JSON.stringify(data.images) : undefined,
-        variants: data.variants ? JSON.stringify(data.variants) : undefined,
-      },
+      data: preparedData,
       include: {
         category: true
       }
@@ -186,23 +206,50 @@ export class DatabaseService {
 
   // Transform database product to Shopify format
   transformToShopifyProduct(product: any) {
-    const tags = product.tags ? JSON.parse(product.tags) : [];
+    let tags = [];
     let images = [];
     let variants = [];
     
-    // Safely parse images
+    // Safely parse tags - handle both string and array formats
     try {
-      const parsedImages = product.images ? JSON.parse(product.images) : [];
-      images = Array.isArray(parsedImages) ? parsedImages : [];
+      if (product.tags) {
+        if (typeof product.tags === 'string') {
+          tags = JSON.parse(product.tags);
+        } else if (Array.isArray(product.tags)) {
+          tags = product.tags;
+        }
+      }
+      if (!Array.isArray(tags)) tags = [];
+    } catch (e) {
+      console.warn('Failed to parse tags for product:', product.id, e);
+      tags = [];
+    }
+    
+    // Safely parse images - handle both string and array formats
+    try {
+      if (product.images) {
+        if (typeof product.images === 'string') {
+          const parsedImages = JSON.parse(product.images);
+          images = Array.isArray(parsedImages) ? parsedImages : [];
+        } else if (Array.isArray(product.images)) {
+          images = product.images;
+        }
+      }
     } catch (e) {
       console.warn('Failed to parse images for product:', product.id, e);
       images = [];
     }
     
-    // Safely parse variants
+    // Safely parse variants - handle both string and array formats
     try {
-      const parsedVariants = product.variants ? JSON.parse(product.variants) : [];
-      variants = Array.isArray(parsedVariants) ? parsedVariants : [];
+      if (product.variants) {
+        if (typeof product.variants === 'string') {
+          const parsedVariants = JSON.parse(product.variants);
+          variants = Array.isArray(parsedVariants) ? parsedVariants : [];
+        } else if (Array.isArray(product.variants)) {
+          variants = product.variants;
+        }
+      }
     } catch (e) {
       console.warn('Failed to parse variants for product:', product.id, e);
       variants = [];

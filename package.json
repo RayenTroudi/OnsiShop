@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
+    "vercel-build": "prisma generate && prisma db push --accept-data-loss && next build",
     "start": "next start",
     "lint": "next lint",
     "lint-staged": "lint-staged",
@@ -25,6 +26,7 @@
     "db:reset": "npx prisma migrate reset --force",
     "db:setup": "npx prisma generate && npx prisma db push && pnpm db:seed-all",
     "db:init": "npx prisma generate && npx prisma db push && npx prisma db seed",
+    "db:fix-postgres": "npx tsx scripts/fix-postgres-data.ts",
     "vercel:build": "prisma generate && prisma db push && next build",
     "vercel:postbuild": "npx tsx scripts/vercel-migrate.ts",
     "postinstall": "npx prisma generate"

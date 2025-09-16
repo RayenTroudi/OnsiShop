@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "buildCommand": "npm run build",
+  "buildCommand": "prisma generate && prisma db push --accept-data-loss && npm run build",
   "installCommand": "npm install",
   "functions": {
     "app/api/**/*.ts": {
@@ -12,6 +12,9 @@
   },
   "regions": ["iad1"],
   "env": {
-    "PRISMA_GENERATE_DATAPROXY": "true"
+    "PRISMA_GENERATE_DATAPROXY": "true",
+    "SKIP_ENV_VALIDATION": "true",
+    "DATABASE_URL": "@database_url",
+    "POSTGRES_URL": "@postgres_url"
   }
 }
