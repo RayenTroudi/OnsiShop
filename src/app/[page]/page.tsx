@@ -3,7 +3,8 @@ import type { Metadata } from 'next';
 import { getPage } from '@/lib/mock-shopify';
 import { notFound } from 'next/navigation';
 
-export const runtime = 'edge';
+// Removed edge runtime to reduce bundle size
+// export const runtime = 'edge';
 
 export const revalidate = 43200; // 12 hours in seconds
 

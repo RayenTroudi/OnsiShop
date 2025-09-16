@@ -45,3 +45,4 @@ next-env.d.ts
 # utility scripts (optional - remove this line if you want to commit them)
 check-db-content.js
 restore-content.js
+.env*.local

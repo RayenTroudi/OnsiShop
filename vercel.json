@@ -5,16 +5,13 @@
   "functions": {
     "app/api/**/*.ts": {
       "maxDuration": 30
+    },
+    "app/product/[handle]/page.tsx": {
+      "maxDuration": 30
     }
   },
   "regions": ["iad1"],
   "env": {
     "PRISMA_GENERATE_DATAPROXY": "true"
-  },
-  "crons": [
-    {
-      "path": "/api/cron/cleanup",
-      "schedule": "0 2 * * *"
-    }
-  ]
+  }
 }

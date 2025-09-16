@@ -14,15 +14,25 @@ import { getProduct } from '@/lib/mock-shopify';
 // import { ProductDescription } from '@/components/product/product-description';
 import ProductDescription from '@/components/product/ProductDescription';
 import ProductRating from '@/components/product/ProductRating';
-import ProductReviews from '@/components/product/ProductReviews';
 import ProductSlider from '@/components/product/ProductSlider';
-import RecommendedItems from '@/components/product/RecommendedItems';
-import RelatedProducts from '@/components/product/RelatedProducts';
 
-// types
-// import { Image } from '@/lib/shopify/types';
+// Dynamic imports to reduce bundle size
+import dynamic from 'next/dynamic';
 
-export const runtime = 'edge';
+const ProductReviews = dynamic(() => import('@/components/product/ProductReviews'), {
+  loading: () => <div className="animate-pulse bg-gray-200 h-96 rounded-lg"></div>
+});
+
+const RecommendedItems = dynamic(() => import('@/components/product/RecommendedItems'), {
+  loading: () => <div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>
+});
+
+const RelatedProducts = dynamic(() => import('@/components/product/RelatedProducts'), {
+  loading: () => <div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>
+});
+
+// Remove edge runtime to use Node.js runtime instead
+// export const runtime = 'edge';
 
 export async function generateMetadata({
   params
@@ -113,30 +123,24 @@ const ProductPage = async ({ params }: { params: { handle: string } }) => {
         {/* Product Reviews Section */}
         <section className="py-8 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <Suspense fallback={<div className="animate-pulse bg-gray-200 h-96 rounded-lg"></div>}>
-              <ProductReviews productId={product.id} />
-            </Suspense>
+            <ProductReviews productId={product.id} />
           </div>
         </section>
 
         {/* Related Products Section */}
         <section className="py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <Suspense fallback={<div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>}>
-              <RelatedProducts 
-                currentProductId={product.id} 
-                productTags={product.tags} 
-              />
-            </Suspense>
+            <RelatedProducts 
+              currentProductId={product.id} 
+              productTags={product.tags} 
+            />
           </div>
         </section>
 
         {/* Recommended Items */}
         <section className="py-8 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <Suspense fallback={<div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>}>
-              <RecommendedItems productId={product.id} />
-            </Suspense>
+            <RecommendedItems productId={product.id} />
           </div>
         </section>
       </div>
