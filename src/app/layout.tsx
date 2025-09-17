@@ -1,19 +1,9 @@
-// next
-import dynamic from 'next/dynamic';
-
 // react
-import { ReactNode, Suspense } from 'react';
-
-// loading component
-import Loading from '@/components/common/Loading';
-const loading = () => <Loading />;
+import { ReactNode } from 'react';
 
 // components
 import ClientProviders from '@/components/layout/ClientProviders';
-import Header from '@/components/sections/Header';
-const Footer = dynamic(() => import('@/components/sections/Footer'), {
-  loading
-});
+import LayoutWrapper from '@/components/layout/LayoutWrapper';
 
 // utils
 import { ensureStartsWith } from '@/lib/utils';
@@ -59,11 +49,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html lang="en" className={`${quicksand.variable} ${lora.variable} ${quicksand.className}`}>
       <body className="bg-white text-veryDarkPurple">
         <ClientProviders>
-          <Header />
-          <Suspense>
-            <main>{children}</main>
-          </Suspense>
-          <Footer />
+          <LayoutWrapper>{children}</LayoutWrapper>
         </ClientProviders>
       </body>
     </html>
