@@ -120,7 +120,7 @@ export default function CartModal({ cart }: { cart: Cart | undefined }) {
                                     item.merchandise.product.featuredImage?.altText ||
                                     item.merchandise.product.title
                                   }
-                                  src={item.merchandise.product.featuredImage?.url || '/images/placeholder-product.jpg'}
+                                  src={item.merchandise.product.featuredImage?.url || '/images/placeholder-product.svg'}
                                 />
                               </div>
 

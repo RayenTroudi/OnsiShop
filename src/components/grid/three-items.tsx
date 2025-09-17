@@ -18,7 +18,7 @@ function ThreeItemGridItem({
     >
       <Link className="relative block aspect-square h-full w-full" href={`/products/${item.id}`}>
         <GridTileImage
-          src={item.featuredImage?.url || '/images/placeholder-product.jpg'}
+          src={item.featuredImage?.url || '/images/placeholder-product.svg'}
           fill
           sizes={
             size === 'full' ? '(min-width: 768px) 66vw, 100vw' : '(min-width: 768px) 33vw, 100vw'
