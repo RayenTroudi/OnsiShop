@@ -4,30 +4,30 @@ const prisma = new PrismaClient()
 
 const translations = [
   // Navigation
-  { key: 'nav.home', en: 'Home', fr: 'Accueil', ar: 'الرئيسية' },
-  { key: 'nav.shop', en: 'Shop', fr: 'Boutique', ar: 'المتجر' },
-  { key: 'nav.about', en: 'About', fr: 'À propos', ar: 'حول' },
-  { key: 'nav.contact', en: 'Contact', fr: 'Contact', ar: 'اتصل' },
-  { key: 'nav.admin', en: 'Admin', fr: 'Admin', ar: 'الإدارة' },
-  { key: 'nav.cart', en: 'Cart', fr: 'Panier', ar: 'السلة' },
-  { key: 'nav.account', en: 'Account', fr: 'Compte', ar: 'الحساب' },
+  { key: 'nav_home', en: 'Home', fr: 'Accueil', ar: 'الرئيسية' },
+  { key: 'nav_shop', en: 'Shop', fr: 'Boutique', ar: 'المتجر' },
+  { key: 'nav_about', en: 'About', fr: 'À propos', ar: 'حول' },
+  { key: 'nav_contact', en: 'Contact', fr: 'Contact', ar: 'اتصل' },
+  { key: 'nav_admin', en: 'Admin', fr: 'Admin', ar: 'الإدارة' },
+  { key: 'nav_cart', en: 'Cart', fr: 'Panier', ar: 'السلة' },
+  { key: 'nav_account', en: 'Account', fr: 'Compte', ar: 'الحساب' },
 
   // Language switcher
-  { key: 'language.english', en: 'English', fr: 'Anglais', ar: 'الإنجليزية' },
-  { key: 'language.french', en: 'French', fr: 'Français', ar: 'الفرنسية' },
-  { key: 'language.arabic', en: 'Arabic', fr: 'Arabe', ar: 'العربية' },
+  { key: 'language_english', en: 'English', fr: 'Anglais', ar: 'الإنجليزية' },
+  { key: 'language_french', en: 'French', fr: 'Français', ar: 'الفرنسية' },
+  { key: 'language_arabic', en: 'Arabic', fr: 'Arabe', ar: 'العربية' },
 
   // Hero section
-  { key: 'hero.title', en: 'Welcome to OnsiShop', fr: 'Bienvenue chez OnsiShop', ar: 'مرحباً بكم في أونسي شوب' },
-  { key: 'hero.subtitle', en: 'Discover Amazing Products', fr: 'Découvrez des Produits Incroyables', ar: 'اكتشف منتجات مذهلة' },
-  { key: 'hero.description', en: 'Find the best products at unbeatable prices. Quality guaranteed with fast shipping worldwide.', fr: 'Trouvez les meilleurs produits à des prix imbattables. Qualité garantie avec expédition rapide dans le monde entier.', ar: 'ابحث عن أفضل المنتجات بأسعار لا تقبل المنافسة. جودة مضمونة مع شحن سريع في جميع أنحاء العالم.' },
-  { key: 'hero.cta', en: 'Shop Now', fr: 'Acheter Maintenant', ar: 'تسوق الآن' },
-  { key: 'hero.learn_more', en: 'Learn More', fr: 'En Savoir Plus', ar: 'اعرف المزيد' },
+  { key: 'hero_title', en: 'Welcome to OnsiShop', fr: 'Bienvenue chez OnsiShop', ar: 'مرحباً بكم في أونسي شوب' },
+  { key: 'hero_subtitle', en: 'Discover Amazing Products', fr: 'Découvrez des Produits Incroyables', ar: 'اكتشف منتجات مذهلة' },
+  { key: 'hero_description', en: 'Find the best products at unbeatable prices. Quality guaranteed with fast shipping worldwide.', fr: 'Trouvez les meilleurs produits à des prix imbattables. Qualité garantie avec expédition rapide dans le monde entier.', ar: 'ابحث عن أفضل المنتجات بأسعار لا تقبل المنافسة. جودة مضمونة مع شحن سريع في جميع أنحاء العالم.' },
+  { key: 'hero_cta', en: 'Shop Now', fr: 'Acheter Maintenant', ar: 'تسوق الآن' },
+  { key: 'hero_learn_more', en: 'Learn More', fr: 'En Savoir Plus', ar: 'اعرف المزيد' },
 
   // Promotion section
-  { key: 'promo.title', en: 'Special Offers', fr: 'Offres Spéciales', ar: 'عروض خاصة' },
-  { key: 'promo.subtitle', en: 'Limited Time Deals', fr: 'Offres à Durée Limitée', ar: 'صفقات محدودة الوقت' },
-  { key: 'promo.description', en: 'Don\'t miss out on our exclusive promotions and seasonal sales.', fr: 'Ne manquez pas nos promotions exclusives et nos ventes saisonnières.', ar: 'لا تفوت عروضنا الحصرية ومبيعاتنا الموسمية.' },
+  { key: 'promo_title', en: 'Special Offers', fr: 'Offres Spéciales', ar: 'عروض خاصة' },
+  { key: 'promo_subtitle', en: 'Limited Time Deals', fr: 'Offres à Durée Limitée', ar: 'صفقات محدودة الوقت' },
+  { key: 'promo_description', en: 'Don\'t miss out on our exclusive promotions and seasonal sales.', fr: 'Ne manquez pas nos promotions exclusives et nos ventes saisonnières.', ar: 'لا تفوت عروضنا الحصرية ومبيعاتنا الموسمية.' },
 
   // Product categories
   { key: 'categories.title', en: 'Shop by Category', fr: 'Acheter par Catégorie', ar: 'تسوق حسب الفئة' },
