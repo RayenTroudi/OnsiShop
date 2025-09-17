@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client';
-import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
 import { broadcastContentUpdate } from '@/lib/content-stream';
+import { PrismaClient } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
+import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
@@ -108,9 +108,26 @@ export async function POST(request: NextRequest) {
     revalidatePath('/');
     revalidatePath('/admin/content');
 
-    // If this is a specific section media, also broadcast the update
+    // If this is a specific section media, also update the corresponding content key
     if (section) {
-      broadcastContentUpdate({ [`${section}_background_image`]: mediaUrl });
+      let contentKey: string;
+      if (file.type.startsWith('video/')) {
+        contentKey = `${section}_background_video`;
+      } else if (file.type.startsWith('image/')) {
+        contentKey = `${section}_background_image`;
+      } else {
+        contentKey = `${section}_media`;
+      }
+
+      // Update or create the content key with the media URL
+      await prisma.siteContent.upsert({
+        where: { key: contentKey },
+        update: { value: mediaUrl },
+        create: { key: contentKey, value: mediaUrl }
+      });
+
+      // Broadcast the update
+      broadcastContentUpdate({ [contentKey]: mediaUrl });
     }
 
     return NextResponse.json(mediaAsset);
