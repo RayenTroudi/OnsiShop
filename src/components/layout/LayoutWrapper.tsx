@@ -1,10 +1,10 @@
 'use client';
 
+import Loading from '@/components/common/Loading';
+import Header from '@/components/sections/Header';
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { ReactNode, Suspense } from 'react';
-import dynamic from 'next/dynamic';
-import Header from '@/components/sections/Header';
-import Loading from '@/components/common/Loading';
 
 const loading = () => <Loading />;
 const Footer = dynamic(() => import('@/components/sections/Footer'), {

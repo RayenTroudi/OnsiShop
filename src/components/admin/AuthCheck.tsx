@@ -1,73 +1,32 @@
 'use client';
 
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-
-interface User {
-  id: string;
-  email: string;
-  name?: string;
-  isAdmin: boolean;
-}
+import { useEffect } from 'react';
 
 interface AuthCheckProps {
   children: React.ReactNode;
 }
 
 export default function AuthCheck({ children }: AuthCheckProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include',
-        cache: 'no-store'
-      });
-      
-      if (response.ok) {
-        const userData = await response.json();
-        if (userData.user?.isAdmin) {
-          setUser(userData.user);
-        } else {
-          // User is logged in but not admin
-          alert('Admin access required');
-          router.push('/');
-        }
-      } else {
+    if (!loading) {
+      if (!user) {
         // Not authenticated
         router.push('/login');
+      } else if (!user.isAdmin) {
+        // User is logged in but not admin
+        alert('Admin access required');
+        router.push('/');
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      router.push('/login');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [user, loading, router]);
 
   const handleLogout = async () => {
-    try {
-      const response = await fetch('/api/auth/logout', { 
-        method: 'POST',
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        router.push('/login');
-      } else {
-        console.error('Logout failed');
-        router.push('/login'); // Force logout anyway
-      }
-    } catch (error) {
-      console.error('Logout failed:', error);
-      router.push('/login'); // Force logout anyway
-    }
+    await logout();
   };
 
   if (loading) {
@@ -81,8 +40,8 @@ export default function AuthCheck({ children }: AuthCheckProps) {
     );
   }
 
-  if (!user) {
-    return null; // Redirecting to login
+  if (!user || !user.isAdmin) {
+    return null; // Redirecting
   }
 
   return (

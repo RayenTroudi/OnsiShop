@@ -1,5 +1,6 @@
 'use client';
 
+import { useAuth } from '@/contexts/AuthContext';
 import { CheckIcon, PlusIcon, StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import { StarIcon } from '@heroicons/react/24/solid';
 import { useEffect, useState } from 'react';
@@ -35,13 +36,15 @@ interface ProductReviewsProps {
 }
 
 export default function ProductReviews({ productId }: ProductReviewsProps) {
+  const { user } = useAuth();
   const [reviewData, setReviewData] = useState<ReviewData>({ comments: [], ratings: [] });
   const [loading, setLoading] = useState(true);
   const [showAddReview, setShowAddReview] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [newRating, setNewRating] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  const isAuthenticated = !!user;
 
   useEffect(() => {
     const fetchReviewData = async () => {
@@ -68,18 +71,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
       }
     };
 
-    // Check authentication
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/auth/me');
-        setIsAuthenticated(response.ok);
-      } catch (error) {
-        setIsAuthenticated(false);
-      }
-    };
-
     fetchReviewData();
-    checkAuth();
   }, [productId]);
 
   const renderStars = (rating: number, interactive = false, onStarClick?: (star: number) => void) => {

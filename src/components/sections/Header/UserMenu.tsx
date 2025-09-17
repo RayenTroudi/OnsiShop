@@ -1,79 +1,16 @@
 'use client';
 
+import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/contexts/TranslationContext';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-
-interface User {
-  id: string;
-  email: string;
-  name?: string;
-  isAdmin: boolean;
-}
 
 export default function UserMenu() {
   const { t } = useTranslation();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    checkAuth();
-
-    // Listen for auth changes
-    const handleAuthChange = () => {
-      checkAuth();
-    };
-
-    window.addEventListener('authChange', handleAuthChange);
-    
-    return () => {
-      window.removeEventListener('authChange', handleAuthChange);
-    };
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include',
-        cache: 'no-store'
-      });
-      
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData.user);
-      } else {
-        setUser(null);
-      }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { user, loading, logout } = useAuth();
 
   const handleLogout = async () => {
-    try {
-      const response = await fetch('/api/auth/logout', { 
-        method: 'POST',
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        setUser(null);
-        window.dispatchEvent(new CustomEvent('authChange'));
-        window.location.href = '/'; // Force navigation to home
-      } else {
-        console.error('Logout failed');
-      }
-    } catch (error) {
-      console.error('Logout failed:', error);
-      // Force logout even if API fails
-      setUser(null);
-      window.dispatchEvent(new CustomEvent('authChange'));
-      window.location.href = '/';
-    }
+    await logout();
   };
 
   if (loading) {
