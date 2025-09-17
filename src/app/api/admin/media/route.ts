@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
+import { broadcastContentUpdate } from '@/lib/content-stream';
 
 const prisma = new PrismaClient();
 
@@ -101,6 +103,15 @@ export async function POST(request: NextRequest) {
         section: section || null
       }
     });
+
+    // Revalidate relevant pages when media is uploaded
+    revalidatePath('/');
+    revalidatePath('/admin/content');
+
+    // If this is a specific section media, also broadcast the update
+    if (section) {
+      broadcastContentUpdate({ [`${section}_background_image`]: mediaUrl });
+    }
 
     return NextResponse.json(mediaAsset);
   } catch (error) {

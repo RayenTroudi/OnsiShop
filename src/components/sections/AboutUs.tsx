@@ -24,10 +24,10 @@ const AboutUs = () => {
         if (result.success) {
           const data = result.data;
           setContent({
-            title: data['about.title'] || t('about_title'),
-            description: data['about.description'] || t('about_description'),
-            buttonText: data['about.buttonText'] || t('about_button_text'),
-            backgroundImage: data['about.backgroundImage']
+            title: data['about_title'] || t('about_title'),
+            description: data['about_description'] || t('about_description'),
+            buttonText: data['about_button_text'] || t('about_button_text'),
+            backgroundImage: data['about_background_image']
           });
         } else {
           // Fallback to translations

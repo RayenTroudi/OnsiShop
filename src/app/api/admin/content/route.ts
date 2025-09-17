@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
+import { broadcastContentUpdate } from '@/lib/content-stream';
 
 const prisma = new PrismaClient();
 
@@ -48,6 +50,13 @@ export async function POST(request: NextRequest) {
       data: { key, value }
     });
 
+    // Revalidate relevant pages
+    revalidatePath('/');
+    revalidatePath('/admin/content');
+
+    // Broadcast update to connected clients
+    broadcastContentUpdate({ [key]: value });
+
     return NextResponse.json(newContent);
   } catch (error) {
     console.error('Error creating content:', error);
@@ -71,10 +80,10 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update each content item
-    await Promise.all(
+    const updates = await Promise.all(
       contentItems.map(async (item: any) => {
         if (item.id && item.key && item.value !== undefined) {
-          await prisma.siteContent.update({
+          return await prisma.siteContent.update({
             where: { id: item.id },
             data: {
               key: item.key,
@@ -82,8 +91,23 @@ export async function PUT(request: NextRequest) {
             }
           });
         }
+        return null;
       })
     );
+
+    // Revalidate relevant pages
+    revalidatePath('/');
+    revalidatePath('/admin/content');
+
+    // Broadcast updates to connected clients
+    const updatedContentMap = updates
+      .filter(item => item !== null)
+      .reduce((acc: Record<string, string>, item: any) => {
+        acc[item.key] = item.value;
+        return acc;
+      }, {} as Record<string, string>);
+    
+    broadcastContentUpdate(updatedContentMap);
 
     return NextResponse.json({ success: true });
   } catch (error) {

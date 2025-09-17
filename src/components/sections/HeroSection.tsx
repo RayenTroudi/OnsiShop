@@ -174,7 +174,7 @@ const HeroSection = () => {
 
   // Handle video URL changes
   useEffect(() => {
-    const backgroundVideo = getContentValue(content, 'hero.backgroundVideo', DEFAULT_CONTENT_VALUES['hero.backgroundVideo']);
+    const backgroundVideo = getContentValue(content, 'hero_background_video', DEFAULT_CONTENT_VALUES['hero_background_video']);
     
     // Validate video URL
     if (backgroundVideo && backgroundVideo !== currentVideoUrl) {
@@ -220,10 +220,10 @@ const HeroSection = () => {
     }
   }, [content, currentVideoUrl, transitionToNewVideo, addDebugLog]);
   
-  const title = getContentValue(content, 'hero.title', DEFAULT_CONTENT_VALUES['hero.title']);
-  const subtitle = getContentValue(content, 'hero.subtitle', DEFAULT_CONTENT_VALUES['hero.subtitle']);
-  const description = getContentValue(content, 'hero.description', DEFAULT_CONTENT_VALUES['hero.description']);
-  const backgroundImage = getContentValue(content, 'hero.backgroundImage', DEFAULT_CONTENT_VALUES['hero.backgroundImage'] || '');
+  const title = getContentValue(content, 'hero_title', DEFAULT_CONTENT_VALUES['hero_title']);
+  const subtitle = getContentValue(content, 'hero_subtitle', DEFAULT_CONTENT_VALUES['hero_subtitle']);
+  const description = getContentValue(content, 'hero_description', DEFAULT_CONTENT_VALUES['hero_description']);
+  const backgroundImage = getContentValue(content, 'hero_background_image', DEFAULT_CONTENT_VALUES['hero_background_image'] || '');
 
   return (
     <section className="relative h-[500px] md:h-[600px] flex items-center justify-center text-white overflow-hidden">

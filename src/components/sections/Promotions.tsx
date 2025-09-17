@@ -46,11 +46,11 @@ const Promotions = () => {
           
           if (result.success && result.data) {
             const newContent = {
-              backgroundImage: result.data['promotion.backgroundImage'] || '/images/placeholder.jpg',
-              buttonLink: result.data['promotion.buttonLink'] || '/search/winter-2024',
-              title: result.data['promotion.title'] || 'have fun',
-              subtitle: result.data['promotion.subtitle'] || 'very nice collection',
-              buttonText: result.data['promotion.buttonText'] || 'check'
+              backgroundImage: result.data['promotion_background_image'] || '/images/placeholder.jpg',
+              buttonLink: result.data['promotion_button_link'] || '/search/winter-2024',
+              title: result.data['promotion_title'] || 'have fun',
+              subtitle: result.data['promotion_subtitle'] || 'very nice collection',
+              buttonText: result.data['promotion_button_text'] || 'check'
             };
             
             console.log('Setting promotion content:', newContent);
@@ -77,11 +77,11 @@ const Promotions = () => {
           console.log('Processing content update:', updatedContent);
           
           setContent(prevContent => ({
-            backgroundImage: updatedContent['promotion.backgroundImage'] || prevContent.backgroundImage,
-            buttonLink: updatedContent['promotion.buttonLink'] || prevContent.buttonLink,
-            title: updatedContent['promotion.title'] || prevContent.title,
-            subtitle: updatedContent['promotion.subtitle'] || prevContent.subtitle,
-            buttonText: updatedContent['promotion.buttonText'] || prevContent.buttonText
+            backgroundImage: updatedContent['promotion_background_image'] || prevContent.backgroundImage,
+            buttonLink: updatedContent['promotion_button_link'] || prevContent.buttonLink,
+            title: updatedContent['promotion_title'] || prevContent.title,
+            subtitle: updatedContent['promotion_subtitle'] || prevContent.subtitle,
+            buttonText: updatedContent['promotion_button_text'] || prevContent.buttonText
           }));
         }
       } catch (error) {
