@@ -1,7 +1,5 @@
 // Unified Content Management System
 import { PrismaClient } from '@prisma/client';
-import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
 
 const prisma = new PrismaClient();
 

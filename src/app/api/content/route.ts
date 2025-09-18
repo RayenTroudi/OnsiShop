@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
-import { 
-  prisma, 
-  initializeDefaultContent, 
-  migrateLegacyContent,
-  DEFAULT_CONTENT_VALUES,
-  normalizeContentKey
+import {
+    DEFAULT_CONTENT_VALUES,
+    initializeDefaultContent,
+    migrateLegacyContent,
+    normalizeContentKey,
+    prisma
 } from '@/lib/content-manager';
+import { revalidatePath } from 'next/cache';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 

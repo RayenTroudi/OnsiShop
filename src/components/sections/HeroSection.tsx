@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from '@/contexts/TranslationContext';
-import { DEFAULT_CONTENT_VALUES, getContentValue, normalizeContentKey } from '@/lib/content-manager';
+import { DEFAULT_CONTENT_VALUES, getContentValue } from '@/lib/content-manager';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const HeroSection = () => {
