@@ -10,21 +10,21 @@ export const DEFAULT_CONTENT_VALUES = {
   hero_subtitle: 'Discover the Latest Trends',
   hero_description: 'Shop our collection of high-quality clothing for men and women. From casual wear to formal attire, we have everything you need to look your best.',
   hero_button_text: 'Shop Now',
-  hero_image_url: '/images/placeholder-product.svg',
-  hero_background_image: '/images/placeholder-product.svg',
+  hero_image_url: '',
+  hero_background_image: '',
   hero_background_video: '',
   
   // About Section
   about_title: 'About Our Store',
   about_description: 'We are passionate about bringing you the finest clothing at affordable prices. Our curated collection features the latest trends and timeless classics.',
-  about_background_image: '/images/placeholder-product.svg',
+  about_background_image: '',
   
   // Promotions
   promotion_title: 'Winter Collection Now Available',
   promotion_subtitle: 'Stay cozy and fashionable this winter with our new collection!',
   promotion_button_text: 'View Collection',
   promotion_button_link: '/search/winter-2024',
-  promotion_background_image: '/images/placeholder-product.svg',
+  promotion_background_image: '',
   
   // Footer
   footer_company_name: 'OnsiShop',

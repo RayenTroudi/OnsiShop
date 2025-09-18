@@ -1,18 +1,44 @@
 'use client';
 
-import { useTranslation } from '@/contexts/TranslationContext';
 import { DEFAULT_CONTENT_VALUES, getContentValue } from '@/lib/content-manager';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+// Custom hook for intersection observer lazy loading
+const useIntersectionObserver = (options = {}) => {
+  const [isIntersecting, setIsIntersecting] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const targetRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      const entry = entries[0];
+      if (entry && entry.isIntersecting && !isLoaded) {
+        setIsIntersecting(true);
+        setIsLoaded(true);
+        observer.disconnect();
+      }
+    }, { threshold: 0.1, rootMargin: '50px', ...options });
+
+    if (targetRef.current) {
+      observer.observe(targetRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [isLoaded]);
+
+  return { ref: targetRef, isIntersecting };
+};
+
 const HeroSection = () => {
-  const { t } = useTranslation();
-  const [content, setContent] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [content, setContent] = useState<Record<string, string>>(DEFAULT_CONTENT_VALUES);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>('');
   const [videoError, setVideoError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const nextVideoRef = useRef<HTMLVideoElement>(null);
+  
+  // Lazy loading with intersection observer
+  const { ref: sectionRef, isIntersecting: shouldLoadMedia } = useIntersectionObserver();
   
   // Debug logging helper (disabled)
   const addDebugLog = useCallback((message: string) => {
@@ -40,7 +66,7 @@ const HeroSection = () => {
       addDebugLog(errorMsg);
       setVideoError(errorMsg);
     } finally {
-      setIsLoading(false);
+      // Content loading complete
     }
   }, [addDebugLog]);
 
@@ -232,7 +258,7 @@ const HeroSection = () => {
   const backgroundImage = getContentValue(content, 'hero_background_image', DEFAULT_CONTENT_VALUES['hero_background_image'] || '');
 
   return (
-    <section className="relative h-[500px] md:h-[600px] flex items-center justify-center text-white overflow-hidden">
+    <section ref={sectionRef} className="relative h-[500px] md:h-[600px] flex items-center justify-center text-white overflow-hidden">
       {/* Background Images and Videos - Layered setup */}
       <div className="absolute inset-0 z-0">
         {/* Background Image Layer (fallback when no video or video fails) */}
@@ -247,7 +273,7 @@ const HeroSection = () => {
             {/* Hidden img tag for accessibility and SEO */}
             <img 
               src={backgroundImage} 
-              alt={t('hero_alt_text')} 
+              alt="Hero background image" 
               className="sr-only" 
               aria-hidden="true"
             />
@@ -255,14 +281,15 @@ const HeroSection = () => {
         )}
         
         {/* Background Videos - Dual video setup for smooth transitions */}
-        {/* Main video */}
+        {/* Main video - lazy loaded */}
+        {shouldLoadMedia && (
         <video
           ref={videoRef}
           autoPlay
           muted
           loop
           playsInline
-          preload="metadata" // Changed from "auto" to reduce bandwidth
+          preload="none" // Lazy load - only load when needed
           className="w-full h-full object-cover transition-opacity duration-500"
           style={{ opacity: currentVideoUrl && !videoError ? 1 : 0 }}
           src={currentVideoUrl || undefined}
@@ -284,8 +311,10 @@ const HeroSection = () => {
             addDebugLog('Main video data loaded');
           }}
         />
+        )}
         
-        {/* Transition video (hidden, used for smooth transitions) */}
+        {/* Transition video (hidden, used for smooth transitions) - lazy loaded */}
+        {shouldLoadMedia && (
         <video
           ref={nextVideoRef}
           muted
@@ -298,15 +327,11 @@ const HeroSection = () => {
             addDebugLog('Transition video error');
           }}
         />
+        )}
         
-        {/* Loading overlay */}
+        {/* Simple loading overlay - minimal and fast */}
         {isVideoLoading && (
-          <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
-            <div className="flex flex-col items-center space-y-2">
-              <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              <p className="text-white text-sm">{t('loading_video')}</p>
-            </div>
-          </div>
+          <div className="absolute inset-0 bg-black/10 z-10" />
         )}
         
         {/* Light text shadow for readability - no overlay needed */}
@@ -322,15 +347,15 @@ const HeroSection = () => {
       {/* Content */}
       <div className="relative z-20 max-w-4xl mx-auto px-4 text-center">
         <h1 className="text-4xl md:text-6xl font-bold mb-4 text-white" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
-          {t('hero_title')}
+          {title}
         </h1>
         
         <h2 className="text-xl md:text-2xl font-medium mb-6 text-white" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.8)' }}>
-          {t('hero_subtitle')}
+          {subtitle}
         </h2>
         
         <p className="text-lg md:text-xl mb-8 max-w-3xl mx-auto leading-relaxed text-white" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
-          {t('hero_description')}
+          {description}
         </p>
       </div>
       

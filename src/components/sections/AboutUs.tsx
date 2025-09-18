@@ -1,7 +1,34 @@
 'use client';
 
 import { useTranslation } from '@/contexts/TranslationContext';
-import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useEffect, useRef, useState } from 'react';
+
+// Intersection Observer hook for lazy loading
+const useIntersectionObserver = (options = {}) => {
+  const [isIntersecting, setIsIntersecting] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const targetRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      const entry = entries[0];
+      if (entry && entry.isIntersecting && !isLoaded) {
+        setIsIntersecting(true);
+        setIsLoaded(true);
+        observer.disconnect();
+      }
+    }, { threshold: 0.1, rootMargin: '50px', ...options });
+
+    if (targetRef.current) {
+      observer.observe(targetRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [isLoaded]);
+
+  return { ref: targetRef, isIntersecting };
+};
 
 interface AboutContent {
   title: string;
@@ -14,6 +41,9 @@ const AboutUs = () => {
   const { t } = useTranslation();
   const [content, setContent] = useState<AboutContent | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Lazy loading with intersection observer
+  const { ref: sectionRef, isIntersecting: shouldLoadMedia } = useIntersectionObserver();
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -66,23 +96,29 @@ const AboutUs = () => {
     );
   }
 
-  const sectionStyle = content?.backgroundImage ? {
-    backgroundImage: `url(${content.backgroundImage})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat'
-  } : {};
-
   return (
     <section 
-      className="flex items-center justify-center border-t-[1px] border-purple bg-lightPurple py-[48px] md:py-[64px] relative"
-      style={sectionStyle}
+      ref={sectionRef}
+      className="flex items-center justify-center border-t-[1px] border-purple bg-lightPurple py-[48px] md:py-[64px] relative overflow-hidden"
     >
-      {content?.backgroundImage && (
-        <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+      {/* Lazy-loaded background image */}
+      {content?.backgroundImage && shouldLoadMedia && (
+        <>
+          <Image
+            src={content.backgroundImage}
+            alt="About us background"
+            fill
+            className="object-cover"
+            priority={false}
+            loading="lazy"
+            quality={85}
+            unoptimized={content.backgroundImage.includes('/uploads/') || content.backgroundImage.startsWith('data:')}
+          />
+          <div className="absolute inset-0 bg-black bg-opacity-40 z-10"></div>
+        </>
       )}
       <h2 className="sr-only">{t('section_about_us_title')}</h2>
-      <div className="flex max-w-[95%] flex-col items-center justify-center gap-[32px] text-center md:max-w-[700px] relative z-10">
+      <div className="flex max-w-[95%] flex-col items-center justify-center gap-[32px] text-center md:max-w-[700px] relative z-20">
         <h3 className={`font-lora text-[clamp(28px,18px_+_2vw,40px)] font-semibold ${content?.backgroundImage ? 'text-white' : 'text-veryDarkPurple'}`}>
           {content?.title}
         </h3>
