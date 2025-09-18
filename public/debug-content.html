@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Content API Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .result { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #e6ffe6; border: 1px solid #00aa00; }
+        .error { background: #ffe6e6; border: 1px solid #ff0000; }
+        pre { white-space: pre-wrap; word-wrap: break-word; max-height: 300px; overflow-y: auto; }
+        button { padding: 10px 20px; margin: 5px; background: #007cba; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #005a87; }
+        .video-preview { max-width: 300px; max-height: 200px; }
+        .image-preview { max-width: 300px; max-height: 200px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Content API Debug Tool</h1>
+    
+    <div>
+        <button onclick="testContentAPI()">🔄 Test Content API</button>
+        <button onclick="testHeroVideo()">🎬 Test Hero Video</button>
+        <button onclick="testPromoImage()">🖼️ Test Promo Image</button>
+        <button onclick="clearResults()">🗑️ Clear Results</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script>
+        function addResult(title, content, isError = false, isSuccess = false) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = 'result ' + (isError ? 'error' : isSuccess ? 'success' : '');
+            div.innerHTML = '<h3>' + title + '</h3>' + content;
+            results.appendChild(div);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testContentAPI() {
+            try {
+                addResult('📡 Testing /api/content...', 'Loading...');
+                
+                const response = await fetch('/api/content?t=' + Date.now()); // Cache buster
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    let content = '<h4>✅ API Response Success!</h4>';
+                    content += '<p><strong>Count:</strong> ' + (data.count || 0) + '</p>';
+                    content += '<p><strong>Has Hero Video:</strong> ' + (data.has_hero_video ? '✅ Yes' : '❌ No') + '</p>';
+                    content += '<p><strong>Has Promo Image:</strong> ' + (data.has_promo_image ? '✅ Yes' : '❌ No') + '</p>';
+                    
+                    if (data.data) {
+                        const heroVideo = data.data['hero_background_video'];
+                        const promoImage = data.data['promotion_background_image'];
+                        
+                        if (heroVideo) {
+                            content += '<h4>🎬 Hero Video:</h4>';
+                            content += '<p>Type: ' + (heroVideo.startsWith('data:') ? 'Base64 Data URL' : 'Regular URL') + '</p>';
+                            content += '<p>Size: ' + (heroVideo.length / 1024 / 1024).toFixed(2) + ' MB</p>';
+                        }
+                        
+                        if (promoImage) {
+                            content += '<h4>🖼️ Promo Image:</h4>';
+                            content += '<p>Type: ' + (promoImage.startsWith('data:') ? 'Base64 Data URL' : 'Regular URL') + '</p>';
+                            content += '<p>Size: ' + (promoImage.length / 1024).toFixed(0) + ' KB</p>';
+                        }
+                    }
+                    
+                    addResult('✅ Content API Success', content, false, true);
+                } else {
+                    addResult('❌ Content API Error', '<pre>' + JSON.stringify(data, null, 2) + '</pre>', true);
+                }
+            } catch (error) {
+                addResult('❌ Content API Network Error', error.toString(), true);
+            }
+        }
+
+        async function testHeroVideo() {
+            try {
+                const response = await fetch('/api/content?t=' + Date.now());
+                const data = await response.json();
+                
+                if (data.success && data.data && data.data['hero_background_video']) {
+                    const videoUrl = data.data['hero_background_video'];
+                    
+                    let content = '<h4>🎬 Hero Video Test</h4>';
+                    content += '<p>Size: ' + (videoUrl.length / 1024 / 1024).toFixed(2) + ' MB</p>';
+                    content += '<p>Type: ' + (videoUrl.startsWith('data:video/') ? 'Valid Video Data URL' : 'Unknown Type') + '</p>';
+                    
+                    if (videoUrl.startsWith('data:video/')) {
+                        content += '<video class="video-preview" controls muted>';
+                        content += '<source src="' + videoUrl + '" type="video/mp4">';
+                        content += 'Your browser does not support video.';
+                        content += '</video>';
+                        content += '<p>✅ Video should play above if valid</p>';
+                    }
+                    
+                    addResult('🎬 Hero Video Preview', content, false, true);
+                } else {
+                    addResult('❌ Hero Video Not Found', 'No hero video in API response', true);
+                }
+            } catch (error) {
+                addResult('❌ Hero Video Test Error', error.toString(), true);
+            }
+        }
+
+        async function testPromoImage() {
+            try {
+                const response = await fetch('/api/content?t=' + Date.now());
+                const data = await response.json();
+                
+                if (data.success && data.data && data.data['promotion_background_image']) {
+                    const imageUrl = data.data['promotion_background_image'];
+                    
+                    let content = '<h4>🖼️ Promo Image Test</h4>';
+                    content += '<p>Size: ' + (imageUrl.length / 1024).toFixed(0) + ' KB</p>';
+                    content += '<p>Type: ' + (imageUrl.startsWith('data:image/') ? 'Valid Image Data URL' : 'Unknown Type') + '</p>';
+                    
+                    if (imageUrl.startsWith('data:image/')) {
+                        content += '<img class="image-preview" src="' + imageUrl + '" alt="Promo Image Preview">';
+                        content += '<p>✅ Image should display above if valid</p>';
+                    }
+                    
+                    addResult('🖼️ Promo Image Preview', content, false, true);
+                } else {
+                    addResult('❌ Promo Image Not Found', 'No promo image in API response', true);
+                }
+            } catch (error) {
+                addResult('❌ Promo Image Test Error', error.toString(), true);
+            }
+        }
+
+        // Auto-run test on page load
+        window.onload = function() {
+            testContentAPI();
+        };
+    </script>
+</body>
+</html>
