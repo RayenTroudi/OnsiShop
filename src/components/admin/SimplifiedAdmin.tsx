@@ -39,8 +39,11 @@ export default function SimplifiedAdmin() {
   };
 
   const handleUploadSuccess = (url: string) => {
-    // Refresh media assets after successful upload
-    fetchMediaAssets();
+    // Refresh media assets after successful upload with a slight delay to avoid race conditions
+    console.log('✅ Upload successful, refreshing media list...');
+    setTimeout(() => {
+      fetchMediaAssets();
+    }, 500);
   };
 
   const deleteMedia = async (id: string) => {

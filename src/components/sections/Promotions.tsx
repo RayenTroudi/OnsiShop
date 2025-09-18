@@ -29,29 +29,65 @@ const Promotions = () => {
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
-    // TEMPORARY: Use static content due to database size limits (6.44MB > 5MB Vercel limit)
-    console.log('⚠️  Promotions: Using static content due to database size limits');
-    
-    setIsLoading(true);
-    setImageError(false);
-    
-    // Simulate loading for UX
-    setTimeout(() => {
-      const staticContent = {
-        backgroundImage: '/images/placeholder-product.svg', // TODO: Fix base64 storage issue
-        buttonLink: '/search/winter-2024',
-        title: 'Winter Collection Now Available',
-        subtitle: 'Stay cozy and fashionable this winter with our new collection!',
-        buttonText: 'View Collection'
-      };
+    const fetchContent = async () => {
+      console.log('🎯 Promotions: Fetching real content from API');
+      setIsLoading(true);
+      setImageError(false);
       
-      console.log('Setting static promotion content:', staticContent);
-      setContent(staticContent);
-      setIsLoading(false);
-    }, 500);
-
-    // TODO: Re-enable real-time updates when database size issue is fixed
-    // Currently disabled due to API issues from 6.44MB database (exceeds 5MB limit)
+      try {
+        const response = await fetch('/api/content', {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          const promotionContent = {
+            backgroundImage: result.data.promotion_background_image || '/images/placeholder-product.svg',
+            buttonLink: result.data.promotion_button_link || '/search/winter-2024',
+            title: result.data.promotion_title || 'Winter Collection Now Available',
+            subtitle: result.data.promotion_subtitle || 'Stay cozy and fashionable this winter with our new collection!',
+            buttonText: result.data.promotion_button_text || 'View Collection'
+          };
+          
+          console.log('✅ Promotions: Using real content');
+          console.log('   Background Image:', promotionContent.backgroundImage ? 
+            (promotionContent.backgroundImage.startsWith('data:') ? 
+              `Base64 image (${(promotionContent.backgroundImage.length / 1024).toFixed(0)}KB)` : 
+              promotionContent.backgroundImage) : 
+            'None');
+          console.log('   Title:', promotionContent.title);
+          console.log('   Subtitle:', promotionContent.subtitle);
+          
+          setContent(promotionContent);
+        } else {
+          console.log('⚠️  Promotions: API failed, using fallback content');
+          setContent({
+            backgroundImage: '/images/placeholder-product.svg',
+            buttonLink: '/search/winter-2024',
+            title: 'Winter Collection Now Available',
+            subtitle: 'Stay cozy and fashionable this winter with our new collection!',
+            buttonText: 'View Collection'
+          });
+        }
+      } catch (error) {
+        console.error('❌ Promotions: Error fetching content:', error);
+        setContent({
+          backgroundImage: '/images/placeholder-product.svg',
+          buttonLink: '/search/winter-2024',
+          title: 'Winter Collection Now Available',
+          subtitle: 'Stay cozy and fashionable this winter with our new collection!',
+          buttonText: 'View Collection'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchContent();
   }, []);
 
   return (

@@ -30,6 +30,13 @@ export async function POST(request: NextRequest) {
     const section = formData.get('section') as string;
     const alt = formData.get('alt') as string;
 
+    // Log upload details for debugging
+    console.log(`📁 Media Upload Started:`);
+    console.log(`   File: ${file?.name}`);
+    console.log(`   Type: ${file?.type}`);
+    console.log(`   Section: ${section}`);
+    console.log(`   Size: ${file ? (file.size / 1024).toFixed(0) : 'unknown'} KB`);
+
     if (!file) {
       return NextResponse.json(
         { error: 'No file provided' },
@@ -117,15 +124,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For hero videos, clean up old videos FIRST before creating new one
+    // For hero videos only, clean up old hero videos FIRST before creating new one
     if (isHeroVideo) {
-      // Delete old hero videos BEFORE creating new one
-      await prisma.mediaAsset.deleteMany({
+        console.log('🧹 Cleaning up old hero videos before uploading new one...');
+      // Delete old hero videos BEFORE creating new one (ONLY for hero section)
+      const deletedVideos = await prisma.mediaAsset.deleteMany({
         where: {
           section: 'hero',
           type: { startsWith: 'video/' }
         }
       });
+      console.log(`🗑️ Deleted ${deletedVideos.count} old hero videos`);
+      
+      // IMPORTANT: Do NOT delete hero video content from SiteContent table
+      // We only delete the MediaAsset records, not the SiteContent
     }
 
     // Create media asset record
@@ -143,10 +155,48 @@ export async function POST(request: NextRequest) {
     revalidatePath('/');
     revalidatePath('/admin/content');
 
-    // Update content keys after successful creation
+    // Update content keys after successful creation - ONLY update the specific section
+    let contentKey: string | null = null;
+    
     if (isHeroVideo) {
-      // Update the hero background video content key
-      const contentKey = 'hero_background_video';
+      // ONLY update hero video content key for hero videos
+      contentKey = 'hero_background_video';
+      console.log('🎬 Updating hero background video content key');
+    } else if (section) {
+      // Handle other media types - be very specific about content keys
+      const normalizedSection = section.toLowerCase().replace(/[-\s]/g, '_');
+      
+      if (file.type.startsWith('video/')) {
+        // Non-hero videos
+        if (normalizedSection === 'promotion' || normalizedSection === 'promotions') {
+          contentKey = 'promotion_background_video';
+        } else if (normalizedSection === 'about') {
+          contentKey = 'about_background_video';
+        } else {
+          contentKey = `${normalizedSection}_background_video`;
+        }
+      } else if (file.type.startsWith('image/')) {
+        // Images - be very specific
+        if (normalizedSection === 'hero') {
+          contentKey = 'hero_background_image';
+          console.log('🖼️ Updating hero background image content key');
+        } else if (normalizedSection === 'about') {
+          contentKey = 'about_background_image';
+          console.log('📖 Updating about background image content key');
+        } else if (normalizedSection === 'promotion' || normalizedSection === 'promotions') {
+          contentKey = 'promotion_background_image';
+          console.log('🎯 Updating promotion background image content key');
+        } else {
+          contentKey = `${normalizedSection}_background_image`;
+        }
+      } else {
+        contentKey = `${normalizedSection}_media`;
+      }
+    }
+
+    // Only update content if we have a valid key
+    if (contentKey) {
+      console.log(`📝 Upserting content key: ${contentKey}`);
       await prisma.siteContent.upsert({
         where: { key: contentKey },
         update: { value: mediaUrl },
@@ -155,35 +205,9 @@ export async function POST(request: NextRequest) {
 
       // Broadcast the update for real-time updates
       broadcastContentUpdate({ [contentKey]: mediaUrl });
-    } else if (section) {
-      // Handle other media types normally
-      let contentKey: string;
-      
-      const normalizedSection = section.toLowerCase().replace(/[-\s]/g, '_');
-      
-      if (file.type.startsWith('video/')) {
-        contentKey = `${normalizedSection}_background_video`;
-      } else if (file.type.startsWith('image/')) {
-        if (normalizedSection === 'hero') {
-          contentKey = 'hero_background_image';
-        } else if (normalizedSection === 'about') {
-          contentKey = 'about_background_image';
-        } else if (normalizedSection === 'promotion' || normalizedSection === 'promotions') {
-          contentKey = 'promotion_background_image';
-        } else {
-          contentKey = `${normalizedSection}_background_image`;
-        }
-      } else {
-        contentKey = `${normalizedSection}_media`;
-      }
-
-      await prisma.siteContent.upsert({
-        where: { key: contentKey },
-        update: { value: mediaUrl },
-        create: { key: contentKey, value: mediaUrl }
-      });
-
-      broadcastContentUpdate({ [contentKey]: mediaUrl });
+      console.log(`✅ Successfully updated ${contentKey}`);
+    } else {
+      console.log('⚠️ No content key determined, skipping content update');
     }
 
     return NextResponse.json(mediaAsset);

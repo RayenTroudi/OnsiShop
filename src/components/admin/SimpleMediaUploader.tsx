@@ -57,12 +57,19 @@ export default function SimpleMediaUploader({
   };
 
   const uploadFile = async (file: File) => {
+    // Prevent duplicate uploads
+    if (uploading) {
+      console.log('⚠️  Upload already in progress, skipping');
+      return;
+    }
+    
     const validationError = validateFile(file);
     if (validationError) {
       alert(validationError);
       return;
     }
 
+    console.log(`🚀 Starting upload for: ${file.name}`);
     setUploading(true);
 
     try {
