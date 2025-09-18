@@ -1,18 +1,23 @@
-import { broadcastContentUpdate } from '@/lib/content-stream';
-import { prisma } from '@/lib/database';
-import { initializeDefaultVideo } from '@/lib/video-utils';
-import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
+import { 
+  prisma, 
+  initializeDefaultContent, 
+  migrateLegacyContent,
+  DEFAULT_CONTENT_VALUES,
+  normalizeContentKey
+} from '@/lib/content-manager';
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/content - Fetch all site content
+// GET /api/content - Fetch all site content (legacy endpoint, redirects to new system)
 export async function GET() {
   try {
-    // Initialize default video if needed
-    await initializeDefaultVideo();
+    // Initialize defaults and migrate legacy content
+    await initializeDefaultContent();
+    await migrateLegacyContent();
     
-    const content = await (prisma as any).siteContent.findMany({
+    const content = await prisma.siteContent.findMany({
       select: {
         key: true,
         value: true,
@@ -23,16 +28,25 @@ export async function GET() {
       }
     });
 
-    // Convert to key-value object for easier frontend consumption
-    const contentMap = content.reduce((acc: Record<string, string>, item: any) => {
-      acc[item.key] = item.value;
-      return acc;
-    }, {} as Record<string, string>);
+    // Convert to key-value object with all defaults included
+    const contentMap: Record<string, string> = {};
+    
+    // Start with defaults
+    Object.entries(DEFAULT_CONTENT_VALUES).forEach(([key, value]) => {
+      const normalizedKey = normalizeContentKey(key);
+      contentMap[normalizedKey] = value;
+    });
+    
+    // Override with database values
+    content.forEach(item => {
+      const normalizedKey = normalizeContentKey(item.key);
+      contentMap[normalizedKey] = item.value;
+    });
 
     return NextResponse.json({
       success: true,
       data: contentMap,
-      items: content // Also return array format
+      items: content
     }, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
@@ -45,7 +59,8 @@ export async function GET() {
     console.error('Error fetching content:', error);
     return NextResponse.json({
       success: false,
-      message: 'Failed to fetch content'
+      message: 'Failed to fetch content',
+      error: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }
@@ -62,28 +77,21 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Update or create each content item
+    // Update or create each content item with normalized keys
     const updates = await Promise.all(
-      Object.entries(content).map(([key, value]) =>
-        (prisma as any).siteContent.upsert({
-          where: { key },
+      Object.entries(content).map(([key, value]) => {
+        const normalizedKey = normalizeContentKey(key);
+        return prisma.siteContent.upsert({
+          where: { key: normalizedKey },
           update: { value: String(value) },
-          create: { key, value: String(value) }
-        })
-      )
+          create: { key: normalizedKey, value: String(value) }
+        });
+      })
     );
 
     // Revalidate relevant pages
     revalidatePath('/');
     revalidatePath('/admin/content');
-
-    // Broadcast update to connected clients
-    const updatedContentMap = updates.reduce((acc: Record<string, string>, item: any) => {
-      acc[item.key] = item.value;
-      return acc;
-    }, {} as Record<string, string>);
-    
-    broadcastContentUpdate(updatedContentMap);
 
     return NextResponse.json({
       success: true,

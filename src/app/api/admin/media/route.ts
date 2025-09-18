@@ -111,12 +111,30 @@ export async function POST(request: NextRequest) {
     // If this is a specific section media, also update the corresponding content key
     if (section) {
       let contentKey: string;
+      
+      // Normalize section name and create appropriate content key
+      const normalizedSection = section.toLowerCase().replace(/[-\s]/g, '_');
+      
       if (file.type.startsWith('video/')) {
-        contentKey = `${section}_background_video`;
+        // Handle video uploads for background videos
+        if (normalizedSection === 'hero' || normalizedSection === 'hero_background') {
+          contentKey = 'hero_background_video';
+        } else {
+          contentKey = `${normalizedSection}_background_video`;
+        }
       } else if (file.type.startsWith('image/')) {
-        contentKey = `${section}_background_image`;
+        // Handle image uploads for backgrounds
+        if (normalizedSection === 'hero' || normalizedSection === 'hero_background') {
+          contentKey = 'hero_background_image';
+        } else if (normalizedSection === 'about') {
+          contentKey = 'about_background_image';
+        } else if (normalizedSection === 'promotion' || normalizedSection === 'promotions') {
+          contentKey = 'promotion_background_image';
+        } else {
+          contentKey = `${normalizedSection}_background_image`;
+        }
       } else {
-        contentKey = `${section}_media`;
+        contentKey = `${normalizedSection}_media`;
       }
 
       // Update or create the content key with the media URL

@@ -48,21 +48,34 @@ export default function ContentAdmin() {
     setLoading(true);
     try {
       const [contentResponse, mediaResponse] = await Promise.all([
-        fetch('/api/admin/content'),
+        fetch('/api/content-manager'),
         fetch('/api/admin/media')
       ]);
 
       if (contentResponse.ok) {
-        const content = await contentResponse.json();
-        setContentItems(content);
+        const contentResult = await contentResponse.json();
+        if (contentResult.success && contentResult.items) {
+          setContentItems(contentResult.items);
+        } else {
+          console.error('Content API error:', contentResult);
+          setContentItems([]);
+        }
+      } else {
+        console.error('Content API failed:', contentResponse.status);
+        setContentItems([]);
       }
 
       if (mediaResponse.ok) {
         const media = await mediaResponse.json();
         setMediaAssets(media);
+      } else {
+        console.error('Media API failed:', mediaResponse.status);
+        setMediaAssets([]);
       }
     } catch (error) {
       console.error('Error fetching content:', error);
+      setContentItems([]);
+      setMediaAssets([]);
     } finally {
       setLoading(false);
     }
@@ -77,23 +90,25 @@ export default function ContentAdmin() {
   const saveAllChanges = async () => {
     setSaving(true);
     try {
-      const response = await fetch('/api/admin/content', {
+      const response = await fetch('/api/content-manager', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ contentItems }),
+        body: JSON.stringify({ items: contentItems }),
       });
 
-      if (response.ok) {
-        alert('All changes saved successfully!');
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        alert(`Successfully saved ${result.updated} changes!`);
         await fetchContent();
       } else {
-        throw new Error('Failed to save changes');
+        throw new Error(result.error || 'Failed to save changes');
       }
     } catch (error) {
       console.error('Error saving changes:', error);
-      alert('Error saving changes');
+      alert(`Error saving changes: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setSaving(false);
     }
@@ -110,20 +125,28 @@ export default function ContentAdmin() {
   const deleteContent = async (id: string) => {
     if (!confirm('Are you sure you want to delete this content item?')) return;
 
+    const itemToDelete = contentItems.find(item => item.id === id);
+    if (!itemToDelete) {
+      alert('Content item not found');
+      return;
+    }
+
     try {
-      const response = await fetch(`/api/admin/content/${id}`, {
+      const response = await fetch(`/api/content-manager?key=${encodeURIComponent(itemToDelete.key)}`, {
         method: 'DELETE',
       });
 
-      if (response.ok) {
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
         setContentItems(items => items.filter(item => item.id !== id));
         alert('Content deleted successfully!');
       } else {
-        throw new Error('Failed to delete content');
+        throw new Error(result.error || 'Failed to delete content');
       }
     } catch (error) {
       console.error('Error deleting content:', error);
-      alert('Error deleting content');
+      alert(`Error deleting content: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -154,7 +177,7 @@ export default function ContentAdmin() {
     }
 
     try {
-      const response = await fetch('/api/admin/content', {
+      const response = await fetch('/api/content-manager', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -165,18 +188,19 @@ export default function ContentAdmin() {
         }),
       });
 
-      if (response.ok) {
-        const newItem = await response.json();
-        setContentItems(items => [...items, newItem]);
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        setContentItems(items => [...items, result.data]);
         setNewContentKey('');
         setNewContentValue('');
         alert('Content added successfully!');
       } else {
-        throw new Error('Failed to add content');
+        throw new Error(result.error || 'Failed to add content');
       }
     } catch (error) {
       console.error('Error adding content:', error);
-      alert('Error adding content');
+      alert(`Error adding content: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 

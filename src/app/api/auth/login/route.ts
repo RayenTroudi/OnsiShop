@@ -53,6 +53,8 @@ export async function POST(request: NextRequest) {
     // Set cookie
     const response = NextResponse.json({
       message: 'Login successful',
+      success: true,
+      token: token, // Include token for API access
       user: {
         id: user.id,
         email: user.email,

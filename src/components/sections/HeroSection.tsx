@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from '@/contexts/TranslationContext';
-import { DEFAULT_CONTENT_VALUES, getContentValue } from '@/lib/content';
+import { DEFAULT_CONTENT_VALUES, getContentValue, normalizeContentKey } from '@/lib/content-manager';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const HeroSection = () => {
@@ -174,11 +174,8 @@ const HeroSection = () => {
 
   // Handle video URL changes
   useEffect(() => {
-    // Check multiple possible content keys for background video (different naming conventions)
-    const backgroundVideo = getContentValue(content, 'hero_background_video', DEFAULT_CONTENT_VALUES['hero_background_video']) || 
-                           getContentValue(content, 'hero.backgroundVideo', '') ||
-                           getContentValue(content, 'hero_video', '') ||
-                           getContentValue(content, 'background_video', '');
+    // Use normalized key lookup for background video
+    const backgroundVideo = getContentValue(content, 'hero_background_video', DEFAULT_CONTENT_VALUES['hero_background_video']);
     
     // Validate video URL
     if (backgroundVideo && backgroundVideo !== currentVideoUrl) {
@@ -224,6 +221,7 @@ const HeroSection = () => {
     }
   }, [content, currentVideoUrl, transitionToNewVideo, addDebugLog]);
   
+  // Use normalized content keys for consistent access
   const title = getContentValue(content, 'hero_title', DEFAULT_CONTENT_VALUES['hero_title']);
   const subtitle = getContentValue(content, 'hero_subtitle', DEFAULT_CONTENT_VALUES['hero_subtitle']);
   const description = getContentValue(content, 'hero_description', DEFAULT_CONTENT_VALUES['hero_description']);
