@@ -1,9 +1,6 @@
+import { prisma } from '@/lib/database';
 import type { Language } from '@/types/translation';
-import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
-
-// Create a single Prisma client instance
-const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {

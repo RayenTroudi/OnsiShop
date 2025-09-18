@@ -9,10 +9,13 @@ export function getDatabaseConnection(): PrismaClient {
   }
 
   const isProduction = process.env.NODE_ENV === 'production';
-  const databaseUrl = process.env.DATABASE_URL;
+  // Try different environment variable names for database URL
+  const databaseUrl = process.env.DATABASE_URL || 
+                     process.env.PRISMA_DATABASE_URL || 
+                     process.env.POSTGRES_URL;
 
   if (!databaseUrl) {
-    throw new Error('DATABASE_URL environment variable is not set');
+    throw new Error('No database URL found. Please set DATABASE_URL, PRISMA_DATABASE_URL, or POSTGRES_URL environment variable');
   }
 
   console.log('🔌 Initializing database connection...');

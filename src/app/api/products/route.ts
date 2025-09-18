@@ -1,8 +1,6 @@
-import { DatabaseService } from '@/lib/database';
-import { PrismaClient } from '@prisma/client';
+import { DatabaseService, prisma } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
 
-const prisma = new PrismaClient();
 const db = new DatabaseService();
 
 export const dynamic = 'force-dynamic';
