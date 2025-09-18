@@ -117,6 +117,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // For hero videos, clean up old videos FIRST before creating new one
+    if (isHeroVideo) {
+      // Delete old hero videos BEFORE creating new one
+      await prisma.mediaAsset.deleteMany({
+        where: {
+          section: 'hero',
+          type: { startsWith: 'video/' }
+        }
+      });
+    }
+
     // Create media asset record
     const mediaAsset = await prisma.mediaAsset.create({
       data: {
@@ -132,26 +143,8 @@ export async function POST(request: NextRequest) {
     revalidatePath('/');
     revalidatePath('/admin/content');
 
-    // For hero videos, automatically update the content key and clean up old videos
+    // Update content keys after successful creation
     if (isHeroVideo) {
-      // Remove any existing hero videos to keep only one active
-      const existingHeroVideos = await prisma.mediaAsset.findMany({
-        where: {
-          section: 'hero',
-          type: { startsWith: 'video/' }
-        }
-      });
-
-      // Delete old hero videos (keep storage clean)
-      if (existingHeroVideos.length > 0) {
-        await prisma.mediaAsset.deleteMany({
-          where: {
-            section: 'hero',
-            type: { startsWith: 'video/' }
-          }
-        });
-      }
-
       // Update the hero background video content key
       const contentKey = 'hero_background_video';
       await prisma.siteContent.upsert({

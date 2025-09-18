@@ -75,19 +75,28 @@ export function getContentValue(content: Record<string, string>, key: string, de
   return DEFAULT_CONTENT_VALUES[normalizedKey as keyof typeof DEFAULT_CONTENT_VALUES] || defaultValue;
 }
 
-// Initialize default content in database
+// Initialize only essential default content in database
 export async function initializeDefaultContent() {
   try {
     const existingContent = await prisma.siteContent.findMany();
     const existingKeys = new Set(existingContent.map(item => item.key));
     
+    // Only initialize critical content keys, not all defaults
+    const essentialKeys = [
+      'hero_background_video',
+      'hero_title', 
+      'hero_subtitle',
+      'hero_description'
+    ];
+    
     const toCreate = [];
     
-    // Add missing default content
-    for (const [key, value] of Object.entries(DEFAULT_CONTENT_VALUES)) {
+    // Add only missing essential content
+    for (const key of essentialKeys) {
       const normalizedKey = normalizeContentKey(key);
       if (!existingKeys.has(normalizedKey) && !existingKeys.has(key)) {
-        toCreate.push({ key: normalizedKey, value });
+        const defaultValue = DEFAULT_CONTENT_VALUES[key as keyof typeof DEFAULT_CONTENT_VALUES] || '';
+        toCreate.push({ key: normalizedKey, value: defaultValue });
       }
     }
     
@@ -96,7 +105,7 @@ export async function initializeDefaultContent() {
         data: toCreate,
         skipDuplicates: true
       });
-      console.log(`Initialized ${toCreate.length} default content items`);
+      console.log(`Initialized ${toCreate.length} essential content items`);
     }
     
   } catch (error) {

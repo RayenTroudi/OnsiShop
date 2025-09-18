@@ -23,11 +23,11 @@ interface MediaAsset {
   updatedAt: string;
 }
 
-type ContentSection = 'all' | 'hero' | 'hero-video' | 'promotions' | 'about' | 'footer' | 'contact';
+type ContentSection = 'hero-video' | 'promotions' | 'about' | 'footer' | 'contact';
 
 export default function ContentAdmin() {
   const { t } = useTranslation();
-  const [activeSection, setActiveSection] = useState<ContentSection>('all');
+  const [activeSection, setActiveSection] = useState<ContentSection>('hero-video');
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,7 +88,17 @@ export default function ContentAdmin() {
     setRefreshing(false);
   };
 
+  const [modifiedItems, setModifiedItems] = useState<Set<string>>(new Set());
+  
   const saveAllChanges = async () => {
+    // Only save items that have been modified
+    const itemsToSave = contentItems.filter(item => modifiedItems.has(item.id));
+    
+    if (itemsToSave.length === 0) {
+      alert('No changes to save');
+      return;
+    }
+    
     setSaving(true);
     try {
       const response = await fetch('/api/content-manager', {
@@ -96,13 +106,14 @@ export default function ContentAdmin() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ items: contentItems }),
+        body: JSON.stringify({ items: itemsToSave }),
       });
 
       const result = await response.json();
       
       if (response.ok && result.success) {
         alert(`Successfully saved ${result.updated} changes!`);
+        setModifiedItems(new Set()); // Clear modified items
         await fetchContent();
       } else {
         throw new Error(result.error || 'Failed to save changes');
@@ -121,6 +132,8 @@ export default function ContentAdmin() {
         item.id === id ? { ...item, [field]: value } : item
       )
     );
+    // Track that this item has been modified
+    setModifiedItems(prev => new Set(prev).add(id));
   };
 
   const deleteContent = async (id: string) => {
@@ -285,12 +298,10 @@ export default function ContentAdmin() {
   };
 
   const filteredContent = contentItems.filter(item => {
-    if (activeSection === 'all') return true;
-    return item.key.toLowerCase().includes(activeSection.toLowerCase());
+    return item.key.toLowerCase().includes(activeSection.toLowerCase().replace('-', '_'));
   });
 
   const filteredMedia = mediaAssets.filter(asset => {
-    if (activeSection === 'all') return true;
     if (activeSection === 'hero-video') return false; // Hero video has its own component
     return asset.section?.toLowerCase() === activeSection.toLowerCase();
   });
@@ -333,8 +344,6 @@ export default function ContentAdmin() {
       {/* Section Navigation */}
       <div className="flex flex-wrap gap-2 mb-6">
         {[
-          { key: 'all', label: 'All Content' },
-          { key: 'hero', label: 'Hero Section' },
           { key: 'hero-video', label: 'Hero Video' },
           { key: 'promotions', label: 'Promotions' },
           { key: 'about', label: 'About' },
