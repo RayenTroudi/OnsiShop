@@ -190,8 +190,12 @@ const HeroSection = () => {
       // Handle different types of video URLs
       let validVideoUrl = backgroundVideo;
       
+      // If it's a base64 data URL, use it directly
+      if (backgroundVideo.startsWith('data:')) {
+        validVideoUrl = backgroundVideo;
+      }
       // If it's a database media ID route, use it directly
-      if (backgroundVideo.startsWith('/api/media/')) {
+      else if (backgroundVideo.startsWith('/api/media/')) {
         validVideoUrl = backgroundVideo;
       }
       // If it's an external URL, use it directly
