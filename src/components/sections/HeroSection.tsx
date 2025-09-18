@@ -236,13 +236,12 @@ const HeroSection = () => {
       {/* Background Images and Videos - Layered setup */}
       <div className="absolute inset-0 z-0">
         {/* Background Image Layer (fallback when no video or video fails) */}
-        {backgroundImage && (
+        {backgroundImage && !currentVideoUrl && (
           <>
             <div 
-              className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-opacity duration-500"
+              className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
               style={{
-                backgroundImage: `url('${backgroundImage}')`,
-                opacity: currentVideoUrl && !videoError ? 0.3 : 1 // Dim when video is playing, full opacity when no video
+                backgroundImage: `url('${backgroundImage}')`
               }}
             />
             {/* Hidden img tag for accessibility and SEO */}
@@ -310,8 +309,7 @@ const HeroSection = () => {
           </div>
         )}
         
-        {/* Dark overlay for better text readability */}
-        <div className="absolute inset-0 bg-black/40" />
+        {/* Light text shadow for readability - no overlay needed */}
       </div>
       
       {/* Fallback gradient background (shown if no video and no image) */}
@@ -319,22 +317,19 @@ const HeroSection = () => {
         <div className="absolute inset-0 z-0 bg-gradient-to-br from-purple-900 via-purple-700 to-pink-600" />
       )}
       
-      {/* Background Pattern */}
-      <div className="absolute inset-0 z-10 opacity-20" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-      }} />
+
       
       {/* Content */}
       <div className="relative z-20 max-w-4xl mx-auto px-4 text-center">
-        <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent drop-shadow-lg">
+        <h1 className="text-4xl md:text-6xl font-bold mb-4 text-white" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
           {t('hero_title')}
         </h1>
         
-        <h2 className="text-xl md:text-2xl font-medium mb-6 text-purple-100 drop-shadow-md">
+        <h2 className="text-xl md:text-2xl font-medium mb-6 text-white" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.8)' }}>
           {t('hero_subtitle')}
         </h2>
         
-        <p className="text-lg md:text-xl mb-8 max-w-3xl mx-auto leading-relaxed text-white/90 drop-shadow-md">
+        <p className="text-lg md:text-xl mb-8 max-w-3xl mx-auto leading-relaxed text-white" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
           {t('hero_description')}
         </p>
       </div>
