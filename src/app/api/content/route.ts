@@ -1,109 +1,50 @@
-import {
-    DEFAULT_CONTENT_VALUES,
-    initializeDefaultContent,
-    migrateLegacyContent,
-    normalizeContentKey,
-    prisma
-} from '@/lib/content-manager';
-import { revalidatePath } from 'next/cache';
-import { NextRequest, NextResponse } from 'next/server';
+// Emergency static content API - bypassing database size limits
+import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/content - Fetch all site content (legacy endpoint, redirects to new system)
 export async function GET() {
-  try {
-    // Initialize defaults and migrate legacy content
-    await initializeDefaultContent();
-    await migrateLegacyContent();
-    
-    const content = await prisma.siteContent.findMany({
-      select: {
-        key: true,
-        value: true,
-        updatedAt: true
-      },
-      orderBy: {
-        key: 'asc'
-      }
-    });
+  const staticContent = {
+    success: true,
+    data: {
+      hero_title: 'Welcome to Our Fashion Store',
+      hero_subtitle: 'Discover the Latest Trends',
+      hero_description: 'Shop our collection of high-quality clothing for men and women.',
+      hero_button_text: 'Shop Now',
+      hero_background_image: '/images/placeholder-product.svg',
+      hero_background_video: '',
+      promotion_title: 'Winter Collection Now Available', 
+      promotion_subtitle: 'Stay cozy and fashionable this winter with our new collection!',
+      promotion_button_text: 'View Collection',
+      promotion_button_link: '/search/winter-2024',
+      promotion_background_image: '/images/placeholder-product.svg',
+      about_title: 'About Our Store',
+      about_description: 'We are passionate about bringing you the finest clothing at affordable prices.',
+      footer_company_name: 'OnsiShop',
+      footer_description: 'Your Fashion Destination'
+    },
+    items: [],
+    emergency_mode: true,
+    note: 'Database size (6.44MB) exceeds Vercel 5MB query limit due to base64 images'
+  };
 
-    // Convert to key-value object with all defaults included
-    const contentMap: Record<string, string> = {};
-    
-    // Start with defaults
-    Object.entries(DEFAULT_CONTENT_VALUES).forEach(([key, value]) => {
-      const normalizedKey = normalizeContentKey(key);
-      contentMap[normalizedKey] = value;
-    });
-    
-    // Override with database values
-    content.forEach(item => {
-      const normalizedKey = normalizeContentKey(item.key);
-      contentMap[normalizedKey] = item.value;
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: contentMap,
-      items: content
-    }, {
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      }
-    });
-
-  } catch (error) {
-    console.error('Error fetching content:', error);
-    return NextResponse.json({
-      success: false,
-      message: 'Failed to fetch content',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
-  }
+  return new NextResponse(JSON.stringify(staticContent), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    }
+  });
 }
 
-// POST /api/content - Create or update content (bulk)
-export async function POST(request: NextRequest) {
-  try {
-    const { content } = await request.json();
-
-    if (!content || typeof content !== 'object') {
-      return NextResponse.json({
-        success: false,
-        message: 'Content object is required'
-      }, { status: 400 });
-    }
-
-    // Update or create each content item with normalized keys
-    const updates = await Promise.all(
-      Object.entries(content).map(([key, value]) => {
-        const normalizedKey = normalizeContentKey(key);
-        return prisma.siteContent.upsert({
-          where: { key: normalizedKey },
-          update: { value: String(value) },
-          create: { key: normalizedKey, value: String(value) }
-        });
-      })
-    );
-
-    // Revalidate relevant pages
-    revalidatePath('/');
-    revalidatePath('/admin/content');
-
-    return NextResponse.json({
-      success: true,
-      message: 'Content updated successfully',
-      data: updates
-    });
-
-  } catch (error) {
-    console.error('Error updating content:', error);
-    return NextResponse.json({
-      success: false,
-      message: 'Failed to update content'
-    }, { status: 500 });
-  }
+export async function POST() {
+  return new NextResponse(JSON.stringify({
+    success: false,
+    message: 'Updates disabled - database size limit exceeded'
+  }), {
+    status: 503,
+    headers: { 'Content-Type': 'application/json' }
+  });
 }

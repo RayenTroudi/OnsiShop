@@ -1,7 +1,7 @@
 'use client';
 
-import ContentAdmin from '@/components/admin/ContentAdmin';
+import SimplifiedAdmin from '@/components/admin/SimplifiedAdmin';
 
 export default function ContentManagerPage() {
-  return <ContentAdmin />;
+  return <SimplifiedAdmin />;
 }

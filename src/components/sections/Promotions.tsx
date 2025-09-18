@@ -29,83 +29,29 @@ const Promotions = () => {
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
-    // Load promotion content from database (only background image and link)
-    const fetchContent = async () => {
-      try {
-        setIsLoading(true);
-        setImageError(false);
-        
-        // Add cache busting to force fresh data
-        const timestamp = new Date().getTime();
-        const response = await fetch(`/api/content?t=${timestamp}`, {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          console.log('Promotion content loaded:', result.data);
-          
-          if (result.success && result.data) {
-            const newContent = {
-              backgroundImage: result.data['promotion_background_image'] || '/images/placeholder-product.svg',
-              buttonLink: result.data['promotion_button_link'] || '/search/winter-2024',
-              title: result.data['promotion_title'] || 'have fun',
-              subtitle: result.data['promotion_subtitle'] || 'very nice collection',
-              buttonText: result.data['promotion_button_text'] || 'check'
-            };
-            
-            console.log('Setting promotion content:', newContent);
-            setContent(newContent);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading promotion content:', error);
-        setImageError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchContent();
-
-    // Set up real-time updates via Server-Sent Events
-    const eventSource = new EventSource('/api/content/stream');
+    // TEMPORARY: Use static content due to database size limits (6.44MB > 5MB Vercel limit)
+    console.log('⚠️  Promotions: Using static content due to database size limits');
     
-    eventSource.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        console.log('Received SSE message:', message);
-        
-        if (message.type === 'content-update' && message.content) {
-          const updatedContent = message.content;
-          console.log('Processing content update:', updatedContent);
-          
-          setImageError(false);
-          setContent(prevContent => ({
-            backgroundImage: updatedContent['promotion_background_image'] || prevContent.backgroundImage,
-            buttonLink: updatedContent['promotion_button_link'] || prevContent.buttonLink,
-            title: updatedContent['promotion_title'] || prevContent.title,
-            subtitle: updatedContent['promotion_subtitle'] || prevContent.subtitle,
-            buttonText: updatedContent['promotion_button_text'] || prevContent.buttonText
-          }));
-        }
-      } catch (error) {
-        console.error('Error processing content update:', error);
-      }
-    };
+    setIsLoading(true);
+    setImageError(false);
+    
+    // Simulate loading for UX
+    setTimeout(() => {
+      const staticContent = {
+        backgroundImage: '/images/placeholder-product.svg', // TODO: Fix base64 storage issue
+        buttonLink: '/search/winter-2024',
+        title: 'Winter Collection Now Available',
+        subtitle: 'Stay cozy and fashionable this winter with our new collection!',
+        buttonText: 'View Collection'
+      };
+      
+      console.log('Setting static promotion content:', staticContent);
+      setContent(staticContent);
+      setIsLoading(false);
+    }, 500);
 
-    eventSource.onerror = (error) => {
-      console.error('EventSource error:', error);
-    };
-
-    // Cleanup function
-    return () => {
-      eventSource.close();
-    };
+    // TODO: Re-enable real-time updates when database size issue is fixed
+    // Currently disabled due to API issues from 6.44MB database (exceeds 5MB limit)
   }, []);
 
   return (
