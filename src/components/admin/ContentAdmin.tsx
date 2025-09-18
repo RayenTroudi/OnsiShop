@@ -2,6 +2,7 @@
 
 import { useTranslation } from '@/contexts/TranslationContext';
 import { useEffect, useState } from 'react';
+import HeroVideoManager from './HeroVideoManager';
 
 interface ContentItem {
   id: string;
@@ -22,7 +23,7 @@ interface MediaAsset {
   updatedAt: string;
 }
 
-type ContentSection = 'all' | 'hero' | 'video' | 'image' | 'promotions' | 'about' | 'footer' | 'contact';
+type ContentSection = 'all' | 'hero' | 'hero-video' | 'promotions' | 'about' | 'footer' | 'contact';
 
 export default function ContentAdmin() {
   const { t } = useTranslation();
@@ -290,8 +291,7 @@ export default function ContentAdmin() {
 
   const filteredMedia = mediaAssets.filter(asset => {
     if (activeSection === 'all') return true;
-    if (activeSection === 'video') return asset.type.includes('video');
-    if (activeSection === 'image') return asset.type.includes('image');
+    if (activeSection === 'hero-video') return false; // Hero video has its own component
     return asset.section?.toLowerCase() === activeSection.toLowerCase();
   });
 
@@ -335,8 +335,7 @@ export default function ContentAdmin() {
         {[
           { key: 'all', label: 'All Content' },
           { key: 'hero', label: 'Hero Section' },
-          { key: 'video', label: 'Video Management' },
-          { key: 'image', label: 'Image Management' },
+          { key: 'hero-video', label: 'Hero Video' },
           { key: 'promotions', label: 'Promotions' },
           { key: 'about', label: 'About' },
           { key: 'footer', label: 'Footer' },
@@ -356,7 +355,16 @@ export default function ContentAdmin() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Hero Video Section */}
+      {activeSection === 'hero-video' && (
+        <div className="mb-6">
+          <HeroVideoManager />
+        </div>
+      )}
+
+      {/* Main Content Grid - Hide when showing hero video */}
+      {activeSection !== 'hero-video' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Content Items Section */}
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b border-gray-200">
@@ -536,6 +544,7 @@ export default function ContentAdmin() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

@@ -46,22 +46,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file size based on type
+    // Validate file size based on type and section
     let maxSize: number;
+    const isHeroVideo = section === 'hero' && file.type.startsWith('video/');
+    
     if (file.type.startsWith('video/')) {
-      maxSize = 50 * 1024 * 1024; // 50MB for videos
+      // Hero videos get more restrictive size limits for better performance
+      maxSize = isHeroVideo ? 5 * 1024 * 1024 : 10 * 1024 * 1024; // 5MB for hero videos, 10MB for others
     } else if (file.type.startsWith('image/')) {
-      maxSize = 10 * 1024 * 1024; // 10MB for images
+      maxSize = 5 * 1024 * 1024; // 5MB for images
     } else {
       maxSize = 5 * 1024 * 1024; // 5MB for other files
     }
 
     if (file.size > maxSize) {
       const sizeMB = Math.round(maxSize / (1024 * 1024));
+      const fileType = file.type.split('/')[0];
+      const sectionNote = isHeroVideo ? ' (hero background videos are limited to 5MB for optimal performance)' : '';
       return NextResponse.json(
-        { error: `File too large. Maximum size is ${sizeMB}MB for ${file.type.split('/')[0]} files.` },
+        { 
+          error: `File too large. Maximum size is ${sizeMB}MB for ${fileType} files${sectionNote}.`,
+          details: `Current file size: ${Math.round(file.size / (1024 * 1024) * 100) / 100}MB`
+        },
         { status: 400 }
       );
+    }
+
+    // Additional validation for hero videos
+    if (isHeroVideo) {
+      // Check video duration if possible (this is a basic check)
+      // For more advanced validation, you could use a library like ffprobe
+      const recommendedFormats = ['video/mp4', 'video/webm'];
+      if (!recommendedFormats.includes(file.type)) {
+        return NextResponse.json(
+          { 
+            error: 'For hero videos, MP4 or WebM format is recommended for best compatibility.',
+            details: `Current format: ${file.type}`
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // For large files (over 5MB), we need to handle differently
@@ -108,23 +132,46 @@ export async function POST(request: NextRequest) {
     revalidatePath('/');
     revalidatePath('/admin/content');
 
-    // If this is a specific section media, also update the corresponding content key
-    if (section) {
+    // For hero videos, automatically update the content key and clean up old videos
+    if (isHeroVideo) {
+      // Remove any existing hero videos to keep only one active
+      const existingHeroVideos = await prisma.mediaAsset.findMany({
+        where: {
+          section: 'hero',
+          type: { startsWith: 'video/' }
+        }
+      });
+
+      // Delete old hero videos (keep storage clean)
+      if (existingHeroVideos.length > 0) {
+        await prisma.mediaAsset.deleteMany({
+          where: {
+            section: 'hero',
+            type: { startsWith: 'video/' }
+          }
+        });
+      }
+
+      // Update the hero background video content key
+      const contentKey = 'hero_background_video';
+      await prisma.siteContent.upsert({
+        where: { key: contentKey },
+        update: { value: mediaUrl },
+        create: { key: contentKey, value: mediaUrl }
+      });
+
+      // Broadcast the update for real-time updates
+      broadcastContentUpdate({ [contentKey]: mediaUrl });
+    } else if (section) {
+      // Handle other media types normally
       let contentKey: string;
       
-      // Normalize section name and create appropriate content key
       const normalizedSection = section.toLowerCase().replace(/[-\s]/g, '_');
       
       if (file.type.startsWith('video/')) {
-        // Handle video uploads for background videos
-        if (normalizedSection === 'hero' || normalizedSection === 'hero_background') {
-          contentKey = 'hero_background_video';
-        } else {
-          contentKey = `${normalizedSection}_background_video`;
-        }
+        contentKey = `${normalizedSection}_background_video`;
       } else if (file.type.startsWith('image/')) {
-        // Handle image uploads for backgrounds
-        if (normalizedSection === 'hero' || normalizedSection === 'hero_background') {
+        if (normalizedSection === 'hero') {
           contentKey = 'hero_background_image';
         } else if (normalizedSection === 'about') {
           contentKey = 'about_background_image';
@@ -137,14 +184,12 @@ export async function POST(request: NextRequest) {
         contentKey = `${normalizedSection}_media`;
       }
 
-      // Update or create the content key with the media URL
       await prisma.siteContent.upsert({
         where: { key: contentKey },
         update: { value: mediaUrl },
         create: { key: contentKey, value: mediaUrl }
       });
 
-      // Broadcast the update
       broadcastContentUpdate({ [contentKey]: mediaUrl });
     }
 

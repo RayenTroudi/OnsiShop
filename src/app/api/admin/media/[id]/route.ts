@@ -1,4 +1,6 @@
+import { broadcastContentUpdate } from '@/lib/content-stream';
 import { PrismaClient } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
@@ -11,9 +13,38 @@ export async function DELETE(
   try {
     const { id } = params;
 
+    // Find the media asset to get its details before deletion
+    const mediaAsset = await prisma.mediaAsset.findUnique({
+      where: { id }
+    });
+
+    if (!mediaAsset) {
+      return NextResponse.json(
+        { error: 'Media asset not found' },
+        { status: 404 }
+      );
+    }
+
+    // Delete the media asset
     await prisma.mediaAsset.delete({
       where: { id }
     });
+
+    // If this was a hero video, clear the content key
+    if (mediaAsset.section === 'hero' && mediaAsset.type.startsWith('video/')) {
+      await prisma.siteContent.upsert({
+        where: { key: 'hero_background_video' },
+        update: { value: '' },
+        create: { key: 'hero_background_video', value: '' }
+      });
+
+      // Broadcast the update
+      broadcastContentUpdate({ hero_background_video: '' });
+    }
+
+    // Revalidate pages
+    revalidatePath('/');
+    revalidatePath('/admin/content');
 
     return NextResponse.json({ success: true });
   } catch (error) {
