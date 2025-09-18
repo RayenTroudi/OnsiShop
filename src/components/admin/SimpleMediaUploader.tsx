@@ -21,6 +21,7 @@ export default function SimpleMediaUploader({
 }: SimpleMediaUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [justUploaded, setJustUploaded] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getAcceptTypes = () => {
@@ -79,14 +80,19 @@ export default function SimpleMediaUploader({
         const result = await response.json();
         onUploadSuccess?.(result.url);
         
-        // Show success message
+        // Show success state
         const fileName = file.name.length > 30 ? file.name.substring(0, 30) + '...' : file.name;
-        alert(`✅ ${fileName} uploaded successfully!\n\nYour ${mediaType} will appear on the website immediately.`);
+        setJustUploaded(fileName);
         
-        // Reset file input
+        // Show success message
+        alert(`✅ ${fileName} uploaded successfully!\n\nYour ${mediaType} is now live on the website!`);
+        
+        // Reset file input and clear success after 5 seconds
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
+        
+        setTimeout(() => setJustUploaded(null), 5000);
       } else {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Upload failed');
@@ -139,22 +145,64 @@ export default function SimpleMediaUploader({
       {/* Current Media Preview */}
       {currentMedia && (
         <div className="mb-4">
-          <p className="text-sm font-medium text-gray-700 mb-2">Current {mediaType}:</p>
-          <div className="border border-gray-200 rounded-lg overflow-hidden max-w-sm">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium text-gray-700">Current {mediaType}:</p>
+            {currentMedia.startsWith('data:') && (
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                Base64 ({(currentMedia.length / 1024).toFixed(0)} KB)
+              </span>
+            )}
+          </div>
+          <div className="border border-gray-200 rounded-lg overflow-hidden max-w-sm relative">
             {mediaType === 'video' || currentMedia.includes('video') ? (
               <video 
                 src={currentMedia} 
                 className="w-full h-32 object-cover"
                 muted
                 controls={false}
+                onError={(e) => {
+                  console.error('Video preview error for:', currentMedia.substring(0, 100));
+                }}
               />
             ) : (
               <img 
                 src={currentMedia} 
                 alt={`Current ${section} ${mediaType}`}
                 className="w-full h-32 object-cover"
+                onError={(e) => {
+                  console.error('Image preview error for:', currentMedia.substring(0, 100));
+                }}
               />
             )}
+            {currentMedia.startsWith('data:') && currentMedia.length > 1000000 && (
+              <div className="absolute top-1 right-1 bg-yellow-500 text-white text-xs px-2 py-1 rounded">
+                Large File
+              </div>
+            )}
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            {currentMedia.startsWith('data:') 
+              ? `Stored as base64 data (${(currentMedia.length / 1024 / 1024).toFixed(2)} MB)`
+              : `URL: ${currentMedia.substring(0, 60)}${currentMedia.length > 60 ? '...' : ''}`
+            }
+          </p>
+        </div>
+      )}
+
+      {/* Success Banner */}
+      {justUploaded && (
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-green-800">
+                ✅ Upload successful! "{justUploaded}" is now live on your website.
+              </p>
+            </div>
           </div>
         </div>
       )}
