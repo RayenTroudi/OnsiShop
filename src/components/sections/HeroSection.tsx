@@ -174,7 +174,11 @@ const HeroSection = () => {
 
   // Handle video URL changes
   useEffect(() => {
-    const backgroundVideo = getContentValue(content, 'hero_background_video', DEFAULT_CONTENT_VALUES['hero_background_video']);
+    // Check multiple possible content keys for background video (different naming conventions)
+    const backgroundVideo = getContentValue(content, 'hero_background_video', DEFAULT_CONTENT_VALUES['hero_background_video']) || 
+                           getContentValue(content, 'hero.backgroundVideo', '') ||
+                           getContentValue(content, 'hero_video', '') ||
+                           getContentValue(content, 'background_video', '');
     
     // Validate video URL
     if (backgroundVideo && backgroundVideo !== currentVideoUrl) {
