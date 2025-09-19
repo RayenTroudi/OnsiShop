@@ -196,5 +196,20 @@
   "nav_navigation": "Navigation",
   "section_best_sellers": "Meilleures Ventes",
   "promo_free_shipping": "Livraison Gratuite",
-  "footer_all_rights_reserved": "Tous droits réservés"
+  "footer_all_rights_reserved": "Tous droits réservés",
+  
+  "admin_total_products": "Total Produits",
+  "admin_categories": "Catégories",
+  "admin_content_items": "Éléments de Contenu",
+  "admin_available_products": "Produits Disponibles",
+  "admin_translation_keys": "Clés de Traduction",
+  "admin_quick_actions": "Actions Rapides",
+  "admin_add_product": "Ajouter un Produit",
+  "admin_add_category": "Ajouter une Catégorie",
+  "admin_manage_content": "Gérer le Contenu",
+  "admin_manage_products": "Gérer les Produits",
+  "admin_manage_categories": "Gérer les Catégories",
+  "admin_manage_translations": "Gérer les Traductions",
+  "admin_recent_products": "Produits Récents",
+  "admin_no_products_yet": "Aucun produit encore"
 }

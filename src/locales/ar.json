@@ -196,5 +196,20 @@
   "nav_navigation": "التنقل",
   "section_best_sellers": "الأكثر مبيعاً",
   "promo_free_shipping": "شحن مجاني",
-  "footer_all_rights_reserved": "جميع الحقوق محفوظة"
+  "footer_all_rights_reserved": "جميع الحقوق محفوظة",
+  
+  "admin_total_products": "إجمالي المنتجات",
+  "admin_categories": "الفئات",
+  "admin_content_items": "عناصر المحتوى",
+  "admin_available_products": "المنتجات المتاحة",
+  "admin_translation_keys": "مفاتيح الترجمة",
+  "admin_quick_actions": "إجراءات سريعة",
+  "admin_add_product": "إضافة منتج",
+  "admin_add_category": "إضافة فئة",
+  "admin_manage_content": "إدارة المحتوى",
+  "admin_manage_products": "إدارة المنتجات",
+  "admin_manage_categories": "إدارة الفئات",
+  "admin_manage_translations": "إدارة الترجمات",
+  "admin_recent_products": "المنتجات الأخيرة",
+  "admin_no_products_yet": "لا توجد منتجات بعد"
 }

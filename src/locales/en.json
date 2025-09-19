@@ -196,5 +196,20 @@
   "nav_navigation": "Navigation",
   "section_best_sellers": "Best Sellers",
   "promo_free_shipping": "Free Shipping",
-  "footer_all_rights_reserved": "All rights reserved"
+  "footer_all_rights_reserved": "All rights reserved",
+  
+  "admin_total_products": "Total Products",
+  "admin_categories": "Categories",
+  "admin_content_items": "Content Items",
+  "admin_available_products": "Available Products",
+  "admin_translation_keys": "Translation Keys",
+  "admin_quick_actions": "Quick Actions",
+  "admin_add_product": "Add Product",
+  "admin_add_category": "Add Category",
+  "admin_manage_content": "Manage Content",
+  "admin_manage_products": "Manage Products",
+  "admin_manage_categories": "Manage Categories",
+  "admin_manage_translations": "Manage Translations",
+  "admin_recent_products": "Recent Products",
+  "admin_no_products_yet": "No products yet"
 }
