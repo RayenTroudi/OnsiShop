@@ -25,8 +25,8 @@ export async function generateMetadata({
     }
 
     return {
-      title: category.name,
-      description: category.description || `${category.name} products`
+      title: (category as any).name || category.id,
+      description: (category as any).description || `${(category as any).name || category.id} products`
     };
   } catch (error) {
     console.error('Error generating metadata:', error);
@@ -106,7 +106,7 @@ export default async function CategoryPage({
         {products.length === 0 ? (
           <div className="py-12 text-center">
             <h2 className="font-lora text-3xl font-bold capitalize text-darkPurple mb-4">
-              {category.name}
+              {(category as any).name || category.id}
             </h2>
             <p className="text-lg text-gray-600 mb-6">
               No products found in this category yet.
@@ -121,7 +121,7 @@ export default async function CategoryPage({
         ) : (
           <div className="flex flex-col items-center justify-center gap-[48px]">
             <h2 className="font-lora text-3xl font-bold capitalize text-darkPurple">
-              {category.name}
+              {(category as any).name || category.id}
             </h2>
             <Grid className="grid-cols-1 items-start justify-center sm:grid-cols-2 lg:grid-cols-3">
               <ProductGridItems products={products} />

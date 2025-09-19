@@ -19,7 +19,7 @@ export async function GET() {
     
     const content = await prisma.siteContent.findMany({
       orderBy: { key: 'asc' }
-    });
+    }) as any[];
 
     // Convert to key-value object with all defaults included
     const contentMap: Record<string, string> = {};

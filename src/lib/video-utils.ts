@@ -1,4 +1,5 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
+import { Collections, getDatabase } from '@/lib/mongodb';
 
 /**
  * Initialize default video in database if none exists
@@ -6,35 +7,35 @@ import { prisma } from '@/lib/database';
 export async function initializeDefaultVideo() {
   try {
     // Check if there's already a hero background video in the database
-    const existingVideo = await (prisma as any).mediaAsset.findFirst({
-      where: {
-        section: 'hero-background'
-      }
+    const db = await getDatabase();
+    const existingVideo = await db.collection(Collections.MEDIA_ASSETS).findOne({
+      section: 'hero-background'
     });
 
     if (!existingVideo) {
       console.log('📽️ No hero video found, creating default entry...');
       
       // Create a default video entry that points to an external source
-      const defaultVideo = await (prisma as any).mediaAsset.create({
-        data: {
-          filename: 'default-hero-video.mp4',
-          url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-          type: 'video/mp4',
-          section: 'hero-background',
-          alt: 'Default hero background video'
-        }
-      });
+      const now = new Date();
+      const defaultVideoData = {
+        filename: 'default-hero-video.mp4',
+        url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+        type: 'video/mp4',
+        section: 'hero-background',
+        alt: 'Default hero background video',
+        createdAt: now,
+        updatedAt: now
+      };
+      
+      const result = await db.collection(Collections.MEDIA_ASSETS).insertOne(defaultVideoData);
+      const defaultVideo = {
+        ...defaultVideoData,
+        _id: result.insertedId.toString(),
+        id: result.insertedId.toString()
+      };
 
       // Update the site content to use this video
-      await (prisma as any).siteContent.upsert({
-        where: { key: 'hero.backgroundVideo' },
-        update: { value: `/api/media/${defaultVideo.id}` },
-        create: { 
-          key: 'hero.backgroundVideo', 
-          value: `/api/media/${defaultVideo.id}` 
-        }
-      });
+      await dbService.updateSiteContentByKey('hero.backgroundVideo', `/api/media/${defaultVideo.id}`);
 
       console.log('✅ Default hero video initialized:', defaultVideo.id);
       return defaultVideo;
@@ -52,27 +53,26 @@ export async function initializeDefaultVideo() {
  */
 export async function getVideosFromDatabase() {
   try {
-    const videos = await (prisma as any).mediaAsset.findMany({
-      where: {
-        type: {
-          startsWith: 'video/'
-        }
-      },
-      select: {
-        id: true,
-        filename: true,
-        type: true,
-        section: true,
-        createdAt: true
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
+    const db = await getDatabase();
+    const videos = await db.collection(Collections.MEDIA_ASSETS)
+      .find({
+        type: { $regex: '^video/' }
+      })
+      .sort({ createdAt: -1 })
+      .project({
+        _id: 1,
+        filename: 1,
+        type: 1,
+        section: 1,
+        createdAt: 1
+      })
+      .toArray();
 
     return videos.map((video: any) => ({
       ...video,
-      url: `/api/media/${video.id}`,
+      id: video._id?.toString(),
+      _id: video._id?.toString(),
+      url: `/api/media/${video._id?.toString()}`,
       size: 'Database stored'
     }));
   } catch (error) {

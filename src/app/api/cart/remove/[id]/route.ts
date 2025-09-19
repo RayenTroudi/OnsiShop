@@ -24,17 +24,19 @@ export async function DELETE(
 
     // Verify the cart item belongs to the user
     const cartItem = await prisma.cartItem.findUnique({
-      where: { id: itemId },
-      include: {
-        cart: true
-      }
-    });
+      where: { id: itemId }
+    }) as any;
 
     if (!cartItem) {
       return NextResponse.json({ error: 'Cart item not found' }, { status: 404 });
     }
 
-    if (cartItem.cart.userId !== userId) {
+    // Get the cart to check ownership
+    const cart = await prisma.cart.findUnique({
+      where: { id: cartItem.cartId }
+    }) as any;
+
+    if (!cart || cart.userId !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 

@@ -22,11 +22,10 @@ export async function PUT(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Get the cart item with product info
+    // Get the cart item and product info separately
     const cartItem = await prisma.cartItem.findUnique({
-      where: { id: itemId },
-      include: { product: true }
-    });
+      where: { id: itemId }
+    }) as any;
 
     if (!cartItem) {
       return NextResponse.json({
@@ -35,8 +34,10 @@ export async function PUT(request: NextRequest) {
       }, { status: 404 });
     }
 
-    // Check stock availability
-    const product = cartItem.product as any;
+    // Get product info
+    const product = await prisma.product.findUnique({
+      where: { id: cartItem.productId }
+    }) as any;
     if (product.stock < quantity) {
       return NextResponse.json({
         success: false,
@@ -60,8 +61,7 @@ export async function PUT(request: NextRequest) {
     // Update quantity
     const updatedItem = await prisma.cartItem.update({
       where: { id: itemId },
-      data: { quantity },
-      include: { product: true }
+      data: { quantity }
     });
 
     return NextResponse.json({

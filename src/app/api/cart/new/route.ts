@@ -47,14 +47,7 @@ export async function POST(request: NextRequest) {
     // Create cart if it doesn't exist
     if (!cart) {
       cart = await prisma.cart.create({
-        data: { userId },
-        include: {
-          items: {
-            include: {
-              product: true
-            }
-          }
-        }
+        data: { userId }
       });
     }
 

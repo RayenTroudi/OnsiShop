@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/database';
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
-
-const prisma = new PrismaClient();
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +28,7 @@ export async function GET(
       orderBy: {
         createdAt: 'desc',
       },
-    });
+    }) as any[];
 
     // Calculate rating statistics
     const totalRatings = ratings.length;

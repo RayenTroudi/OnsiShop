@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
           }
         }
       }
-    });
+    }) as any;
 
     if (!cart || cart.items.length === 0) {
       console.log('❌ Order creation failed: Cart is empty', { 
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     // Calculate total amount
     const totalAmount = cart.items.reduce(
-      (sum, item) => sum + (item.product.price * item.quantity),
+      (sum: number, item: any) => sum + (item.product.price * item.quantity),
       0
     );
 
@@ -110,50 +110,52 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create order with transaction
-    const order = await prisma.$transaction(async (tx) => {
-      // Create the order
-      const newOrder = await tx.order.create({
+    // Create order (replacing transaction with sequential operations)
+    // Create the order
+    const newOrder = await prisma.order.create({
+      data: {
+        userId,
+        fullName,
+        email,
+        phone,
+        shippingAddress,
+        totalAmount,
+        status: 'pending'
+      }
+    });
+
+    // Create order items and update product stock
+    for (const item of cart.items) {
+      await prisma.orderItem.create({
         data: {
-          userId,
-          fullName,
-          email,
-          phone,
-          shippingAddress,
-          totalAmount,
-          status: 'pending'
+          orderId: newOrder.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.product.price
         }
       });
 
-      // Create order items and update product stock
-      for (const item of cart.items) {
-        await tx.orderItem.create({
-          data: {
-            orderId: newOrder.id,
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.product.price
-          }
-        });
-
-        // Update product stock
-        await tx.product.update({
+      // Update product stock
+      const currentProduct = await prisma.product.findUnique({
+        where: { id: item.productId }
+      }) as any;
+      
+      if (currentProduct) {
+        await prisma.product.update({
           where: { id: item.productId },
           data: {
-            stock: {
-              decrement: item.quantity
-            }
+            stock: currentProduct.stock - item.quantity
           }
         });
       }
+    }
 
-      // Clear the cart items but keep the cart
-      await tx.cartItem.deleteMany({
-        where: { cartId: cart.id }
-      });
-
-      return newOrder;
+    // Clear the cart items but keep the cart
+    await prisma.cartItem.deleteMany({
+      where: { cartId: cart.id }
     });
+
+    const order = newOrder;
 
     // Send email notifications
     try {
@@ -163,7 +165,7 @@ export async function POST(request: NextRequest) {
         customerEmail: email,
         customerPhone: phone,
         shippingAddress,
-        items: cart.items.map(item => ({
+        items: cart.items.map((item: any) => ({
           name: item.product.name || item.product.title || 'Product',
           quantity: item.quantity,
           price: item.product.price

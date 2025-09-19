@@ -1,10 +1,8 @@
 import ProductForm from '@/components/product/ProductForm';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/database';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-
-const prisma = new PrismaClient();
 
 // Check if current user is admin
 async function isCurrentUserAdmin(): Promise<boolean> {
@@ -18,8 +16,7 @@ async function isCurrentUserAdmin(): Promise<boolean> {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: { role: true }
+      where: { id: decoded.userId }
     });
 
     return user?.role === 'admin';

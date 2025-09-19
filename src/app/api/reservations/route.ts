@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/database';
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
-
-const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 export async function POST(request: NextRequest) {
@@ -157,7 +155,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Parse items JSON for each reservation
-    const reservationsWithItems = reservations.map(reservation => ({
+    const reservationsWithItems = (reservations as any[]).map((reservation: any) => ({
       ...reservation,
       items: JSON.parse(reservation.items)
     }));

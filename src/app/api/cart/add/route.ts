@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
         productId,
         variantId: variantId || null
       }
-    });
+    }) as any;
 
     let cartItem;
     if (existingItem) {
@@ -143,8 +143,7 @@ export async function POST(request: NextRequest) {
 
       cartItem = await prisma.cartItem.update({
         where: { id: existingItem.id },
-        data: { quantity: newQuantity },
-        include: { product: true }
+        data: { quantity: newQuantity }
       });
     } else {
       cartItem = await prisma.cartItem.create({
@@ -153,8 +152,7 @@ export async function POST(request: NextRequest) {
           productId,
           quantity,
           variantId: variantId || null
-        },
-        include: { product: true }
+        }
       });
     }
 

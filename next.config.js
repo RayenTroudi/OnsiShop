@@ -45,7 +45,7 @@ module.exports = {
   // Vercel deployment optimizations
   experimental: {
     ...module.exports.experimental,
-    serverComponentsExternalPackages: ["@prisma/client", "prisma"]
+    serverComponentsExternalPackages: ["mongodb"]
   },
   // Optimize bundle size
   webpack: (config, { isServer }) => {
@@ -56,6 +56,14 @@ module.exports = {
         fs: false,
         net: false,
         tls: false,
+        child_process: false,
+        dns: false,
+        'timers/promises': false,
+        crypto: false,
+        stream: false,
+        util: false,
+        url: false,
+        querystring: false,
       };
     }
     return config;

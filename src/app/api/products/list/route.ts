@@ -1,8 +1,5 @@
-import { DatabaseService } from '@/lib/database';
-import { PrismaClient } from '@prisma/client';
+import { DatabaseService, prisma } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
-
-const prisma = new PrismaClient();
 const db = new DatabaseService();
 
 export const dynamic = 'force-dynamic';
@@ -96,10 +93,10 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Calculate average ratings for each product and transform to Shopify format
-    const productsWithRatings = products.map((product) => {
+    const productsWithRatings = (products as any[]).map((product: any) => {
       const ratings = product.ratings;
       const avgRating = ratings.length > 0
-        ? ratings.reduce((sum, rating) => sum + rating.stars, 0) / ratings.length
+        ? ratings.reduce((sum: number, rating: any) => sum + rating.stars, 0) / ratings.length
         : null;
 
       // Remove ratings array from response and add avgRating

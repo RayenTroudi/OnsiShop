@@ -1,9 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/database';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
-
-const prisma = new PrismaClient();
 
 export async function GET() {
   try {
@@ -12,7 +10,7 @@ export async function GET() {
     // Fetch all site content from database
     const siteContentItems = await prisma.siteContent.findMany({
       orderBy: { updatedAt: 'desc' }
-    });
+    }) as any[];
 
     console.log(`📋 Found ${siteContentItems.length} content items`);
 

@@ -47,25 +47,23 @@ export async function GET(request: NextRequest) {
       }, { status: 401 });
     }
 
-    // Get cart with items and product details
+    // Get cart and items separately (compatibility layer doesn't support include)
     const cart = await prisma.cart.findFirst({
-      where: { userId },
-      include: {
-        items: {
-          include: {
-            product: true
-          },
-          orderBy: {
-            createdAt: 'desc'
-          }
-        }
-      }
-    });
+      where: { userId }
+    }) as any;
+
+    // Get cart items if cart exists
+    let cartItems: any[] = [];
+    if (cart) {
+      cartItems = await prisma.cartItem.findMany({
+        where: { cartId: cart.id }
+      }) as any[];
+    }
 
     console.log('🛒 Cart query result:', {
       userId,
       hasCart: !!cart,
-      itemCount: cart?.items?.length || 0
+      itemCount: cartItems.length || 0
     });
 
     if (!cart) {
@@ -86,11 +84,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate totals
-    const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
-    const totalAmount = cart.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    const totalItems = cartItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
+    const totalAmount = cartItems.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
 
     const cartWithTotals = {
       ...cart,
+      items: cartItems,
       totalItems,
       totalAmount
     };

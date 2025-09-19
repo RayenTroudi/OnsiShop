@@ -1,9 +1,7 @@
 import { broadcastContentUpdate } from '@/lib/content-stream';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/database';
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
-
-const prisma = new PrismaClient();
 
 // GET - Fetch all media assets
 export async function GET() {

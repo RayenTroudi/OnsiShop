@@ -1,23 +1,25 @@
-import { DatabaseService } from '@/lib/database';
+import { prisma } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const db = new DatabaseService();
-    
     // Use searchParams directly instead of new URL(request.url)
     const handle = request.nextUrl.searchParams.get('handle');
     
     if (handle) {
       // Get products for a specific category
-      const products = await db.getProductsByCategory(handle);
+      const products = await prisma.product.findMany({
+        where: { categoryId: handle }
+      }) as any[];
       return NextResponse.json(products);
     }
     
     // Get all categories (public access)
-    const categories = await db.getCategories();
+    const categories = await prisma.category.findMany({
+      orderBy: { name: 'asc' }
+    }) as any[];
     
     // Return only the essential fields for public use
     const publicCategories = categories.map(category => ({

@@ -1,10 +1,7 @@
-import { DatabaseService } from '@/lib/database';
-import { PrismaClient } from '@prisma/client';
+import { DatabaseService, prisma } from '@/lib/database';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
-
-const prisma = new PrismaClient();
 const db = new DatabaseService();
 
 export const dynamic = 'force-dynamic';
@@ -52,7 +49,7 @@ export async function GET(
           },
         },
       },
-    });
+    }) as any;
 
     if (!product) {
       return NextResponse.json(
@@ -64,7 +61,7 @@ export async function GET(
     // Calculate average rating
     const ratings = product.ratings;
     const avgRating = ratings.length > 0
-      ? ratings.reduce((sum, rating) => sum + rating.stars, 0) / ratings.length
+      ? ratings.reduce((sum: number, rating: any) => sum + rating.stars, 0) / ratings.length
       : null;
 
     // Remove ratings array and add calculated rating
@@ -135,7 +132,7 @@ export async function PUT(
     // Check if product exists
     const existingProduct = await prisma.product.findUnique({
       where: { id },
-    });
+    }) as any;
 
     if (!existingProduct) {
       return NextResponse.json(

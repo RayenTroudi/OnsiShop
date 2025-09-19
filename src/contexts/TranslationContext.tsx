@@ -3,6 +3,11 @@
 import type { Language, TranslationContextType, TranslationResponse } from '@/types/translation';
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 
+// Import the translation files
+import arTranslations from '@/locales/ar.json';
+import enTranslations from '@/locales/en.json';
+import frTranslations from '@/locales/fr.json';
+
 const TranslationContext = createContext<TranslationContextType | undefined>(undefined);
 
 interface TranslationProviderProps {
@@ -10,10 +15,17 @@ interface TranslationProviderProps {
   defaultLanguage?: Language;
 }
 
+// Translation map for easy access
+const translationsMap: Record<Language, TranslationResponse> = {
+  en: enTranslations,
+  fr: frTranslations,
+  ar: arTranslations,
+};
+
 export function TranslationProvider({ children, defaultLanguage = 'en' }: TranslationProviderProps) {
   const [language, setLanguage] = useState<Language>(defaultLanguage);
   const [translations, setTranslations] = useState<TranslationResponse>({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Load translations from localStorage on mount
@@ -34,57 +46,28 @@ export function TranslationProvider({ children, defaultLanguage = 'en' }: Transl
     }
   }, [language, isInitialized]);
 
-  // Fetch translations when language changes
+  // Load translations when language changes
   useEffect(() => {
     if (!isInitialized) return;
     
-    const fetchTranslations = async () => {
+    const loadTranslations = () => {
       setIsLoading(true);
-      console.log(`🔄 Fetching translations for language: ${language}`);
+      console.log(`🔄 Loading translations for language: ${language}`);
       
       try {
-        const timestamp = Date.now(); // Add timestamp for cache busting
-        const response = await fetch(`/api/translations?language=${language}&t=${timestamp}`, {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setTranslations(data);
-          console.log(`✅ Loaded ${Object.keys(data).length} translations for ${language}`);
-          
-          // Debug: log some key translations including auth keys
-          const debugKeys = ['hero_title', 'promo_title', 'about_title', 'auth_sign_in', 'auth_create_new_account', 'common_or', 'auth_demo_credentials'];
-          debugKeys.forEach(key => {
-            if (data[key]) {
-              console.log(`🔍 ${key}: "${data[key]}"`);
-            } else {
-              console.warn(`⚠️ Missing translation for debug key: ${key}`);
-            }
-          });
-        } else {
-          console.error('Failed to fetch translations:', response.status, response.statusText);
-          // Fallback to empty object but don't reset existing translations
-          if (Object.keys(translations).length === 0) {
-            setTranslations({});
-          }
-        }
+        const selectedTranslations = translationsMap[language] || translationsMap.en;
+        setTranslations(selectedTranslations);
+        console.log(`✅ Loaded ${Object.keys(selectedTranslations).length} translations for ${language}`);
       } catch (error) {
-        console.error('Error fetching translations:', error);
-        // Fallback to empty object but don't reset existing translations
-        if (Object.keys(translations).length === 0) {
-          setTranslations({});
-        }
+        console.error('Error loading translations:', error);
+        // Fallback to English translations
+        setTranslations(translationsMap.en);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchTranslations();
+    loadTranslations();
   }, [language, isInitialized]);
 
   const t = (key: string): string => {
@@ -127,27 +110,23 @@ export function useTranslation() {
 // Helper hook for specific language translations
 export function useTranslationWithLanguage(lang: Language) {
   const [translations, setTranslations] = useState<TranslationResponse>({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const fetchTranslations = async () => {
+    const loadTranslations = () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/translations?language=${lang}`);
-        if (response.ok) {
-          const data = await response.json();
-          setTranslations(data);
-        } else {
-          console.error('Failed to fetch translations:', response.statusText);
-        }
+        const selectedTranslations = translationsMap[lang] || translationsMap.en;
+        setTranslations(selectedTranslations);
       } catch (error) {
-        console.error('Error fetching translations:', error);
+        console.error('Error loading translations:', error);
+        setTranslations(translationsMap.en);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchTranslations();
+    loadTranslations();
   }, [lang]);
 
   const t = (key: string): string => {

@@ -34,11 +34,12 @@ export async function getShopifyMockData(query: string, variables?: any) {
       if (collectionHandle) {
         // Find products that belong to this collection/category
         filteredProducts = adminProducts.filter(product => {
-          if (product.category && product.category.handle === collectionHandle) {
+          const category = product.category as any;
+          if (category && category.handle === collectionHandle) {
             return true;
           }
           // Fallback: match collection name with category name (case insensitive)
-          if (product.category && product.category.name.toLowerCase() === collectionHandle.toLowerCase()) {
+          if (category && category.name && category.name.toLowerCase() === collectionHandle.toLowerCase()) {
             return true;
           }
           return false;
@@ -65,8 +66,8 @@ export async function getShopifyMockData(query: string, variables?: any) {
     if (query.includes('getMenu') || query.includes('menu(')) {
       // Convert categories to menu format
       const menuItems = adminCategories.map(category => ({
-        title: category.name,
-        url: `/search/${category.handle}`,
+        title: (category as any).name || category.id,
+        url: `/search/${(category as any).handle || category.id}`,
         items: [] // Add empty items array to match expected format
       }));
       

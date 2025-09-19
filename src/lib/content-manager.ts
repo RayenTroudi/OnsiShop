@@ -1,7 +1,5 @@
 // Unified Content Management System
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from './database';
 
 // Default content values with standardized naming
 export const DEFAULT_CONTENT_VALUES = {
@@ -79,7 +77,7 @@ export function getContentValue(content: Record<string, string>, key: string, de
 export async function initializeDefaultContent() {
   try {
     const existingContent = await prisma.siteContent.findMany();
-    const existingKeys = new Set(existingContent.map(item => item.key));
+    const existingKeys = new Set(existingContent.map((item: any) => item.key));
     
     // Only initialize critical content keys, not all defaults
     const essentialKeys = [
@@ -89,24 +87,18 @@ export async function initializeDefaultContent() {
       'hero_description'
     ];
     
-    const toCreate = [];
-    
     // Add only missing essential content
     for (const key of essentialKeys) {
       const normalizedKey = normalizeContentKey(key);
       if (!existingKeys.has(normalizedKey) && !existingKeys.has(key)) {
         const defaultValue = DEFAULT_CONTENT_VALUES[key as keyof typeof DEFAULT_CONTENT_VALUES] || '';
-        toCreate.push({ key: normalizedKey, value: defaultValue });
+        await prisma.siteContent.create({
+          data: { key: normalizedKey, value: defaultValue }
+        });
       }
     }
     
-    if (toCreate.length > 0) {
-      await prisma.siteContent.createMany({
-        data: toCreate,
-        skipDuplicates: true
-      });
-      console.log(`Initialized ${toCreate.length} essential content items`);
-    }
+    console.log('Initialized essential content items');
     
   } catch (error) {
     console.error('Error initializing default content:', error);
@@ -117,39 +109,29 @@ export async function initializeDefaultContent() {
 export async function migrateLegacyContent() {
   try {
     const allContent = await prisma.siteContent.findMany();
-    const updates = [];
     
-    for (const item of allContent) {
+    for (const item of allContent as any[]) {
       const normalizedKey = normalizeContentKey(item.key);
       
       // If the key has dots or mixed case, normalize it
       if (item.key !== normalizedKey) {
         // Check if normalized version already exists
-        const existing = allContent.find(c => c.key === normalizedKey);
+        const existing = await prisma.siteContent.findUnique({ 
+          where: { key: normalizedKey } 
+        });
         
         if (!existing) {
-          // Update the key to normalized version
-          updates.push(
-            prisma.siteContent.update({
-              where: { id: item.id },
-              data: { key: normalizedKey }
-            })
-          );
-        } else {
-          // Normalized version exists, delete the old one
-          updates.push(
-            prisma.siteContent.delete({
-              where: { id: item.id }
-            })
-          );
+          // Create new normalized entry and remove old one
+          await prisma.siteContent.create({
+            data: { key: normalizedKey, value: item.value }
+          });
         }
+        // Note: For now we keep old entries to avoid data loss
+        // They can be manually cleaned up later
       }
     }
     
-    if (updates.length > 0) {
-      await Promise.all(updates);
-      console.log(`Migrated ${updates.length} content keys`);
-    }
+    console.log('Migrated content keys');
     
   } catch (error) {
     console.error('Error migrating legacy content:', error);

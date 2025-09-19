@@ -1,8 +1,5 @@
-import { DatabaseService } from '@/lib/database';
-import { PrismaClient } from '@prisma/client';
+import { DatabaseService, prisma } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
-
-const prisma = new PrismaClient();
 const db = new DatabaseService();
 
 export const dynamic = 'force-dynamic';
@@ -59,7 +56,7 @@ export async function GET(request: NextRequest) {
       },
       take: limit,
       orderBy: { createdAt: 'desc' },
-    });
+    }) as any[];
 
     // If not enough products from same category, fetch more from other categories
     if (relatedProducts.length < limit) {
@@ -67,7 +64,7 @@ export async function GET(request: NextRequest) {
         where: {
           id: { 
             not: productId,
-            notIn: relatedProducts.map(p => p.id),
+            notIn: relatedProducts.map((p: any) => p.id),
           },
           availableForSale: true,
         },
@@ -84,16 +81,16 @@ export async function GET(request: NextRequest) {
         },
         take: limit - relatedProducts.length,
         orderBy: { createdAt: 'desc' },
-      });
+      }) as any[];
 
       relatedProducts = [...relatedProducts, ...additionalProducts];
     }
 
     // Calculate average ratings and transform data
-    const productsWithRatings = relatedProducts.map((product) => {
+    const productsWithRatings = relatedProducts.map((product: any) => {
       const ratings = product.ratings;
       const avgRating = ratings.length > 0
-        ? ratings.reduce((sum, rating) => sum + rating.stars, 0) / ratings.length
+        ? ratings.reduce((sum: number, rating: any) => sum + rating.stars, 0) / ratings.length
         : null;
 
       // Remove ratings array from response and add calculated fields

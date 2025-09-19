@@ -17,17 +17,15 @@ export async function POST(request: NextRequest) {
 
     // Get cart with items
     const cart = await prisma.cart.findFirst({
-      where: userId ? { userId } : { id: cartId },
-      include: {
-        items: {
-          include: {
-            product: true
-          }
-        }
-      }
-    });
+      where: userId ? { userId } : { id: cartId }
+    }) as any;
 
-    if (!cart || cart.items.length === 0) {
+    // Get cart items separately since our compatibility layer doesn't support include
+    const cartItems = cart ? await prisma.cartItem.findMany({
+      where: { cartId: cart.id }
+    }) as any[] : [];
+
+    if (!cart || cartItems.length === 0) {
       return NextResponse.json({
         success: false,
         message: 'Cart is empty or not found'
@@ -45,35 +43,32 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Use transaction to ensure data consistency
-    const result = await prisma.$transaction(async (tx) => {
-      // Deduct stock from products
-      for (const item of cart.items) {
-        await tx.product.update({
+    // Process checkout
+    // Deduct stock from products
+    for (const item of cartItems) {
+      const product = await prisma.product.findUnique({ where: { id: item.productId } }) as any;
+      if (product) {
+        await prisma.product.update({
           where: { id: item.productId },
-          data: {
-            stock: {
-              decrement: item.quantity
-            }
-          }
+          data: { stock: Math.max(0, product.stock - item.quantity) }
         });
       }
+    }
 
-      // Calculate order total
-      const orderTotal = cart.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    // Calculate order total
+    const orderTotal = cartItems.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
 
-      // Clear cart items
-      await tx.cartItem.deleteMany({
-        where: { cartId: cart.id }
-      });
-
-      return {
-        orderId: `ORDER_${Date.now()}`,
-        items: cart.items.length,
-        totalAmount: orderTotal,
-        processedAt: new Date().toISOString()
-      };
+    // Clear cart items
+    await prisma.cartItem.deleteMany({
+      where: { cartId: cart.id }
     });
+
+    const result = {
+      orderId: `ORDER_${Date.now()}`,
+      items: cartItems.length,
+      totalAmount: orderTotal,
+      processedAt: new Date().toISOString()
+    };
 
     return NextResponse.json({
       success: true,

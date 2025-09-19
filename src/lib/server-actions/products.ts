@@ -9,11 +9,12 @@ export async function getProductsByCollection(collection: string) {
     
     // Filter products by category handle
     const filteredProducts = products.filter(product => {
-      if (product.category && product.category.handle === collection) {
+      const category = product.category as any;
+      if (category && category.handle === collection) {
         return true;
       }
       // Fallback: match collection name with category name (case insensitive)
-      if (product.category && product.category.name.toLowerCase() === collection.toLowerCase()) {
+      if (category && category.name && category.name.toLowerCase() === collection.toLowerCase()) {
         return true;
       }
       return false;

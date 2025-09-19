@@ -81,10 +81,10 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Calculate average ratings and transform to Shopify format
-    const productsWithRatings = products.map((product) => {
+    const productsWithRatings = (products as any[]).map((product: any) => {
       const ratings = product.ratings;
       const avgRating = ratings.length > 0
-        ? ratings.reduce((sum, rating) => sum + rating.stars, 0) / ratings.length
+        ? ratings.reduce((sum: number, rating: any) => sum + rating.stars, 0) / ratings.length
         : null;
 
       const { ratings: _, ...productData } = product;
