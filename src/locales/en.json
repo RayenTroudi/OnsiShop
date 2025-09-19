@@ -190,5 +190,11 @@
   
   "auth_network_error": "Network error. Please try again.",
   "auth_continue_checkout": "Please sign in to continue with your order",
-  "auth_signing_in": "Signing in..."
+  "auth_signing_in": "Signing in...",
+  
+  "about_button_text": "Learn More",
+  "nav_navigation": "Navigation",
+  "section_best_sellers": "Best Sellers",
+  "promo_free_shipping": "Free Shipping",
+  "footer_all_rights_reserved": "All rights reserved"
 }

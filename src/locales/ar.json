@@ -190,5 +190,11 @@
   
   "auth_network_error": "خطأ في الشبكة. يرجى المحاولة مرة أخرى.",
   "auth_continue_checkout": "يرجى تسجيل الدخول للمتابعة مع طلبك",
-  "auth_signing_in": "جاري تسجيل الدخول..."
+  "auth_signing_in": "جاري تسجيل الدخول...",
+  
+  "about_button_text": "اعرف المزيد",
+  "nav_navigation": "التنقل",
+  "section_best_sellers": "الأكثر مبيعاً",
+  "promo_free_shipping": "شحن مجاني",
+  "footer_all_rights_reserved": "جميع الحقوق محفوظة"
 }

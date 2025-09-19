@@ -190,5 +190,11 @@
   
   "auth_network_error": "Erreur réseau. Veuillez réessayer.",
   "auth_continue_checkout": "Veuillez vous connecter pour continuer votre commande",
-  "auth_signing_in": "Connexion en cours..."
+  "auth_signing_in": "Connexion en cours...",
+  
+  "about_button_text": "En Savoir Plus",
+  "nav_navigation": "Navigation",
+  "section_best_sellers": "Meilleures Ventes",
+  "promo_free_shipping": "Livraison Gratuite",
+  "footer_all_rights_reserved": "Tous droits réservés"
 }
