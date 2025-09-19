@@ -1,8 +1,7 @@
-import { DatabaseService, prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
-const db = new DatabaseService();
 
 export const dynamic = 'force-dynamic';
 
@@ -14,42 +13,7 @@ export async function GET(
   try {
     const { id } = params;
 
-    const product = await prisma.product.findUnique({
-      where: { id },
-      include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
-            handle: true,
-          },
-        },
-        ratings: {
-          select: {
-            stars: true,
-          },
-        },
-        comments: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-        },
-        _count: {
-          select: {
-            ratings: true,
-            comments: true,
-          },
-        },
-      },
-    }) as any;
+    const product = await dbService.getProductById(id);
 
     if (!product) {
       return NextResponse.json(
@@ -58,17 +22,18 @@ export async function GET(
       );
     }
 
+    // Fetch ratings separately
+    const ratings = await dbService.findManyRatings({
+      where: { productId: params.id }
+    });
+    
     // Calculate average rating
-    const ratings = product.ratings;
     const avgRating = ratings.length > 0
       ? ratings.reduce((sum: number, rating: any) => sum + rating.stars, 0) / ratings.length
       : null;
-
-    // Remove ratings array and add calculated rating
-    const { ratings: _, ...productData } = product;
     
     // Transform to Shopify format with proper image structure
-    const transformedProduct = db.transformToShopifyProduct(productData);
+    const transformedProduct = dbService.transformToShopifyProduct(product);
     
     const productWithRating = {
       ...transformedProduct,
@@ -113,10 +78,7 @@ export async function PUT(
     }
 
     // Check if user is admin
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: { role: true }
-    });
+    const user = await dbService.getUserById(decoded.userId );
 
     if (!user || user.role !== 'admin') {
       return NextResponse.json(
@@ -130,9 +92,7 @@ export async function PUT(
     const { name, title, description, price, image, categoryId } = body;
 
     // Check if product exists
-    const existingProduct = await prisma.product.findUnique({
-      where: { id },
-    }) as any;
+    const existingProduct = await dbService.getProductById(id);
 
     if (!existingProduct) {
       return NextResponse.json(
@@ -150,20 +110,15 @@ export async function PUT(
     }
 
     // Generate new handle if name changed
-    let handle = existingProduct.handle;
-    if (name !== existingProduct.name) {
+    let handle = (existingProduct as any).handle;
+    if (name !== (existingProduct as any).name) {
       handle = name
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
 
       // Check if new handle already exists (for other products)
-      const handleExists = await prisma.product.findFirst({
-        where: {
-          handle,
-          id: { not: id },
-        },
-      });
+      const handleExists = await dbService.findProductByHandleExcluding(handle, id);
 
       if (handleExists) {
         handle = `${handle}-${Date.now()}`;
@@ -171,27 +126,12 @@ export async function PUT(
     }
 
     // Update the product
-    const updatedProduct = await prisma.product.update({
-      where: { id },
-      data: {
-        name,
-        title,
-        handle,
-        description: description || '',
-        price: parseFloat(price),
-        image: image || null,
-        categoryId: categoryId || null,
-        updatedAt: new Date(),
-      },
-      include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
-            handle: true,
-          },
-        },
-      },
+    const updatedProduct = await dbService.updateProduct(id, {
+      handle,
+      title,
+      description: description || '',
+      price: parseFloat(price),
+      categoryId: categoryId || null,
     });
 
     return NextResponse.json(updatedProduct);
@@ -232,10 +172,7 @@ export async function DELETE(
     }
 
     // Check if user is admin
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: { role: true }
-    });
+    const user = await dbService.getUserById(decoded.userId );
 
     if (!user || user.role !== 'admin') {
       return NextResponse.json(
@@ -247,9 +184,7 @@ export async function DELETE(
     const { id } = params;
 
     // Check if product exists
-    const existingProduct = await prisma.product.findUnique({
-      where: { id },
-    });
+    const existingProduct = await dbService.getProductById(id);
 
     if (!existingProduct) {
       return NextResponse.json(
@@ -259,9 +194,7 @@ export async function DELETE(
     }
 
     // Delete the product (this will cascade delete related comments and ratings)
-    await prisma.product.delete({
-      where: { id },
-    });
+    await dbService.deleteProduct(id);
 
     return NextResponse.json(
       { message: 'Product deleted successfully' },

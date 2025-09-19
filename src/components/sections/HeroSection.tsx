@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from '@/contexts/TranslationContext';
 import { DEFAULT_CONTENT_VALUES, getContentValue } from '@/lib/content-manager';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -30,6 +31,7 @@ const useIntersectionObserver = (options = {}) => {
 };
 
 const HeroSection = () => {
+  const { t } = useTranslation();
   const [content, setContent] = useState<Record<string, string>>(DEFAULT_CONTENT_VALUES);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>('');
@@ -251,10 +253,10 @@ const HeroSection = () => {
     }
   }, [content, currentVideoUrl, transitionToNewVideo, addDebugLog]);
   
-  // Use normalized content keys for consistent access
-  const title = getContentValue(content, 'hero_title', DEFAULT_CONTENT_VALUES['hero_title']);
-  const subtitle = getContentValue(content, 'hero_subtitle', DEFAULT_CONTENT_VALUES['hero_subtitle']);
-  const description = getContentValue(content, 'hero_description', DEFAULT_CONTENT_VALUES['hero_description']);
+  // Use translations for text content, content management for media
+  const title = t('hero_title');
+  const subtitle = t('hero_subtitle');
+  const description = getContentValue(content, 'hero_description', t('hero_description')); // Fallback to translation if no custom description
   const backgroundImage = getContentValue(content, 'hero_background_image', DEFAULT_CONTENT_VALUES['hero_background_image'] || '');
 
   return (

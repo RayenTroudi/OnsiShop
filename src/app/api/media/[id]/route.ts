@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
@@ -10,14 +10,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Fetch media asset from database
-    const mediaAsset = await (prisma as any).mediaAsset.findUnique({
-      where: { id },
-      select: {
-        url: true,
-        type: true,
-        filename: true
-      }
-    });
+    const mediaAsset = await dbService.getMediaAssetById(id);
 
     if (!mediaAsset) {
       return NextResponse.json({ error: 'Media not found' }, { status: 404 });

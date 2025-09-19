@@ -4,7 +4,7 @@ import DeleteProductButton from '@/components/product/DeleteProductButton';
 import ProductRating from '@/components/product/ProductRating';
 import ProductReviews from '@/components/product/ProductReviews';
 import RelatedProducts from '@/components/product/RelatedProducts';
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import jwt from 'jsonwebtoken';
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
@@ -55,9 +55,7 @@ async function isCurrentUserAdmin(): Promise<boolean> {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId }
-    });
+    const user = await dbService.getUserById(decoded.userId );
 
     return user?.role === 'admin';
   } catch (error) {

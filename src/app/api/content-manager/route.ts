@@ -1,10 +1,10 @@
 import {
-    DEFAULT_CONTENT_VALUES,
-    initializeDefaultContent,
-    migrateLegacyContent,
-    normalizeContentKey,
-    prisma
+  DEFAULT_CONTENT_VALUES,
+  initializeDefaultContent,
+  migrateLegacyContent,
+  normalizeContentKey
 } from '@/lib/content-manager';
+import { dbService } from '@/lib/database';
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -17,9 +17,7 @@ export async function GET() {
     await initializeDefaultContent();
     await migrateLegacyContent();
     
-    const content = await prisma.siteContent.findMany({
-      orderBy: { key: 'asc' }
-    }) as any[];
+    const content = await dbService.getAllSiteContent() as any[];
 
     // Convert to key-value object with all defaults included
     const contentMap: Record<string, string> = {};
@@ -74,11 +72,7 @@ export async function POST(request: NextRequest) {
 
     const normalizedKey = normalizeContentKey(key);
 
-    const upsertedContent = await prisma.siteContent.upsert({
-      where: { key: normalizedKey },
-      update: { value: String(value) },
-      create: { key: normalizedKey, value: String(value) }
-    });
+    const upsertedContent = await dbService.upsertSiteContent(normalizedKey, String(value));
 
     // Revalidate pages
     revalidatePath('/');
@@ -114,11 +108,7 @@ export async function PUT(request: NextRequest) {
       items.map(async (item: { key: string; value: string }) => {
         const normalizedKey = normalizeContentKey(item.key);
         
-        return await prisma.siteContent.upsert({
-          where: { key: normalizedKey },
-          update: { value: String(item.value) },
-          create: { key: normalizedKey, value: String(item.value) }
-        });
+        return await dbService.upsertSiteContent(normalizedKey, String(item.value));
       })
     );
 
@@ -156,9 +146,7 @@ export async function DELETE(request: NextRequest) {
 
     const normalizedKey = normalizeContentKey(key);
 
-    await prisma.siteContent.delete({
-      where: { key: normalizedKey }
-    });
+    await dbService.deleteSiteContent(normalizedKey);
 
     // Revalidate pages
     revalidatePath('/');

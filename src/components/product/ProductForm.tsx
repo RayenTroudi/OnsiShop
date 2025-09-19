@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from '@/contexts/TranslationContext';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -34,6 +35,7 @@ interface ProductFormProps {
 }
 
 export default function ProductForm({ productId, initialData, mode }: ProductFormProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     description: '',
@@ -318,8 +320,8 @@ export default function ProductForm({ productId, initialData, mode }: ProductFor
             className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors font-semibold"
           >
             {isSubmitting 
-              ? (mode === 'create' ? 'Creating...' : 'Updating...') 
-              : (mode === 'create' ? 'Create Product' : 'Update Product')
+              ? (mode === 'create' ? t('button_creating') : t('button_updating')) 
+              : (mode === 'create' ? t('button_create_product') : t('button_update_product'))
             }
           </button>
           

@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -23,27 +23,21 @@ export async function DELETE(
     console.log('🗑️ Remove cart item:', { userId, itemId });
 
     // Verify the cart item belongs to the user
-    const cartItem = await prisma.cartItem.findUnique({
-      where: { id: itemId }
-    }) as any;
+    const cartItem = await dbService.getCartItemById(itemId) as any;
 
     if (!cartItem) {
       return NextResponse.json({ error: 'Cart item not found' }, { status: 404 });
     }
 
     // Get the cart to check ownership
-    const cart = await prisma.cart.findUnique({
-      where: { id: cartItem.cartId }
-    }) as any;
+    const cart = await dbService.getCartByUserId(userId);
 
-    if (!cart || cart.userId !== userId) {
+    if (!cart || cart.id !== cartItem.cartId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
     // Delete the cart item
-    await prisma.cartItem.delete({
-      where: { id: itemId }
-    });
+    await dbService.deleteCartItem(cartItem.cartId, cartItem.productId, cartItem.variantId);
 
     console.log('✅ Cart item removed successfully');
 

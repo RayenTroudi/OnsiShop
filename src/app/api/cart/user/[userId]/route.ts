@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -22,16 +22,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Get cart and items separately (compatibility layer doesn't support include)
-    const cart = await prisma.cart.findFirst({
-      where: { userId }
-    }) as any;
+    const cart = await dbService.getCartByUserId(userId) as any;
 
     // Get cart items if cart exists
     let cartItems: any[] = [];
     if (cart) {
-      cartItems = await prisma.cartItem.findMany({
-        where: { cartId: cart.id }
-      }) as any[];
+      cartItems = await dbService.getCartItems(cart.id ) as any[];
     }
 
     if (!cart) {

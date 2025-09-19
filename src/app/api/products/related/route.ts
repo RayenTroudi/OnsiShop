@@ -1,6 +1,6 @@
-import { DatabaseService, prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
-const db = new DatabaseService();
+
 
 export const dynamic = 'force-dynamic';
 
@@ -20,10 +20,7 @@ export async function GET(request: NextRequest) {
     }
 
     // First, get the current product to find its category
-    const currentProduct = await prisma.product.findUnique({
-      where: { id: productId },
-      select: { categoryId: true },
-    });
+    const currentProduct = await dbService.getProductById(productId );
 
     const where: any = {
       id: { not: productId },
@@ -31,8 +28,8 @@ export async function GET(request: NextRequest) {
     };
 
     // Prioritize products from the same category
-    if (currentProduct?.categoryId) {
-      where.categoryId = currentProduct.categoryId;
+    if ((currentProduct as any)?.categoryId) {
+      where.categoryId = (currentProduct as any).categoryId;
     } else if (tags.length > 0) {
       // Fallback to products with similar tags
       where.OR = tags.map(tag => ({
@@ -41,47 +38,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch related products with ratings
-    let relatedProducts = await prisma.product.findMany({
-      where,
-      include: {
-        category: {
-          select: { name: true },
-        },
-        ratings: {
-          select: { stars: true },
-        },
-        _count: {
-          select: { ratings: true },
-        },
-      },
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-    }) as any[];
+    let relatedProducts = await dbService.getProducts() as any[];
 
     // If not enough products from same category, fetch more from other categories
     if (relatedProducts.length < limit) {
-      const additionalProducts = await prisma.product.findMany({
-        where: {
-          id: { 
-            not: productId,
-            notIn: relatedProducts.map((p: any) => p.id),
-          },
-          availableForSale: true,
-        },
-        include: {
-          category: {
-            select: { name: true },
-          },
-          ratings: {
-            select: { stars: true },
-          },
-          _count: {
-            select: { ratings: true },
-          },
-        },
-        take: limit - relatedProducts.length,
-        orderBy: { createdAt: 'desc' },
-      }) as any[];
+      const additionalProducts = await dbService.getProducts() as any[];
 
       relatedProducts = [...relatedProducts, ...additionalProducts];
     }
@@ -97,7 +58,7 @@ export async function GET(request: NextRequest) {
       const { ratings: _, ...productData } = product;
       
       // Transform to Shopify format with proper image structure
-      const transformedProduct = db.transformToShopifyProduct(productData);
+      const transformedProduct = dbService.transformToShopifyProduct(productData);
       
       return {
         ...transformedProduct,

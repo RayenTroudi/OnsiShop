@@ -103,7 +103,7 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
     }
 
     if (!cart || cart.items.length === 0) {
-      alert('Your cart is empty');
+      alert(t('cart_empty_error'));
       return;
     }
 
@@ -132,11 +132,11 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
           router.push(`/order/${result.orderId}`);
         }
       } else {
-        alert(result.error || 'Failed to place order');
+        alert(result.error || t('order_place_failed'));
       }
     } catch (error) {
       console.error('Error placing order:', error);
-      alert('An error occurred while placing your order. Please try again.');
+      alert(t('order_place_error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -293,7 +293,7 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
             disabled={isSubmitting}
             className="flex-1 py-3 px-6 bg-purple text-white rounded-md hover:bg-purple/80 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? 'Placing Order...' : 'Place Order'}
+            {isSubmitting ? t('button_placing_order') : t('button_place_order')}
           </button>
         </div>
       </form>

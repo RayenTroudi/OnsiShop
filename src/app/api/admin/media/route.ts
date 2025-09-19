@@ -1,14 +1,12 @@
 import { broadcastContentUpdate } from '@/lib/content-stream';
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
 // GET - Fetch all media assets
 export async function GET() {
   try {
-    const mediaAssets = await prisma.mediaAsset.findMany({
-      orderBy: { createdAt: 'desc' }
-    });
+    const mediaAssets = await dbService.getMediaAssets();
 
     return NextResponse.json(mediaAssets);
   } catch (error) {
@@ -126,11 +124,9 @@ export async function POST(request: NextRequest) {
     if (isHeroVideo) {
         console.log('🧹 Cleaning up old hero videos before uploading new one...');
       // Delete old hero videos BEFORE creating new one (ONLY for hero section)
-      const deletedVideos = await prisma.mediaAsset.deleteMany({
-        where: {
-          section: 'hero',
-          type: { startsWith: 'video/' }
-        }
+      const deletedVideos = await dbService.deleteMediaAssets({
+        section: 'hero',
+        type: { startsWith: 'video/' }
       });
       console.log(`🗑️ Deleted ${deletedVideos.count} old hero videos`);
       
@@ -139,14 +135,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Create media asset record
-    const mediaAsset = await prisma.mediaAsset.create({
-      data: {
-        filename: file.name,
-        url: mediaUrl,
-        alt: alt || null,
-        type: file.type,
-        section: section || null
-      }
+    const mediaAsset = await dbService.createMediaAsset({
+      filename: file.name,
+      url: mediaUrl,
+      alt: alt || null,
+      type: file.type,
+      section: section || null
     });
 
     // Revalidate relevant pages when media is uploaded
@@ -195,11 +189,7 @@ export async function POST(request: NextRequest) {
     // Only update content if we have a valid key
     if (contentKey) {
       console.log(`📝 Upserting content key: ${contentKey}`);
-      await prisma.siteContent.upsert({
-        where: { key: contentKey },
-        update: { value: mediaUrl },
-        create: { key: contentKey, value: mediaUrl }
-      });
+      await dbService.upsertSiteContent(contentKey, mediaUrl);
 
       // Broadcast the update for real-time updates
       broadcastContentUpdate({ [contentKey]: mediaUrl });

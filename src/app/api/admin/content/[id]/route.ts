@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 // DELETE - Delete a specific content item
@@ -9,9 +9,7 @@ export async function DELETE(
   try {
     const { id } = params;
 
-    await prisma.siteContent.delete({
-      where: { id }
-    });
+    await dbService.deleteSiteContentById(id);
 
     return NextResponse.json({ success: true });
   } catch (error) {

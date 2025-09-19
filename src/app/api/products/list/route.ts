@@ -1,6 +1,6 @@
-import { DatabaseService, prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
-const db = new DatabaseService();
+
 
 export const dynamic = 'force-dynamic';
 
@@ -66,30 +66,8 @@ export async function GET(request: NextRequest) {
 
     // Fetch products with ratings
     const [products, totalCount] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        include: {
-          category: {
-            select: {
-              name: true,
-            },
-          },
-          ratings: {
-            select: {
-              stars: true,
-            },
-          },
-          _count: {
-            select: {
-              ratings: true,
-            },
-          },
-        },
-        orderBy,
-        skip: offset,
-        take: limit,
-      }),
-      prisma.product.count({ where }),
+      dbService.getProducts(),
+      dbService.countProductsWithFilter({ where }),
     ]);
 
     // Calculate average ratings for each product and transform to Shopify format
@@ -103,7 +81,7 @@ export async function GET(request: NextRequest) {
       const { ratings: _, ...productWithoutRatings } = product;
       
       // Transform to Shopify format with proper image structure
-      const transformedProduct = db.transformToShopifyProduct(productWithoutRatings);
+      const transformedProduct = dbService.transformToShopifyProduct(productWithoutRatings);
       
       return {
         ...transformedProduct,

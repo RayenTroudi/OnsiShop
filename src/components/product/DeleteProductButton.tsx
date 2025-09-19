@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from '@/contexts/TranslationContext';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -10,6 +11,7 @@ interface DeleteProductButtonProps {
 }
 
 export default function DeleteProductButton({ productId, productName }: DeleteProductButtonProps) {
+  const { t } = useTranslation();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const router = useRouter();
@@ -31,11 +33,11 @@ export default function DeleteProductButton({ productId, productName }: DeletePr
         router.push('/products?deleted=true');
       } else {
         const error = await response.json();
-        alert(`Failed to delete product: ${error.error || 'Unknown error'}`);
+        alert(`${t('delete_product_failed')}: ${error.error || t('unknown_error')}`);
       }
     } catch (error) {
       console.error('Error deleting product:', error);
-      alert('Failed to delete product. Please try again.');
+      alert(t('delete_product_error'));
     } finally {
       setIsDeleting(false);
       setShowConfirm(false);
@@ -51,8 +53,7 @@ export default function DeleteProductButton({ productId, productName }: DeletePr
       <div className="flex-1 space-y-2">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-sm text-red-800 mb-3">
-            Are you sure you want to delete <strong>&quot;{productName}&quot;</strong>? 
-            This action cannot be undone.
+            {t('delete_product_confirm')} <strong>&quot;{productName}&quot;</strong>? {t('action_cannot_be_undone')}
           </p>
           <div className="flex space-x-2">
             <button
@@ -60,14 +61,14 @@ export default function DeleteProductButton({ productId, productName }: DeletePr
               disabled={isDeleting}
               className="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700 disabled:bg-red-400 transition-colors"
             >
-              {isDeleting ? 'Deleting...' : 'Yes, Delete'}
+              {isDeleting ? t('button_deleting') : t('button_yes_delete')}
             </button>
             <button
               onClick={handleCancel}
               disabled={isDeleting}
               className="bg-gray-200 text-gray-700 px-4 py-2 rounded text-sm hover:bg-gray-300 transition-colors"
             >
-              Cancel
+              {t('button_cancel')}
             </button>
           </div>
         </div>
@@ -81,7 +82,7 @@ export default function DeleteProductButton({ productId, productName }: DeletePr
       className="flex-1 bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-red-700 transition-colors font-semibold flex items-center justify-center space-x-2"
     >
       <TrashIcon className="w-5 h-5" />
-      <span>Delete Product</span>
+      <span>{t('button_delete_product')}</span>
     </button>
   );
 }

@@ -1,7 +1,5 @@
-import { DatabaseService, prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
-
-const db = new DatabaseService();
 
 export const dynamic = 'force-dynamic';
 
@@ -16,85 +14,38 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category') || '';
     const collection = searchParams.get('collection') || '';
     const search = searchParams.get('search') || '';
-    const sort = searchParams.get('sort') || 'createdAt';
-    const order = searchParams.get('order') || 'desc';
     
     const offset = (page - 1) * limit;
 
-    // Build where clause
-    const where: any = {};
-    
-    if (category) {
-      where.category = {
-        handle: category,
-      };
-    }
-
-    if (collection) {
-      where.category = {
-        handle: collection,
-      };
-    }
+    let products: any[] = [];
+    let totalCount = 0;
 
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { tags: { contains: search, mode: 'insensitive' } },
-      ];
+      // Search products
+      const searchResults = await dbService.searchProducts(search);
+      products = searchResults.slice(offset, offset + limit);
+      totalCount = searchResults.length;
+    } else if (category || collection) {
+      // Get products by category/collection
+      const categoryHandle = category || collection;
+      const categoryProducts = await dbService.getProductsByCategory(categoryHandle);
+      products = categoryProducts.slice(offset, offset + limit);
+      totalCount = categoryProducts.length;
+    } else {
+      // Get all products
+      const allProducts = await dbService.getProducts();
+      products = allProducts.slice(offset, offset + limit);
+      totalCount = allProducts.length;
     }
 
-    // Build orderBy clause
-    const orderBy: any = {};
-    orderBy[sort] = order;
-
-    // Fetch products with category information
-    const [products, totalCount] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        include: {
-          category: {
-            select: {
-              id: true,
-              name: true,
-              handle: true,
-            },
-          },
-          ratings: {
-            select: {
-              stars: true,
-            },
-          },
-          _count: {
-            select: {
-              ratings: true,
-              comments: true,
-            },
-          },
-        },
-        orderBy,
-        skip: offset,
-        take: limit,
-      }),
-      prisma.product.count({ where }),
-    ]);
-
-    // Calculate average ratings and transform to Shopify format
-    const productsWithRatings = (products as any[]).map((product: any) => {
-      const ratings = product.ratings;
-      const avgRating = ratings.length > 0
-        ? ratings.reduce((sum: number, rating: any) => sum + rating.stars, 0) / ratings.length
-        : null;
-
-      const { ratings: _, ...productData } = product;
-      
+    // Transform to Shopify format
+    const productsWithRatings = products.map((product: any) => {
       // Transform to Shopify format with proper image structure
-      const transformedProduct = db.transformToShopifyProduct(productData);
+      const transformedProduct = dbService.transformToShopifyProduct(product);
       
       return {
         ...transformedProduct,
-        avgRating: avgRating ? Math.round(avgRating * 10) / 10 : null,
+        avgRating: null, // TODO: Implement ratings when needed
       };
     });
 
@@ -148,10 +99,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user is admin
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: { role: true }
-    });
+    const user = await dbService.getUserById(decoded.userId);
 
     if (!user || user.role !== 'admin') {
       return NextResponse.json(
@@ -178,9 +126,7 @@ export async function POST(request: NextRequest) {
       .replace(/(^-|-$)/g, '');
 
     // Check if handle already exists
-    const existingProduct = await prisma.product.findUnique({
-      where: { handle },
-    });
+    const existingProduct = await dbService.getProductByHandle(handle);
 
     if (existingProduct) {
       return NextResponse.json(
@@ -190,27 +136,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the product
-    const product = await prisma.product.create({
-      data: {
-        name,
-        title,
-        handle,
-        description: description || '',
-        price: parseFloat(price),
-        image: image || null,
-        categoryId: categoryId || null,
-        availableForSale: true,
-        stock: 10, // Default stock
-      },
-      include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
-            handle: true,
-          },
-        },
-      },
+    const product = await dbService.createProduct({
+      handle,
+      title,
+      description: description || '',
+      price: parseFloat(price),
+      availableForSale: true,
+      categoryId: categoryId || null,
+      images: image ? [image] : [],
     });
 
     return NextResponse.json(product, { status: 201 });

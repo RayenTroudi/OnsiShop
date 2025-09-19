@@ -1,14 +1,12 @@
 import { broadcastContentUpdate } from '@/lib/content-stream';
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
 // GET - Fetch all content items
 export async function GET() {
   try {
-    const contentItems = await prisma.siteContent.findMany({
-      orderBy: { key: 'asc' }
-    });
+    const contentItems = await dbService.getAllSiteContent();
 
     return NextResponse.json(contentItems);
   } catch (error) {
@@ -33,9 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if key already exists
-    const existing = await prisma.siteContent.findUnique({
-      where: { key }
-    });
+    const existing = await dbService.getSiteContentByKey(key);
 
     if (existing) {
       return NextResponse.json(
@@ -44,8 +40,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const newContent = await prisma.siteContent.create({
-      data: { key, value }
+    const newContent = await dbService.createSiteContent({ 
+      key, 
+      value, 
+      createdAt: new Date(), 
+      updatedAt: new Date() 
     });
 
     // Revalidate relevant pages
@@ -81,12 +80,9 @@ export async function PUT(request: NextRequest) {
     const updates = await Promise.all(
       contentItems.map(async (item: any) => {
         if (item.id && item.key && item.value !== undefined) {
-          return await prisma.siteContent.update({
-            where: { id: item.id },
-            data: {
-              key: item.key,
-              value: item.value
-            }
+          return await dbService.updateSiteContentById(item.id, {
+            key: item.key,
+            value: item.value
           });
         }
         return null;

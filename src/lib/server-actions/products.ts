@@ -1,11 +1,11 @@
 'use server';
 
-import { DatabaseService } from '@/lib/database';
+import { dbService } from '@/lib/database';
 
 export async function getProductsByCollection(collection: string) {
   try {
-    const db = new DatabaseService();
-    const products = await db.getProducts();
+    
+    const products = await dbService.getProducts();
     
     // Filter products by category handle
     const filteredProducts = products.filter(product => {
@@ -21,7 +21,7 @@ export async function getProductsByCollection(collection: string) {
     });
     
     // Transform to Shopify format
-    return filteredProducts.map(product => db.transformToShopifyProduct(product));
+    return filteredProducts.map(product => dbService.transformToShopifyProduct(product));
   } catch (error) {
     console.error('Error fetching products by collection:', error);
     return [];
@@ -30,11 +30,11 @@ export async function getProductsByCollection(collection: string) {
 
 export async function getNewArrivalsProducts(count: number = 6) {
   try {
-    const db = new DatabaseService();
-    const products = await db.getProducts();
+    
+    const products = await dbService.getProducts();
     
     // Transform all products to Shopify format and sort by creation date
-    const transformedProducts = products.map(product => db.transformToShopifyProduct(product));
+    const transformedProducts = products.map(product => dbService.transformToShopifyProduct(product));
     
     // Sort by createdAt (newest first) and take the requested count
     return transformedProducts

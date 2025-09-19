@@ -1,5 +1,5 @@
 // Unified Content Management System
-import { prisma } from './database';
+import { dbService } from './database';
 
 // Default content values with standardized naming
 export const DEFAULT_CONTENT_VALUES = {
@@ -76,7 +76,7 @@ export function getContentValue(content: Record<string, string>, key: string, de
 // Initialize only essential default content in database
 export async function initializeDefaultContent() {
   try {
-    const existingContent = await prisma.siteContent.findMany();
+    const existingContent = await dbService.getAllSiteContent();
     const existingKeys = new Set(existingContent.map((item: any) => item.key));
     
     // Only initialize critical content keys, not all defaults
@@ -92,8 +92,12 @@ export async function initializeDefaultContent() {
       const normalizedKey = normalizeContentKey(key);
       if (!existingKeys.has(normalizedKey) && !existingKeys.has(key)) {
         const defaultValue = DEFAULT_CONTENT_VALUES[key as keyof typeof DEFAULT_CONTENT_VALUES] || '';
-        await prisma.siteContent.create({
-          data: { key: normalizedKey, value: defaultValue }
+        const now = new Date();
+        await dbService.createSiteContent({
+          key: normalizedKey, 
+          value: defaultValue,
+          createdAt: now,
+          updatedAt: now
         });
       }
     }
@@ -108,22 +112,24 @@ export async function initializeDefaultContent() {
 // Migrate legacy content keys to new format
 export async function migrateLegacyContent() {
   try {
-    const allContent = await prisma.siteContent.findMany();
+    const allContent = await dbService.getAllSiteContent();
     
-    for (const item of allContent as any[]) {
+    for (const item of allContent) {
       const normalizedKey = normalizeContentKey(item.key);
       
       // If the key has dots or mixed case, normalize it
       if (item.key !== normalizedKey) {
         // Check if normalized version already exists
-        const existing = await prisma.siteContent.findUnique({ 
-          where: { key: normalizedKey } 
-        });
+        const existing = await dbService.getSiteContentByKey(normalizedKey);
         
         if (!existing) {
-          // Create new normalized entry and remove old one
-          await prisma.siteContent.create({
-            data: { key: normalizedKey, value: item.value }
+          // Create new normalized entry
+          const now = new Date();
+          await dbService.createSiteContent({
+            key: normalizedKey, 
+            value: item.value,
+            createdAt: now,
+            updatedAt: now
           });
         }
         // Note: For now we keep old entries to avoid data loss
@@ -137,5 +143,3 @@ export async function migrateLegacyContent() {
     console.error('Error migrating legacy content:', error);
   }
 }
-
-export { prisma };

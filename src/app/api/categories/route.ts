@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -10,16 +10,12 @@ export async function GET(request: NextRequest) {
     
     if (handle) {
       // Get products for a specific category
-      const products = await prisma.product.findMany({
-        where: { categoryId: handle }
-      }) as any[];
+      const products = await dbService.getProductsByCategory(handle);
       return NextResponse.json(products);
     }
     
     // Get all categories (public access)
-    const categories = await prisma.category.findMany({
-      orderBy: { name: 'asc' }
-    }) as any[];
+    const categories = await dbService.getCategories();
     
     // Return only the essential fields for public use
     const publicCategories = categories.map(category => ({

@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -57,9 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
+    const user = await dbService.getUserById(userId );
 
     if (!user) {
       return NextResponse.json(
@@ -69,33 +67,27 @@ export async function POST(request: NextRequest) {
     }
 
     // Create reservation
-    const reservation = await prisma.reservation.create({
-      data: {
-        userId,
-        fullName,
-        email,
-        phone,
-        street,
-        city,
-        zipCode,
-        country,
-        notes: notes || null,
-        totalAmount: parseFloat(totalAmount),
-        items: JSON.stringify(cartItems),
-        status: 'pending'
-      }
+    const reservation = await dbService.createReservation({
+      userId,
+      fullName,
+      email,
+      phone,
+      street,
+      city,
+      zipCode,
+      country,
+      notes: notes || null,
+      totalAmount: parseFloat(totalAmount),
+      items: JSON.stringify(cartItems),
+      status: 'pending'
     });
 
     // Clear user's cart after successful reservation
     try {
-      const userCart = await prisma.cart.findFirst({
-        where: { userId }
-      });
+      const userCart = await dbService.getCartByUserId(userId);
       
       if (userCart) {
-        await prisma.cartItem.deleteMany({
-          where: { cartId: userCart.id }
-        });
+        await dbService.clearCart(userCart.id );
       }
     } catch (error) {
       console.error('Error clearing cart:', error);
@@ -141,17 +133,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's reservations
-    const reservations = await prisma.reservation.findMany({
+    const reservations = await dbService.findManyReservations({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: {
-          select: {
-            name: true,
-            email: true
-          }
-        }
-      }
+      orderBy: { createdAt: 'desc' }
     });
 
     // Parse items JSON for each reservation

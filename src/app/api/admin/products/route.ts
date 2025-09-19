@@ -1,5 +1,5 @@
 import { requireAdmin } from '@/lib/auth';
-import { DatabaseService } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -9,19 +9,19 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const db = new DatabaseService();
+    
     // Use nextUrl.searchParams instead of new URL(request.url)
     const id = request.nextUrl.searchParams.get('id');
     
     if (id) {
-      const product = await db.getProductById(id);
+      const product = await dbService.getProductById(id);
       if (!product) {
         return NextResponse.json({ error: 'Product not found' }, { status: 404 });
       }
       return NextResponse.json(product);
     }
     
-    const products = await db.getProducts();
+    const products = await dbService.getProducts();
     return NextResponse.json(products);
   } catch (error) {
     console.error('Error fetching products:', error);
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const db = new DatabaseService();
+    
     const body = await request.json();
     
     // Generate handle from title if not provided
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       body.handle = body.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     }
     
-    const product = await db.createProduct(body);
+    const product = await dbService.createProduct(body);
     
     // Trigger revalidation to update the UI immediately
     try {
@@ -71,7 +71,7 @@ export async function PUT(request: NextRequest) {
   }
 
   try {
-    const db = new DatabaseService();
+    
     const body = await request.json();
     const { id, ...updates } = body;
     
@@ -79,7 +79,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
     }
     
-    const product = await db.updateProduct(id, updates);
+    const product = await dbService.updateProduct(id, updates);
     
     // Trigger revalidation to update the UI immediately
     try {
@@ -106,7 +106,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    const db = new DatabaseService();
+    
     // Use nextUrl.searchParams instead of new URL(request.url)
     const id = request.nextUrl.searchParams.get('id');
     
@@ -114,7 +114,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
     }
     
-    await db.deleteProduct(id);
+    await dbService.deleteProduct(id);
     
     // Trigger revalidation to update the UI immediately
     try {

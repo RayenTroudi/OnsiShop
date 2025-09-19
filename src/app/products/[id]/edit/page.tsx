@@ -1,5 +1,5 @@
 import ProductForm from '@/components/product/ProductForm';
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
@@ -21,10 +21,7 @@ async function isCurrentUserAdmin(): Promise<boolean> {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: { role: true }
-    });
+    const user = await dbService.getUserById(decoded.userId );
 
     return user?.role === 'admin';
   } catch (error) {
@@ -41,12 +38,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
   }
 
   // Fetch the product data
-  const product = await prisma.product.findUnique({
-    where: { id },
-    include: {
-      category: true,
-    },
-  });
+  const product = await dbService.getProductById(params.id);
 
   if (!product) {
     notFound();
@@ -54,12 +46,12 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
 
   // Transform the data for the form
   const initialData = {
-    name: product.name,
-    description: product.description || '',
-    price: product.price,
-    imageUrl: product.image || '',
-    categoryId: product.categoryId || '',
-    stockQuantity: product.stock,
+    name: (product as any).name,
+    description: (product as any).description || '',
+    price: (product as any).price,
+    imageUrl: (product as any).image || '',
+    categoryId: (product as any).categoryId || '',
+    stockQuantity: (product as any).stock,
   };
 
   return (

@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -16,14 +16,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Get cart with items
-    const cart = await prisma.cart.findFirst({
-      where: userId ? { userId } : { id: cartId }
-    }) as any;
+    const cart = await dbService.getCartByUserId(userId || cartId) as any;
 
     // Get cart items separately since our compatibility layer doesn't support include
-    const cartItems = cart ? await prisma.cartItem.findMany({
-      where: { cartId: cart.id }
-    }) as any[] : [];
+    const cartItems = cart ? await dbService.getCartItems(cart.id ) as any[] : [];
 
     if (!cart || cartItems.length === 0) {
       return NextResponse.json({
@@ -46,11 +42,10 @@ export async function POST(request: NextRequest) {
     // Process checkout
     // Deduct stock from products
     for (const item of cartItems) {
-      const product = await prisma.product.findUnique({ where: { id: item.productId } }) as any;
+      const product = await dbService.getProductById(item.productId ) as any;
       if (product) {
-        await prisma.product.update({
-          where: { id: item.productId },
-          data: { stock: Math.max(0, product.stock - item.quantity) }
+        await dbService.updateProduct(item.productId, { 
+          stock: Math.max(0, product.stock - item.quantity) 
         });
       }
     }
@@ -59,9 +54,7 @@ export async function POST(request: NextRequest) {
     const orderTotal = cartItems.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
 
     // Clear cart items
-    await prisma.cartItem.deleteMany({
-      where: { cartId: cart.id }
-    });
+    await dbService.clearCart(cart.id );
 
     const result = {
       orderId: `ORDER_${Date.now()}`,

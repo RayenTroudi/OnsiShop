@@ -1,8 +1,10 @@
 {
   "hero_title": "Welcome to OnsiShop",
   "hero_subtitle": "Discover amazing products at great prices",
+  "hero_description": "Shop the latest trends and find your perfect style with our curated collection of premium products.",
   "hero_cta": "Shop Now",
   "hero_explore": "Explore Products",
+  "search_placeholder": "Search for products...",
   
   "nav_home": "Home",
   "nav_products": "Products",
@@ -116,7 +118,6 @@
   "categories_view_all": "View All",
   "categories_no_products": "No products in this category",
   
-  "search_placeholder": "Search products...",
   "search_results": "Search Results",
   "search_no_results": "No results found for your search",
   
@@ -139,5 +140,55 @@
   "status_confirmed": "Confirmed",
   "status_shipped": "Shipped",
   "status_delivered": "Delivered",
-  "status_cancelled": "Cancelled"
+  "status_cancelled": "Cancelled",
+  
+  "nav_best_sellers": "Best Sellers",
+  "nav_new_arrivals": "New Arrivals",
+  "nav_clothing": "Clothing",
+  "nav_accessories": "Accessories",
+  "nav_follow_us": "Follow Us",
+  "nav_orders": "Orders",
+  
+  "section_new_arrivals": "New Arrivals",
+  "button_view_more": "View More",
+  "button_add_to_cart": "Add to Cart",
+  "button_adding": "Adding...",
+  "cart_added_success": "Added to cart!",
+  "review_validation_error": "Please provide both a rating and a comment",
+  "review_submit_error": "Failed to submit review. Please try again.",
+  "review_placeholder": "Share your thoughts about this product...",
+  "button_submitting": "Submitting...",
+  "button_submit_review": "Submit Review",
+  "checkout_submit_failed": "Failed to submit reservation",
+  "checkout_submit_error": "An error occurred while submitting your reservation. Please try again.",
+  "checkout_notes_placeholder": "Any special instructions for delivery...",
+  "button_place_reservation": "Place Reservation",
+  "cart_empty_error": "Your cart is empty",
+  "order_place_failed": "Failed to place order",
+  "order_place_error": "An error occurred while placing your order. Please try again.",
+  "button_placing_order": "Placing Order...",
+  "button_place_order": "Place Order",
+  "button_creating": "Creating...",
+  "button_updating": "Updating...",
+  "button_create_product": "Create Product",
+  "button_update_product": "Update Product",
+  "delete_product_failed": "Failed to delete product",
+  "delete_product_error": "Failed to delete product. Please try again.",
+  "unknown_error": "Unknown error",
+  "delete_product_confirm": "Are you sure you want to delete",
+  "action_cannot_be_undone": "This action cannot be undone.",
+  "button_deleting": "Deleting...",
+  "button_yes_delete": "Yes, Delete",
+  "button_cancel": "Cancel",
+  "button_delete_product": "Delete Product",
+  
+  "menu_profile": "Profile",
+  "menu_admin": "Admin",
+  
+  "footer_disclaimer_title": "Disclaimer",
+  "footer_disclaimer_text": "This website is for demonstration purposes only. All products and prices are fictional.",
+  
+  "auth_network_error": "Network error. Please try again.",
+  "auth_continue_checkout": "Please sign in to continue with your order",
+  "auth_signing_in": "Signing in..."
 }

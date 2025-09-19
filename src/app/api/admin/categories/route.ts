@@ -1,5 +1,5 @@
 import { requireAdmin } from '@/lib/auth';
-import { DatabaseService } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -9,19 +9,19 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const db = new DatabaseService();
+    
     // Use nextUrl.searchParams instead of new URL(request.url)
     const id = request.nextUrl.searchParams.get('id');
     
     if (id) {
-      const category = await db.getCategoryById(id);
+      const category = await dbService.getCategoryById(id);
       if (!category) {
         return NextResponse.json({ error: 'Category not found' }, { status: 404 });
       }
       return NextResponse.json(category);
     }
     
-    const categories = await db.getCategories();
+    const categories = await dbService.getCategories();
     return NextResponse.json(categories);
   } catch (error) {
     console.error('Error fetching categories:', error);
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const db = new DatabaseService();
+    
     const body = await request.json();
     
     // Generate handle from name if not provided
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       body.handle = body.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     }
     
-    const category = await db.createCategory(body);
+    const category = await dbService.createCategory(body);
     
     // Trigger revalidation to update the UI immediately
     try {
@@ -71,7 +71,7 @@ export async function PUT(request: NextRequest) {
   }
 
   try {
-    const db = new DatabaseService();
+    
     const body = await request.json();
     const { id, ...updates } = body;
     
@@ -79,7 +79,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Category ID is required' }, { status: 400 });
     }
     
-    const category = await db.updateCategory(id, updates);
+    const category = await dbService.updateCategory(id, updates);
     
     // Trigger revalidation to update the UI immediately
     try {
@@ -106,7 +106,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    const db = new DatabaseService();
+    
     // Use nextUrl.searchParams instead of new URL(request.url)
     const id = request.nextUrl.searchParams.get('id');
     
@@ -114,7 +114,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Category ID is required' }, { status: 400 });
     }
     
-    await db.deleteCategory(id);
+    await dbService.deleteCategory(id);
     
     // Trigger revalidation to update the UI immediately
     try {

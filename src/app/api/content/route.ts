@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -8,9 +8,7 @@ export async function GET() {
     console.log('🔍 Fetching content from database...');
     
     // Fetch all site content from database
-    const siteContentItems = await prisma.siteContent.findMany({
-      orderBy: { updatedAt: 'desc' }
-    }) as any[];
+    const siteContentItems = await dbService.getAllSiteContent();
 
     console.log(`📋 Found ${siteContentItems.length} content items`);
 
@@ -81,8 +79,6 @@ export async function GET() {
         'Cache-Control': 'no-cache, no-store, must-revalidate'
       }
     });
-  } finally {
-    await prisma.$disconnect();
   }
 }
 

@@ -30,7 +30,7 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
     const db = client.db(); // Uses default database from connection string
     
     // Test the connection
-    await db.admin().ping();
+    await client.db().admin().ping();
     console.log('✅ MongoDB connected successfully');
 
     cachedClient = client;

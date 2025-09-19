@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/TranslationContext';
 import { CheckIcon, PlusIcon, StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import { StarIcon } from '@heroicons/react/24/solid';
 import { useEffect, useState } from 'react';
@@ -37,6 +38,7 @@ interface ProductReviewsProps {
 
 export default function ProductReviews({ productId }: ProductReviewsProps) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [reviewData, setReviewData] = useState<ReviewData>({ comments: [], ratings: [] });
   const [loading, setLoading] = useState(true);
   const [showAddReview, setShowAddReview] = useState(false);
@@ -103,7 +105,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
 
   const handleSubmitReview = async () => {
     if (!newComment.trim() || newRating === 0) {
-      alert('Please provide both a rating and a comment');
+      alert(t('review_validation_error'));
       return;
     }
 
@@ -135,7 +137,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
       }
     } catch (error) {
       console.error('Error submitting review:', error);
-      alert('Failed to submit review. Please try again.');
+      alert(t('review_submit_error'));
     } finally {
       setSubmitting(false);
     }
@@ -211,7 +213,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
               onChange={(e) => setNewComment(e.target.value)}
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent resize-none"
-              placeholder="Share your thoughts about this product..."
+              placeholder={t('review_placeholder')}
             />
           </div>
 
@@ -221,7 +223,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
               disabled={submitting || !newComment.trim() || newRating === 0}
               className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
-              {submitting ? 'Submitting...' : 'Submit Review'}
+              {submitting ? t('button_submitting') : t('button_submit_review')}
             </button>
             <button
               onClick={() => setShowAddReview(false)}

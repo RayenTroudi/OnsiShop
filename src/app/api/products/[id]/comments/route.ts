@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -12,21 +12,9 @@ export async function GET(
   try {
     const { id } = params;
 
-    const comments = await prisma.comment.findMany({
-      where: {
-        productId: id,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+    const comments = await dbService.findManyComments({
+      where: { productId: id },
+      orderBy: { createdAt: 'desc' }
     });
 
     return NextResponse.json(comments);
@@ -80,9 +68,7 @@ export async function POST(
     }
 
     // Check if product exists
-    const product = await prisma.product.findUnique({
-      where: { id },
-    });
+    const product = await dbService.getProductById(id);
 
     if (!product) {
       return NextResponse.json(
@@ -92,20 +78,10 @@ export async function POST(
     }
 
     // Create comment
-    const comment = await prisma.comment.create({
-      data: {
-        text: text.trim(),
-        productId: id,
-        userId,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
+    const comment = await dbService.createComment({
+      text: text.trim(),
+      productId: id,
+      userId
     });
 
     return NextResponse.json(comment, { status: 201 });

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from '@/contexts/TranslationContext';
 import { createUrl } from '@/lib/utils';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -7,6 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 export default function Search() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -30,7 +32,7 @@ export default function Search() {
         key={searchParams?.get('q')}
         type="text"
         name="search"
-        placeholder="Search for products..."
+        placeholder={t('search_placeholder')}
         autoComplete="off"
         defaultValue={searchParams?.get('q') || ''}
         className="w-full rounded-lg border border-purple bg-white/80 px-4 py-2 text-sm outline-none placeholder:text-purple focus-visible:outline"

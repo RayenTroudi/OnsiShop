@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { Collections, dbService, getDatabase } from '@/lib/database';
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -74,9 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if product exists and has enough stock
-    const product = await prisma.product.findUnique({
-      where: { id: productId }
-    }) as any;
+    const product = await dbService.getProductById(productId ) as any;
 
     if (!product) {
       return NextResponse.json({
@@ -93,41 +91,33 @@ export async function POST(request: NextRequest) {
     }
 
     // Ensure user exists (create if not exists for demo purposes)
-    let user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
+    let user = await dbService.getUserById(userId );
 
     if (!user) {
-      user = await prisma.user.create({
-        data: {
-          id: userId,
-          name: 'Demo User',
-          email: `${userId}@demo.com`,
-          password: 'demo_password',
-          role: 'user'
-        }
+      user = await dbService.createUser({
+        name: 'Demo User',
+        email: `${userId}@demo.com`,
+        password: 'demo_password',
+        role: 'user',
+        createdAt: new Date(),
+        updatedAt: new Date()
       });
     }
 
     // Get or create cart
-    let cart = await prisma.cart.findFirst({
-      where: { userId }
-    });
+    let cart = await dbService.getCartByUserId(userId);
 
     if (!cart) {
-      cart = await prisma.cart.create({
-        data: { userId }
-      });
+      cart = await dbService.createCart({ userId, createdAt: new Date(), updatedAt: new Date() });
     }
 
     // Check if item already exists in cart
-    const existingItem = await prisma.cartItem.findFirst({
-      where: {
-        cartId: cart.id,
-        productId,
-        variantId: variantId || null
-      }
-    }) as any;
+    const db = await getDatabase();
+    const existingItem = await db.collection(Collections.CART_ITEMS).findOne({
+      cartId: cart.id,
+      productId,
+      variantId: variantId || null
+    });
 
     let cartItem;
     if (existingItem) {
@@ -141,18 +131,15 @@ export async function POST(request: NextRequest) {
         }, { status: 400 });
       }
 
-      cartItem = await prisma.cartItem.update({
-        where: { id: existingItem.id },
-        data: { quantity: newQuantity }
-      });
+      cartItem = await dbService.updateCartItem(existingItem._id.toString(), { quantity: newQuantity });
     } else {
-      cartItem = await prisma.cartItem.create({
-        data: {
-          cartId: cart.id,
-          productId,
-          quantity,
-          variantId: variantId || null
-        }
+      cartItem = await dbService.createCartItem({
+        cartId: cart.id,
+        productId,
+        quantity,
+        variantId: variantId || undefined,
+        createdAt: new Date(),
+        updatedAt: new Date()
       });
     }
 

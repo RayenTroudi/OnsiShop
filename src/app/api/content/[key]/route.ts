@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -15,14 +15,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { key } = params;
 
-    const content = await (prisma as any).siteContent.findUnique({
-      where: { key },
-      select: {
-        key: true,
-        value: true,
-        updatedAt: true
-      }
-    });
+    const content = await dbService.getSiteContentByKey(key);
 
     if (!content) {
       return NextResponse.json({
@@ -61,21 +54,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     // TODO: Add admin authentication check here
     // For now, we'll allow all updates for demo purposes
     
-    const content = await (prisma as any).siteContent.upsert({
-      where: { key },
-      update: { 
-        value: String(value)
-      },
-      create: { 
-        key, 
-        value: String(value) 
-      },
-      select: {
-        key: true,
-        value: true,
-        updatedAt: true
-      }
-    });
+    const content = await dbService.updateSiteContentByKey(key, String(value));
 
     // Revalidate relevant pages
     revalidatePath('/');

@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
@@ -41,15 +41,17 @@ export async function POST(request: NextRequest) {
     const filename = `hero-video-${timestamp}-${randomString}.${file.type.split('/')[1]}`;
 
     // Store in database
-    const mediaAsset = await (prisma as any).mediaAsset.create({
-      data: {
-        filename,
-        url: dataUrl, // Store the complete data URL
-        type: file.type,
-        section: 'hero-background',
-        alt: 'Hero background video'
-      }
+    const mediaAsset = await dbService.createMediaAsset({
+      filename,
+      url: dataUrl, // Store the complete data URL
+      type: file.type,
+      section: 'hero-background',
+      alt: 'Hero background video'
     });
+
+    if (!mediaAsset) {
+      return NextResponse.json({ success: false, error: 'Failed to store media asset' }, { status: 500 });
+    }
 
     console.log('✅ Video stored in database:', {
       id: mediaAsset.id,

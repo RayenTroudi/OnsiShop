@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -19,24 +19,10 @@ export async function GET(
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
     const userId = decoded.userId;
 
-    const order = await prisma.order.findFirst({
+    const order = await dbService.findFirstOrder({
       where: { 
         id: params.id,
         userId // Ensure user can only access their own orders
-      },
-      include: {
-        items: {
-          include: {
-            product: true
-          }
-        },
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-          }
-        }
       }
     });
 
@@ -72,16 +58,9 @@ export async function PATCH(
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
     }
 
-    const order = await prisma.order.update({
+    const order = await dbService.updateOrder({
       where: { id: params.id },
-      data: { status },
-      include: {
-        items: {
-          include: {
-            product: true
-          }
-        }
-      }
+      data: { status }
     });
 
     return NextResponse.json({ order, message: 'Order status updated successfully' });

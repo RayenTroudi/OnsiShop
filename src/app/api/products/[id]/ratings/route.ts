@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -13,21 +13,9 @@ export async function GET(
     const { id } = params;
 
     // Get all ratings for the product
-    const ratings = await prisma.rating.findMany({
-      where: {
-        productId: id,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+    const ratings = await dbService.findManyRatings({
+      where: { productId: id },
+      orderBy: { createdAt: 'desc' }
     }) as any[];
 
     // Calculate rating statistics
@@ -101,9 +89,7 @@ export async function POST(
     }
 
     // Check if product exists
-    const product = await prisma.product.findUnique({
-      where: { id },
-    });
+    const product = await dbService.getProductById(id);
 
     if (!product) {
       return NextResponse.json(
@@ -113,30 +99,20 @@ export async function POST(
     }
 
     // Create or update rating (upsert)
-    const rating = await prisma.rating.upsert({
+    const rating = await dbService.upsertRating({
       where: {
-        productId_userId: {
-          productId: id,
-          userId,
-        },
+        productId: id,
+        userId
       },
       update: {
         stars,
-        updatedAt: new Date(),
+        updatedAt: new Date()
       },
       create: {
         stars,
         productId: id,
-        userId,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
+        userId
+      }
     });
 
     return NextResponse.json(rating, { status: 201 });

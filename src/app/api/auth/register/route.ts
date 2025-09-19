@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
@@ -29,9 +29,7 @@ export async function POST(request: NextRequest) {
 
     // Check if user already exists
     console.log('🔍 Checking if user exists:', email);
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    const existingUser = await dbService.getUserByEmail(email);
 
     if (existingUser) {
       console.log('❌ User already exists');
@@ -47,13 +45,13 @@ export async function POST(request: NextRequest) {
 
     // Create user as normal user (not admin)
     console.log('👤 Creating new user');
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name: email.split('@')[0], // Use email prefix as name
-        role: 'user', // All new registrations are normal users
-      },
+    const user = await dbService.createUser({
+      email,
+      password: hashedPassword,
+      name: email.split('@')[0], // Use email prefix as name
+      role: 'user', // All new registrations are normal users
+      createdAt: new Date(),
+      updatedAt: new Date()
     });
     console.log('✅ User created successfully:', user.id);
 

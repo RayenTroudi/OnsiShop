@@ -1,18 +1,18 @@
 'use server';
 
-import { DatabaseService } from '@/lib/database';
+import { dbService } from '@/lib/database';
 
 export async function getShopifyMockData(query: string, variables?: any) {
-  const db = new DatabaseService();
+  
   
   try {
-    const adminProducts = await db.getProducts();
-    const adminCategories = await db.getCategories();
+    const adminProducts = await dbService.getProducts();
+    const adminCategories = await dbService.getCategories();
     console.log(`Loaded ${adminProducts.length} products and ${adminCategories.length} categories from database`);
     
     if (query.includes('getProducts') || query.includes('products(')) {
       // Convert admin products to Shopify format
-      const products = adminProducts.map(product => db.transformToShopifyProduct(product));
+      const products = adminProducts.map(product => dbService.transformToShopifyProduct(product));
 
       return {
         status: 200,
@@ -47,7 +47,7 @@ export async function getShopifyMockData(query: string, variables?: any) {
       }
       
       // Convert to Shopify format
-      const products = filteredProducts.map(product => db.transformToShopifyProduct(product));
+      const products = filteredProducts.map(product => dbService.transformToShopifyProduct(product));
       
       return {
         status: 200,

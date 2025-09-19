@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useTranslation } from '@/contexts/TranslationContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -23,6 +24,7 @@ interface CheckoutFormProps {
 export default function CheckoutForm({ onSubmitSuccess }: CheckoutFormProps) {
   const { user } = useAuth();
   const { cart, clearCart } = useCart();
+  const { t } = useTranslation();
   const router = useRouter();
   
   const [formData, setFormData] = useState<CheckoutFormData>({
@@ -137,11 +139,11 @@ export default function CheckoutForm({ onSubmitSuccess }: CheckoutFormProps) {
           router.push(`/checkout/success?reservationId=${result.reservationId}`);
         }
       } else {
-        alert(result.error || 'Failed to submit reservation');
+        alert(result.error || t('checkout_submit_failed'));
       }
     } catch (error) {
       console.error('Error submitting reservation:', error);
-      alert('An error occurred while submitting your reservation. Please try again.');
+      alert(t('checkout_submit_error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -341,7 +343,7 @@ export default function CheckoutForm({ onSubmitSuccess }: CheckoutFormProps) {
             onChange={handleInputChange}
             rows={3}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple/50"
-            placeholder="Any special instructions for delivery..."
+            placeholder={t('checkout_notes_placeholder')}
           />
         </div>
 
@@ -359,7 +361,7 @@ export default function CheckoutForm({ onSubmitSuccess }: CheckoutFormProps) {
             disabled={isSubmitting}
             className="flex-1 py-3 px-6 bg-purple text-white rounded-md hover:bg-purple/80 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? 'Submitting...' : 'Place Reservation'}
+            {isSubmitting ? t('button_submitting') : t('button_place_reservation')}
           </button>
         </div>
       </form>

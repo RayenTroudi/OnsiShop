@@ -1,5 +1,5 @@
 import { broadcastContentUpdate } from '@/lib/content-stream';
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -12,9 +12,7 @@ export async function DELETE(
     const { id } = params;
 
     // Find the media asset to get its details before deletion
-    const mediaAsset = await prisma.mediaAsset.findUnique({
-      where: { id }
-    }) as any;
+    const mediaAsset = await dbService.getMediaAssetById(id);
 
     if (!mediaAsset) {
       return NextResponse.json(
@@ -24,17 +22,11 @@ export async function DELETE(
     }
 
     // Delete the media asset
-    await prisma.mediaAsset.delete({
-      where: { id }
-    });
+    await dbService.deleteMediaAssetById(id);
 
     // If this was a hero video, clear the content key
-    if (mediaAsset.section === 'hero' && mediaAsset.type && mediaAsset.type.startsWith('video/')) {
-      await prisma.siteContent.upsert({
-        where: { key: 'hero_background_video' },
-        update: { value: '' },
-        create: { key: 'hero_background_video', value: '' }
-      });
+    if (mediaAsset && mediaAsset.section === 'hero' && mediaAsset.type && mediaAsset.type.startsWith('video/')) {
+      await dbService.upsertSiteContent('hero_background_video', '');
 
       // Broadcast the update
       broadcastContentUpdate({ hero_background_video: '' });

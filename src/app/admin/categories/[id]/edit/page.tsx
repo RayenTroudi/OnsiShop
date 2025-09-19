@@ -1,7 +1,6 @@
 'use client';
 
-import type { AdminCategory } from '@/lib/admin/database';
-import { db } from '@/lib/admin/database';
+import { dbService } from '@/lib/database';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -13,7 +12,7 @@ export default function EditCategoryPage() {
   
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCategory, setIsLoadingCategory] = useState(true);
-  const [category, setCategory] = useState<AdminCategory | null>(null);
+  const [category, setCategory] = useState<any | null>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -24,19 +23,29 @@ export default function EditCategoryPage() {
 
   useEffect(() => {
     // Load category data
-    const categoryData = db.getCategory(categoryId);
-    if (categoryData) {
-      setCategory(categoryData);
-      setFormData({
-        name: categoryData.name,
-        handle: categoryData.handle,
-        description: categoryData.description || '',
-        image: categoryData.image || '',
-      });
-    } else {
-      router.push('/admin/categories');
-    }
-    setIsLoadingCategory(false);
+    const loadCategory = async () => {
+      try {
+        const categoryData = await dbService.getCategoryById(categoryId);
+        if (categoryData) {
+          setCategory(categoryData);
+          setFormData({
+            name: (categoryData as any).name,
+            handle: (categoryData as any).handle,
+            description: (categoryData as any).description || '',
+            image: (categoryData as any).image || '',
+          });
+        } else {
+          router.push('/admin/categories');
+        }
+      } catch (error) {
+        console.error('Failed to load category:', error);
+        router.push('/admin/categories');
+      } finally {
+        setIsLoadingCategory(false);
+      }
+    };
+    
+    loadCategory();
   }, [categoryId, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -57,9 +66,10 @@ export default function EditCategoryPage() {
     setIsLoading(true);
 
     try {
-      const updatedCategory = db.updateCategory(categoryId, {
-        ...formData,
-        image: formData.image.trim() || undefined,
+      const updatedCategory = await dbService.updateCategory(categoryId, {
+        name: formData.name,
+        handle: formData.handle,
+        description: formData.description,
       });
       
       if (updatedCategory) {

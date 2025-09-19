@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
@@ -17,9 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find user by email
-    const user = await prisma.user.findUnique({
-      where: { email },
-    }) as any;
+    const user = await dbService.getUserByEmail(email);
 
     if (!user) {
       return NextResponse.json(

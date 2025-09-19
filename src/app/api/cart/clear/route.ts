@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -19,9 +19,7 @@ export async function DELETE(request: NextRequest) {
     console.log('🗑️ Clear cart for user:', userId);
 
     // Find user's cart
-    const cart = await prisma.cart.findFirst({
-      where: { userId }
-    });
+    const cart = await dbService.getCartByUserId(userId);
 
     if (!cart) {
       return NextResponse.json({ 
@@ -31,9 +29,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete all cart items
-    await prisma.cartItem.deleteMany({
-      where: { cartId: cart.id }
-    });
+    await dbService.clearCart(cart.id );
 
     console.log('✅ Cart cleared successfully');
 

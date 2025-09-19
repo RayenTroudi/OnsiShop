@@ -3,32 +3,39 @@
 export const dynamic = 'force-dynamic';
 
 import { useTranslation } from '@/contexts/TranslationContext';
-import type { AdminCategory, AdminProduct } from '@/lib/admin/database';
-import { db } from '@/lib/admin/database';
+import { dbService } from '@/lib/database';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
-  const [products, setProducts] = useState<AdminProduct[]>([]);
-  const [categories, setCategories] = useState<AdminCategory[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [contentCount, setContentCount] = useState(0);
   const [translationCount, setTranslationCount] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    // Initialize sample data if needed
-    db.initializeSampleData();
+    const loadData = async () => {
+      try {
+        // Load data
+        const productsData = await dbService.getProducts();
+        const categoriesData = await dbService.getCategories();
+        
+        setProducts(productsData);
+        setCategories(categoriesData);
+        
+        // Fetch content count
+        fetchContentCount();
+        
+        // Fetch translation count
+        fetchTranslationCount();
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+      }
+    };
     
-    // Load data
-    setProducts(db.getProducts());
-    setCategories(db.getCategories());
-    
-    // Fetch content count
-    fetchContentCount();
-    
-    // Fetch translation count
-    fetchTranslationCount();
+    loadData();
     
     setIsLoaded(true);
   }, []);

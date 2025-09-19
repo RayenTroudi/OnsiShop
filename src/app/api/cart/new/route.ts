@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -16,39 +16,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Ensure user exists (create if not exists for demo purposes)
-    let user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
+    let user = await dbService.getUserById(userId );
 
     if (!user) {
-      user = await prisma.user.create({
-        data: {
-          id: userId,
-          name: 'Demo User',
-          email: `${userId}@demo.com`,
-          password: 'demo_password',
-          role: 'user'
-        }
+      user = await dbService.createUser({
+        name: 'Demo User',
+        email: `${userId}@demo.com`,
+        password: 'demo_password',
+        role: 'user',
+        createdAt: new Date(),
+        updatedAt: new Date()
       });
     }
 
     // Check if user already has a cart
-    let cart = await prisma.cart.findFirst({
-      where: { userId },
-      include: {
-        items: {
-          include: {
-            product: true
-          }
-        }
-      }
-    });
+    let cart = await dbService.getCartByUserId(userId);
 
     // Create cart if it doesn't exist
     if (!cart) {
-      cart = await prisma.cart.create({
-        data: { userId }
-      });
+      cart = await dbService.createCart({ userId, createdAt: new Date(), updatedAt: new Date() });
     }
 
     return NextResponse.json({

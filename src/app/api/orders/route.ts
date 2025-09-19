@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { sendCustomerConfirmationEmail, sendOrderNotificationEmail } from '@/lib/email';
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
@@ -17,15 +17,8 @@ export async function GET(request: NextRequest) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
     const userId = decoded.userId;
 
-    const orders = await prisma.order.findMany({
+    const orders = await dbService.findManyOrders({
       where: { userId },
-      include: {
-        items: {
-          include: {
-            product: true
-          }
-        }
-      },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -71,35 +64,41 @@ export async function POST(request: NextRequest) {
     }
 
     // Get cart items for the authenticated user
-    const cart = await prisma.cart.findFirst({
-      where: { userId },
-      include: {
-        items: {
-          include: {
-            product: true
-          }
-        }
-      }
-    }) as any;
+    const cart = await dbService.getCartByUserId(userId);
+    const cartItems = cart ? await dbService.getCartItems(cart.id) : [];
+    
+    // Enhance cart items with product details
+    const cartItemsWithProducts = await Promise.all(
+      cartItems.map(async (item: any) => {
+        const product = await dbService.getProductById(item.productId);
+        return { ...item, product };
+      })
+    );
+    
+    // Create enhanced cart object
+    const enhancedCart = {
+      ...cart,
+      items: cartItemsWithProducts
+    };
 
-    if (!cart || cart.items.length === 0) {
+    if (!enhancedCart || enhancedCart.items.length === 0) {
       console.log('❌ Order creation failed: Cart is empty', { 
-        cartExists: !!cart, 
-        itemCount: cart?.items?.length || 0 
+        cartExists: !!enhancedCart, 
+        itemCount: enhancedCart?.items?.length || 0 
       });
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
     }
 
-    console.log('✅ Cart found with items:', cart.items.length);
+    console.log('✅ Cart found with items:', enhancedCart.items.length);
 
     // Calculate total amount
-    const totalAmount = cart.items.reduce(
+    const totalAmount = enhancedCart.items.reduce(
       (sum: number, item: any) => sum + (item.product.price * item.quantity),
       0
     );
 
     // Check stock availability
-    for (const item of cart.items) {
+    for (const item of enhancedCart.items) {
       if (item.product.stock < item.quantity) {
         return NextResponse.json(
           { 
@@ -112,48 +111,41 @@ export async function POST(request: NextRequest) {
 
     // Create order (replacing transaction with sequential operations)
     // Create the order
-    const newOrder = await prisma.order.create({
-      data: {
-        userId,
-        fullName,
-        email,
-        phone,
-        shippingAddress,
-        totalAmount,
-        status: 'pending'
-      }
+    const newOrder = await dbService.createOrder({
+      userId,
+      fullName,
+      email,
+      phone,
+      shippingAddress,
+      totalAmount,
+      status: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date()
     });
 
     // Create order items and update product stock
-    for (const item of cart.items) {
-      await prisma.orderItem.create({
-        data: {
-          orderId: newOrder.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          price: item.product.price
-        }
+    for (const item of enhancedCart.items) {
+      await dbService.createOrderItem({
+        orderId: newOrder.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.product.price
       });
 
       // Update product stock
-      const currentProduct = await prisma.product.findUnique({
-        where: { id: item.productId }
-      }) as any;
+      const currentProduct = await dbService.getProductById(item.productId) as any;
       
       if (currentProduct) {
-        await prisma.product.update({
-          where: { id: item.productId },
-          data: {
-            stock: currentProduct.stock - item.quantity
-          }
+        await dbService.updateProduct(item.productId, {
+          stock: currentProduct.stock - item.quantity
         });
       }
     }
 
     // Clear the cart items but keep the cart
-    await prisma.cartItem.deleteMany({
-      where: { cartId: cart.id }
-    });
+    if (enhancedCart?.id) {
+      await dbService.clearCart(enhancedCart.id);
+    }
 
     const order = newOrder;
 
@@ -165,7 +157,7 @@ export async function POST(request: NextRequest) {
         customerEmail: email,
         customerPhone: phone,
         shippingAddress,
-        items: cart.items.map((item: any) => ({
+        items: enhancedCart.items.map((item: any) => ({
           name: item.product.name || item.product.title || 'Product',
           quantity: item.quantity,
           price: item.product.price

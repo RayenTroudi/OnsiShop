@@ -1,4 +1,4 @@
-import { DatabaseService } from '@/lib/database';
+import { dbService } from '@/lib/database';
 import { Metadata } from 'next';
 
 import Grid from '@/components/grid';
@@ -13,8 +13,8 @@ export async function generateMetadata({
   params: { collection: string };
 }): Promise<Metadata> {
   try {
-    const db = new DatabaseService();
-    const category = await db.getCategoryByHandle(params.collection);
+    
+    const category = await dbService.getCategoryByHandle(params.collection);
 
     if (!category) {
       // Return metadata for non-existent category instead of notFound
@@ -48,10 +48,10 @@ export default async function CategoryPage({
   const { sortKey, reverse } = sorting.find((item) => item.slug === sort) || defaultSort;
   
   try {
-    const db = new DatabaseService();
+    
     
     // Get category details
-    const category = await db.getCategoryByHandle(params.collection);
+    const category = await dbService.getCategoryByHandle(params.collection);
     
     if (!category) {
       // Show a user-friendly message for non-existent categories
@@ -74,10 +74,10 @@ export default async function CategoryPage({
     }
     
     // Get products for this category
-    const dbProducts = await db.getProductsByCategory(params.collection);
+    const dbProducts = await dbService.getProductsByCategory(params.collection);
     
     // Transform to Shopify format for compatibility with existing components
-    let products = dbProducts.map((product: any) => db.transformToShopifyProduct(product));
+    let products = dbProducts.map((product: any) => dbService.transformToShopifyProduct(product));
     
     // Apply sorting
     if (sortKey === 'PRICE') {
