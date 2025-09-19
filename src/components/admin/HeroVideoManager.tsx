@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import VideoUpload from './VideoUpload';
 
 interface MediaAsset {
   id: string;
@@ -244,60 +245,24 @@ export default function HeroVideoManager() {
               <h3 className="font-medium text-blue-900 mb-2">Video Guidelines</h3>
               <ul className="text-sm text-blue-800 space-y-1">
                 <li>• <strong>Formats:</strong> MP4, WebM, OGG</li>
-                <li>• <strong>Maximum size:</strong> 5MB</li>
+                <li>• <strong>Maximum size:</strong> 50MB</li>
                 <li>• <strong>Recommended:</strong> 1920x1080 or 1280x720 resolution</li>
                 <li>• <strong>Duration:</strong> 10-30 seconds for best performance</li>
                 <li>• <strong>Tip:</strong> Use online video compressors to reduce file size</li>
               </ul>
             </div>
 
-            {/* File Input */}
-            <div className="relative">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="video/mp4,video/webm,video/ogg"
-                onChange={handleFileSelect}
-                disabled={uploading}
-                className="hidden"
-                id="video-upload"
-              />
-              <label
-                htmlFor="video-upload"
-                className={`
-                  flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors
-                  ${uploading 
-                    ? 'border-gray-300 bg-gray-50 cursor-not-allowed' 
-                    : 'border-indigo-300 bg-indigo-50 hover:bg-indigo-100'
-                  }
-                `}
-              >
-                {uploading ? (
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
-                    <p className="text-gray-600">Uploading... {uploadProgress}%</p>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <div className="text-4xl mb-2">📹</div>
-                    <p className="text-indigo-600 font-medium">Click to select video</p>
-                    <p className="text-gray-500 text-sm">MP4, WebM, OGG (max 5MB)</p>
-                  </div>
-                )}
-              </label>
-
-              {/* Progress Bar */}
-              {uploading && (
-                <div className="mt-2">
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${uploadProgress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* New VideoUpload Component */}
+            <VideoUpload
+              maxSizeMB={50}
+              onUploadSuccess={(url) => {
+                // Refresh the video data after successful upload
+                fetchVideoData();
+              }}
+              onUploadError={(error) => {
+                alert(`Upload failed: ${error}`);
+              }}
+            />
           </div>
         </div>
 

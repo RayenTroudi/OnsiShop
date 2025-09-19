@@ -1,5 +1,6 @@
 'use client';
 
+import LazyVideo from '@/components/common/LazyVideo';
 import { useTranslation } from '@/contexts/TranslationContext';
 import { DEFAULT_CONTENT_VALUES, getContentValue } from '@/lib/content-manager';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -36,8 +37,6 @@ const HeroSection = () => {
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>('');
   const [videoError, setVideoError] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const nextVideoRef = useRef<HTMLVideoElement>(null);
   
   // Lazy loading with intersection observer
   const { ref: sectionRef, isIntersecting: shouldLoadMedia } = useIntersectionObserver();
@@ -72,92 +71,7 @@ const HeroSection = () => {
     }
   }, [addDebugLog]);
 
-  // Smooth video transition function
-  const transitionToNewVideo = useCallback((newVideoUrl: string) => {
-    if (!videoRef.current || !nextVideoRef.current || newVideoUrl === currentVideoUrl) {
-      return;
-    }
 
-    addDebugLog(`Starting video transition to: ${newVideoUrl}`);
-    setIsVideoLoading(true);
-    setVideoError(null);
-    
-    const nextVideo = nextVideoRef.current;
-    const currentVideo = videoRef.current;
-    
-    // Clear any existing event listeners
-    nextVideo.removeEventListener('canplay', null as any);
-    nextVideo.removeEventListener('error', null as any);
-    
-    // Set up error handling for the new video
-    const handleError = (e: Event) => {
-      const errorMsg = `Failed to load new video: ${newVideoUrl}`;
-      addDebugLog(errorMsg);
-      setVideoError(errorMsg);
-      setIsVideoLoading(false);
-      // Keep using current video if new one fails
-    };
-    
-    // Set up success handling
-    const handleCanPlay = () => {
-      addDebugLog('New video ready, starting transition');
-      
-      // Remove event listeners to prevent multiple calls
-      nextVideo.removeEventListener('canplay', handleCanPlay);
-      nextVideo.removeEventListener('error', handleError);
-      
-      // Start playing new video
-      nextVideo.play().then(() => {
-        // Smooth transition
-        nextVideo.style.opacity = '1';
-        currentVideo.style.opacity = '0';
-        
-        // After transition, swap videos and cleanup
-        setTimeout(() => {
-          // Update the main video source
-          currentVideo.src = newVideoUrl;
-          currentVideo.load(); // Force reload
-          
-          // Wait for main video to be ready
-          const handleMainVideoReady = () => {
-            currentVideo.style.opacity = '1';
-            nextVideo.style.opacity = '0';
-            currentVideo.play();
-            setCurrentVideoUrl(newVideoUrl);
-            setIsVideoLoading(false);
-            addDebugLog('Video transition complete');
-            
-            // Cleanup
-            currentVideo.removeEventListener('canplay', handleMainVideoReady);
-          };
-          
-          currentVideo.addEventListener('canplay', handleMainVideoReady, { once: true });
-        }, 500); // Match CSS transition duration
-      }).catch((error) => {
-        const errorMsg = `Video play failed: ${error}`;
-        addDebugLog(errorMsg);
-        setVideoError(errorMsg);
-        setIsVideoLoading(false);
-      });
-    };
-
-    // Add event listeners
-    nextVideo.addEventListener('canplay', handleCanPlay, { once: true });
-    nextVideo.addEventListener('error', handleError, { once: true });
-    
-    // Start loading the new video
-    nextVideo.src = newVideoUrl;
-    nextVideo.load();
-    
-    // Timeout fallback to prevent infinite loading
-    setTimeout(() => {
-      if (isVideoLoading) {
-        addDebugLog('Video loading timeout, falling back');
-        setIsVideoLoading(false);
-      }
-    }, 10000); // 10 second timeout
-    
-  }, [currentVideoUrl, isVideoLoading, addDebugLog]);
 
   useEffect(() => {
     fetchContent();
@@ -241,17 +155,12 @@ const HeroSection = () => {
       
       addDebugLog(`Video URL change detected: ${currentVideoUrl} -> ${validVideoUrl}`);
       
-      if (currentVideoUrl === '') {
-        // Initial load
-        addDebugLog('Initial video load');
-        setCurrentVideoUrl(validVideoUrl);
-      } else {
-        // Smooth transition to new video
-        addDebugLog('Transitioning to new video');
-        transitionToNewVideo(validVideoUrl);
-      }
+      // Set the video URL - LazyVideo component will handle the loading
+      addDebugLog(`Setting video URL: ${validVideoUrl}`);
+      setCurrentVideoUrl(validVideoUrl);
+      setVideoError(null); // Reset error state
     }
-  }, [content, currentVideoUrl, transitionToNewVideo, addDebugLog]);
+  }, [content, currentVideoUrl, addDebugLog]);
   
   // Use translations for text content, content management for media
   const title = t('hero_title');
@@ -282,58 +191,50 @@ const HeroSection = () => {
           </>
         )}
         
-        {/* Background Videos - Dual video setup for smooth transitions */}
-        {/* Main video - lazy loaded */}
-        {shouldLoadMedia && (
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="none" // Lazy load - only load when needed
-          className="w-full h-full object-cover transition-opacity duration-500"
-          style={{ opacity: currentVideoUrl && !videoError ? 1 : 0 }}
-          src={currentVideoUrl || undefined}
-          onLoadStart={() => {
-            addDebugLog('Main video loading started');
-            setIsVideoLoading(true);
-          }}
-          onCanPlay={() => {
-            addDebugLog('Main video ready');
-            setIsVideoLoading(false);
-          }}
-          onError={(e) => {
-            const errorMsg = `Main video load error: ${currentVideoUrl}`;
-            addDebugLog(errorMsg);
-            setVideoError(errorMsg);
-            setIsVideoLoading(false);
-          }}
-          onLoadedData={() => {
-            addDebugLog('Main video data loaded');
-          }}
-        />
-        )}
-        
-        {/* Transition video (hidden, used for smooth transitions) - lazy loaded */}
-        {shouldLoadMedia && (
-        <video
-          ref={nextVideoRef}
-          muted
-          loop
-          playsInline
-          preload="none" // Only load when needed
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 pointer-events-none"
-          style={{ opacity: 0 }}
-          onError={(e) => {
-            addDebugLog('Transition video error');
-          }}
-        />
-        )}
-        
-        {/* Simple loading overlay - minimal and fast */}
-        {isVideoLoading && (
-          <div className="absolute inset-0 bg-black/10 z-10" />
+        {/* Background Video - Enhanced lazy loading */}
+        {currentVideoUrl && !videoError && (
+          <LazyVideo
+            src={currentVideoUrl}
+            poster={backgroundImage}
+            className="absolute inset-0"
+            muted={true}
+            autoPlay={true}
+            loop={true}
+            playsInline={true}
+            threshold={0.1}
+            rootMargin="100px"
+            onLoadStart={() => {
+              addDebugLog('Video loading started');
+              setIsVideoLoading(true);
+            }}
+            onLoadComplete={() => {
+              addDebugLog('Video loading completed');
+              setIsVideoLoading(false);
+            }}
+            onError={(error) => {
+              addDebugLog(error);
+              setVideoError(error);
+              setIsVideoLoading(false);
+            }}
+            loadingComponent={
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 via-purple-700/80 to-pink-600/80 flex items-center justify-center">
+                <div className="bg-black/30 rounded-xl p-6 backdrop-blur-sm border border-white/20">
+                  <div className="flex items-center space-x-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent"></div>
+                    <div className="text-white">
+                      <div className="font-medium">Loading video...</div>
+                      <div className="text-sm opacity-80">Preparing your experience</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+            fallbackComponent={
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-purple-700 to-pink-600">
+                <div className="absolute inset-0 bg-black/20" />
+              </div>
+            }
+          />
         )}
         
         {/* Light text shadow for readability - no overlay needed */}
