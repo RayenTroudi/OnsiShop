@@ -42,7 +42,17 @@ next-env.d.ts
 /prisma/dev.db
 /prisma/dev.db-journal
 
-# utility scripts (optional - remove this line if you want to commit them)
+# utility scripts and temporary files
 check-db-content.js
 restore-content.js
+test-*.js
+test-*.html
+debug-*.js
+diagnose-*.js
+*_backup.*
+*-old.*
+*.temp
+*.tmp
+
+# local env files
 .env*.local
