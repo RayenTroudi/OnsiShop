@@ -1,12 +1,12 @@
 'use client';
 
 import CachedImage from '@/components/ui/CachedImage';
-import CachedVideo from '@/components/ui/CachedVideo';
 import { useLoading } from '@/contexts/LoadingContext';
 import { useTranslation } from '@/contexts/TranslationContext';
 import { useHeroContent, useServiceWorker } from '@/hooks/useCache';
 import { preloadHeroAssets } from '@/lib/asset-cache';
 import { DEFAULT_CONTENT_VALUES, getContentValue } from '@/lib/content-manager';
+import { FALLBACK_CONTENT, getQuickContent } from '@/lib/quick-content';
 import { useEffect, useRef, useState } from 'react';
 
 const HeroSection = () => {
@@ -22,6 +22,10 @@ const HeroSection = () => {
     refresh: refreshContent
   } = useHeroContent();
   
+  // Fallback content state
+  const [fallbackContent, setFallbackContent] = useState<any>(null);
+  const [usingFallback, setUsingFallback] = useState(false);
+  
   // Service worker for additional caching
   const { isRegistered: swRegistered } = useServiceWorker();
   
@@ -33,9 +37,40 @@ const HeroSection = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
   
+  // Handle fallback content when main content fails
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | undefined;
+    
+    if (contentLoading && !usingFallback) {
+      // Set a timeout to use fallback if content takes too long
+      timeoutId = setTimeout(async () => {
+        console.log('⏰ Content loading timeout, using fallback content');
+        const quickContent = await getQuickContent();
+        setFallbackContent(quickContent);
+        setUsingFallback(true);
+      }, 3000); // 3 second timeout
+    } else if (contentError) {
+      // Use fallback immediately on error
+      console.log('❌ Content error detected, using fallback content');
+      getQuickContent().then(quickContent => {
+        setFallbackContent(quickContent);
+        setUsingFallback(true);
+      });
+    } else if (content && !contentError) {
+      // Successfully loaded content, clear fallback
+      setUsingFallback(false);
+    }
+    
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [contentLoading, contentError, content, usingFallback]);
+  
   // Handle content loading tasks and preload assets
   useEffect(() => {
-    if (contentLoading) {
+    if (contentLoading && !usingFallback) {
       addLoadingTask('hero-content');
     } else {
       removeLoadingTask('hero-content');
@@ -69,8 +104,10 @@ const HeroSection = () => {
 
   // Handle video URL changes
   useEffect(() => {
-    const safeContent = content || DEFAULT_CONTENT_VALUES;
-    const backgroundVideo = getContentValue(safeContent, 'hero_background_video', DEFAULT_CONTENT_VALUES['hero_background_video']);
+    // Use fallback content if available, otherwise use regular content or defaults
+    const activeContent = usingFallback ? fallbackContent : (content || DEFAULT_CONTENT_VALUES);
+    const backgroundVideo = getContentValue(activeContent, 'hero_background_video', 
+      usingFallback ? FALLBACK_CONTENT.hero_background_video : DEFAULT_CONTENT_VALUES['hero_background_video']);
     
     if (backgroundVideo && backgroundVideo !== currentVideoUrl) {
       // Skip invalid URLs
@@ -96,12 +133,13 @@ const HeroSection = () => {
       setVideoError(null);
       setVideoTaskAdded(false);
     }
-  }, [content, currentVideoUrl]);
+  }, [content, fallbackContent, usingFallback, currentVideoUrl]);
   
   // Get content values
   const title = t('hero_title');
   const subtitle = t('hero_subtitle');
-  const safeContent = content || DEFAULT_CONTENT_VALUES;
+  // Use fallback content if available, otherwise use regular content or defaults
+  const safeContent = usingFallback ? fallbackContent : (content || DEFAULT_CONTENT_VALUES);
   const description = getContentValue(safeContent, 'hero_description', t('hero_description'));
   const backgroundImage = getContentValue(safeContent, 'hero_background_image', DEFAULT_CONTENT_VALUES['hero_background_image'] || '');
 
@@ -132,9 +170,9 @@ const HeroSection = () => {
           />
         )}
         
-        {/* Background Video - Cached */}
+        {/* Background Video - Direct loading for UploadThing URLs to avoid CORS */}
         {currentVideoUrl && !videoError && (
-          <CachedVideo
+          <video
             ref={videoRef}
             src={currentVideoUrl}
             className="absolute inset-0 w-full h-full object-cover"
@@ -143,48 +181,31 @@ const HeroSection = () => {
             autoPlay
             loop
             playsInline
-            preload="cache"
-            showProgress={false}
+            preload="metadata"
             onLoadStart={() => {
-              console.log('🎬 Hero video loading started (cached)');
+              console.log('🎬 Hero video loading started (direct)');
               if (!videoTaskAdded) {
                 setIsVideoLoading(true);
                 addLoadingTask('hero-video');
                 setVideoTaskAdded(true);
               }
             }}
-            onLoad={() => {
-              console.log('🎉 Hero cached video loaded');
+            onCanPlay={() => {
+              console.log('🎉 Hero video can play');
               if (videoTaskAdded) {
                 setIsVideoLoading(false);
                 removeLoadingTask('hero-video');
                 setVideoTaskAdded(false);
-              }
-            }}
-            onCacheLoad={(cached) => {
-              console.log(`📦 Hero video served from cache: ${cached}`);
-              // If video is loaded from cache, it might already be ready to play
-              if (cached && videoTaskAdded) {
-                console.log('🚀 Video served from cache, removing loading task');
-                setTimeout(() => {
-                  setIsVideoLoading(false);
-                  removeLoadingTask('hero-video');
-                  setVideoTaskAdded(false);
-                }, 100);
               }
             }}
             onError={(e) => {
-              console.error('❌ Hero cached video failed:', e);
-              setVideoError('Cached video failed to load');
+              console.error('❌ Hero video failed:', e);
+              setVideoError('Video failed to load');
               if (videoTaskAdded) {
                 setIsVideoLoading(false);
                 removeLoadingTask('hero-video');
                 setVideoTaskAdded(false);
               }
-            }}
-            onCacheError={(error) => {
-              console.error('❌ Hero video cache error:', error);
-              setVideoError(`Video caching failed: ${error.message}`);
             }}
           />
         )}

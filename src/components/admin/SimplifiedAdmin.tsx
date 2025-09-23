@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import HealthMonitor from './HealthMonitor';
 import SimpleMediaUploader from './SimpleMediaUploader';
+import VideoSelector from './VideoSelector';
 
 interface MediaAsset {
   id: string;
@@ -132,14 +133,22 @@ export default function SimplifiedAdmin() {
         
         {/* Hero Video Section */}
         {activeSection === 'hero-video' && (
-          <SimpleMediaUploader
-            section="hero"
-            mediaType="video"
-            currentMedia={getCurrentMedia('hero', 'video')}
-            onUploadSuccess={handleUploadSuccess}
-            title="🎬 Hero Background Video"
-            description="Upload a video that will play as the background on your homepage hero section. This creates an engaging first impression for visitors."
-          />
+          <div className="space-y-6">
+            <SimpleMediaUploader
+              section="hero"
+              mediaType="video"
+              currentMedia={getCurrentMedia('hero', 'video')}
+              onUploadSuccess={handleUploadSuccess}
+              title="🎬 Upload New Hero Video"
+              description="Upload a new video to add to your video library."
+            />
+            
+            <VideoSelector onVideoSelected={(videoUrl) => {
+              console.log('Video selected:', videoUrl);
+              // Optionally refresh media assets
+              fetchMediaAssets();
+            }} />
+          </div>
         )}
 
         {/* Hero Image Section */}

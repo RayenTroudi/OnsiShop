@@ -209,8 +209,10 @@ class AssetCacheManager {
   ): Promise<CachedAsset> {
     console.log(`🌐 Fetching asset from network: ${url}`);
 
+    // Don't send Cache-Control headers for external URLs (like UploadThing) to avoid CORS issues
+    const isExternal = url.startsWith('http') && !url.includes(window.location.hostname);
     const response = await fetch(url, {
-      headers: {
+      headers: isExternal ? {} : {
         'Cache-Control': config?.staleWhileRevalidate ? 'max-age=3600' : 'no-cache'
       }
     });

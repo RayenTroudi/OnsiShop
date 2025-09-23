@@ -1,5 +1,5 @@
 import { broadcastContentUpdate } from '@/lib/content-stream';
-import { enhancedDbService, getCircuitBreakerStatus } from '@/lib/enhanced-db';
+import { simpleDbService } from '@/lib/simple-db';
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -8,11 +8,7 @@ export const dynamic = 'force-dynamic';
 // GET - Fetch all media assets
 export async function GET() {
   try {
-    // Check circuit breaker status
-    const breakerStatus = getCircuitBreakerStatus();
-    console.log('🔍 Media API Circuit breaker status:', breakerStatus);
-    
-    const mediaAssets = await enhancedDbService.getMediaAssets();
+    const mediaAssets = await simpleDbService.getMediaAssets();
 
     return NextResponse.json(mediaAssets);
   } catch (error) {
@@ -69,13 +65,13 @@ export async function POST(request: NextRequest) {
     // For hero videos, clean up old ones first
     if (section === 'hero' && mediaType === 'video') {
       console.log('🧹 Cleaning up old hero videos...');
-      await enhancedDbService.deleteMediaAssets({
+      await simpleDbService.deleteMediaAssets({
         section: 'hero',
         type: { $regex: '^video/' }
       });
     }
     
-    const mediaAsset = await enhancedDbService.createMediaAsset({
+    const mediaAsset = await simpleDbService.createMediaAsset({
       filename: fileName,
       url: url,
       alt: `${section} ${mediaType}`,
@@ -90,7 +86,7 @@ export async function POST(request: NextRequest) {
     // Update the content key if provided
     if (contentKey) {
       console.log(`📝 Updating content key: ${contentKey}`);
-      await enhancedDbService.upsertSiteContent(contentKey, url);
+      await simpleDbService.upsertSiteContent(contentKey, url);
 
       // Broadcast the update for real-time updates
       broadcastContentUpdate({ [contentKey]: url });
@@ -144,7 +140,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete the media asset
-    await enhancedDbService.deleteMediaAssets({ _id: id });
+    await simpleDbService.deleteMediaAssets({ _id: id });
 
     // Revalidate pages
     revalidatePath('/');

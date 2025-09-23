@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video CORS Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        video {
+            width: 100%;
+            max-width: 600px;
+            height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>UploadThing Video CORS Test</h1>
+        <div id="status" class="status info">Testing video load...</div>
+        
+        <h2>Direct Video Element</h2>
+        <video id="testVideo" controls muted>
+            <source src="https://utfs.io/f/1rEveYHUVj032V42w1UQTMjXHRnPoA8hBUF7ftDzWE0r12b3" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        
+        <h2>Test Results</h2>
+        <div id="results"></div>
+        
+        <h2>Fetch Test</h2>
+        <button onclick="testFetch()">Test Fetch Request</button>
+        <div id="fetchResults"></div>
+    </div>
+
+    <script>
+        const video = document.getElementById('testVideo');
+        const statusDiv = document.getElementById('status');
+        const resultsDiv = document.getElementById('results');
+        const fetchResultsDiv = document.getElementById('fetchResults');
+        
+        // Test video loading
+        video.addEventListener('loadstart', () => {
+            console.log('✅ Video load started');
+            addResult('✅ Video load started', 'success');
+        });
+        
+        video.addEventListener('canplay', () => {
+            console.log('✅ Video can play');
+            addResult('✅ Video can play - NO CORS issues!', 'success');
+            statusDiv.innerHTML = '✅ Video loaded successfully - CORS issue resolved!';
+            statusDiv.className = 'status success';
+        });
+        
+        video.addEventListener('error', (e) => {
+            console.error('❌ Video error:', e);
+            addResult('❌ Video failed to load: ' + (e.message || 'Unknown error'), 'error');
+            statusDiv.innerHTML = '❌ Video failed to load';
+            statusDiv.className = 'status error';
+        });
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+        }
+        
+        // Test fetch request (this was causing CORS issues before)
+        async function testFetch() {
+            fetchResultsDiv.innerHTML = '<div class="status info">Testing fetch request...</div>';
+            
+            try {
+                // Test with no headers (should work)
+                const response1 = await fetch('https://utfs.io/f/1rEveYHUVj032V42w1UQTMjXHRnPoA8hBUF7ftDzWE0r12b3', {
+                    method: 'HEAD'
+                });
+                
+                fetchResultsDiv.innerHTML += '<div class="status success">✅ Fetch with no headers: SUCCESS</div>';
+                
+                // Test with cache-control header (this was causing CORS issues)
+                try {
+                    const response2 = await fetch('https://utfs.io/f/1rEveYHUVj032V42w1UQTMjXHRnPoA8hBUF7ftDzWE0r12b3', {
+                        method: 'HEAD',
+                        headers: {
+                            'Cache-Control': 'no-cache'
+                        }
+                    });
+                    fetchResultsDiv.innerHTML += '<div class="status error">❌ Fetch with Cache-Control header: This should have failed but didn\'t</div>';
+                } catch (corsError) {
+                    fetchResultsDiv.innerHTML += '<div class="status success">✅ Fetch with Cache-Control header correctly blocked by CORS (this is expected)</div>';
+                }
+                
+            } catch (error) {
+                fetchResultsDiv.innerHTML += '<div class="status error">❌ Fetch failed: ' + error.message + '</div>';
+            }
+        }
+        
+        // Auto-run tests
+        setTimeout(() => {
+            addResult('Direct video element test completed', 'info');
+        }, 2000);
+    </script>
+</body>
+</html>

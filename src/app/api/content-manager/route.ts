@@ -4,7 +4,7 @@ import {
     migrateLegacyContent,
     normalizeContentKey
 } from '@/lib/content-manager';
-import { enhancedDbService, getCircuitBreakerStatus } from '@/lib/enhanced-db';
+import { simpleDbService } from '@/lib/simple-db';
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -13,15 +13,11 @@ export const dynamic = 'force-dynamic';
 // GET - Fetch all content with normalized keys
 export async function GET() {
   try {
-    // Check circuit breaker status
-    const breakerStatus = getCircuitBreakerStatus();
-    console.log('🔍 Content Manager Circuit breaker status:', breakerStatus);
-    
     // Initialize defaults and migrate legacy content
     await initializeDefaultContent();
     await migrateLegacyContent();
     
-    const content = await enhancedDbService.getAllSiteContent() as any[];
+    const content = await simpleDbService.getAllSiteContent() as any[];
 
     // Convert to key-value object with all defaults included
     const contentMap: Record<string, string> = {};
@@ -85,7 +81,7 @@ export async function POST(request: NextRequest) {
       try {
         console.log(`📝 Upserting content key: ${normalizedKey} (attempt ${attempt})`);
         
-        const upsertedContent = await enhancedDbService.upsertSiteContent(normalizedKey, String(value));
+        const upsertedContent = await simpleDbService.upsertSiteContent(normalizedKey, String(value));
 
         // Revalidate pages on success
         revalidatePath('/');
@@ -170,7 +166,7 @@ export async function PUT(request: NextRequest) {
       items.map(async (item: { key: string; value: string }) => {
         const normalizedKey = normalizeContentKey(item.key);
         
-        return await enhancedDbService.upsertSiteContent(normalizedKey, String(item.value));
+        return await simpleDbService.upsertSiteContent(normalizedKey, String(item.value));
       })
     );
 
@@ -208,7 +204,7 @@ export async function DELETE(request: NextRequest) {
 
     const normalizedKey = normalizeContentKey(key);
 
-    await enhancedDbService.deleteSiteContent(normalizedKey);
+    await simpleDbService.deleteSiteContent(normalizedKey);
 
     // Revalidate pages
     revalidatePath('/');
