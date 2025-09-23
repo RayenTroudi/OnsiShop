@@ -26,17 +26,17 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
   console.log('🔌 Connecting to MongoDB...');
 
   const client = new MongoClient(uri, {
-    // Optimized connection options for better timeout handling
-    maxPoolSize: 15, // Maintain up to 15 socket connections
-    minPoolSize: 3, // Minimum number of connections in the pool
-    maxConnecting: 5, // Maximum number of connections being created at once
+    // Optimized for M0 cluster connection limits (max 25 connections)
+    maxPoolSize: 5, // Maintain up to 5 socket connections (reduced for M0)
+    minPoolSize: 1, // Minimum number of connections in the pool
+    maxConnecting: 2, // Maximum number of connections being created at once
     
     // Aggressive timeout settings to prevent hanging
     serverSelectionTimeoutMS: 15000, // Keep trying to send operations for 15 seconds
     socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
     connectTimeoutMS: 15000, // Give up initial connection after 15 seconds
-    heartbeatFrequencyMS: 5000, // Check server every 5 seconds (more frequent)
-    maxIdleTimeMS: 20000, // Close connections after 20 seconds of inactivity (faster cleanup)
+    heartbeatFrequencyMS: 10000, // Check server every 10 seconds
+    maxIdleTimeMS: 10000, // Close connections after 10 seconds of inactivity (M0 optimized)
     
     // Retry and error handling
     retryWrites: true, // Retry failed writes
@@ -109,6 +109,34 @@ export async function closeConnection(): Promise<void> {
     cachedClient = null;
     cachedDb = null;
     console.log('🔌 MongoDB connection closed');
+  }
+}
+
+// Get current connection count (for monitoring)
+export async function getConnectionCount(): Promise<number> {
+  try {
+    if (!cachedClient) return 0;
+    const db = await getDatabase();
+    const stats = await db.admin().serverStatus();
+    return stats.connections?.current || 0;
+  } catch (error) {
+    console.error('Error getting connection count:', error);
+    return -1;
+  }
+}
+
+// Force cleanup idle connections
+export async function cleanupConnections(): Promise<void> {
+  try {
+    if (cachedClient) {
+      // Close and recreate connection to clean up pool
+      await cachedClient.close();
+      cachedClient = null;
+      cachedDb = null;
+      console.log('🧹 MongoDB connections cleaned up');
+    }
+  } catch (error) {
+    console.error('Error cleaning up connections:', error);
   }
 }
 

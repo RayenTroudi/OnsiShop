@@ -1,13 +1,15 @@
 import { dbService } from '@/lib/database';
+import { withConnectionMonitoring } from '@/lib/connectionMonitor';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
 // GET /api/products/new-arrivals - Get recent products (optimized)
 export async function GET(request: NextRequest) {
-  const startTime = Date.now();
-  
-  try {
+  return withConnectionMonitoring(async () => {
+    const startTime = Date.now();
+    
+    try {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '6');
     
@@ -32,11 +34,12 @@ export async function GET(request: NextRequest) {
     response.headers.set('Cache-Control', 'public, max-age=300, s-maxage=900');
     
     return response;
-  } catch (error) {
-    console.error('Error fetching new arrivals:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch new arrivals', success: false },
-      { status: 500 }
-    );
-  }
+    } catch (error) {
+      console.error('Error fetching new arrivals:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch new arrivals', success: false },
+        { status: 500 }
+      );
+    }
+  }, 'GET /api/products/new-arrivals');
 }
