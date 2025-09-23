@@ -920,31 +920,72 @@ export class DatabaseService {
     return await db.collection(Collections.PRODUCTS).countDocuments(filter);
   }
 
-  // Media Asset placeholder methods (not yet implemented)
+  // Media Asset methods
   async getMediaAssets() {
-    console.warn('Media assets not yet implemented in MongoDB');
-    return [];
+    try {
+      const db = await getDatabase();
+      const assets = await db.collection(Collections.MEDIA_ASSETS).find({}).sort({ createdAt: -1 }).toArray();
+      return assets.map(asset => ({ 
+        ...asset, 
+        id: asset._id?.toString(), 
+        _id: asset._id?.toString() 
+      })) as (MongoTypes.MediaAsset & { id: string })[];
+    } catch (error) {
+      console.error('Error fetching media assets:', error);
+      return [];
+    }
   }
 
-  async createMediaAsset(data: any): Promise<any> {
-    console.warn('Media assets not yet implemented in MongoDB');
-    // Return a mock object with an ID for now
-    return { id: 'mock-id-' + Date.now() };
+  async createMediaAsset(data: MongoTypes.CreateDocument<MongoTypes.MediaAsset>): Promise<any> {
+    try {
+      const db = await getDatabase();
+      const now = new Date();
+      const asset = { ...data, createdAt: now, updatedAt: now };
+      const result = await db.collection(Collections.MEDIA_ASSETS).insertOne(asset);
+      const created = { ...asset, _id: result.insertedId.toString(), id: result.insertedId.toString() };
+      console.log('✅ Media asset created:', { id: created.id, filename: created.filename, type: created.type });
+      return created;
+    } catch (error) {
+      console.error('Error creating media asset:', error);
+      return null;
+    }
   }
 
   async deleteMediaAssets(filter: any) {
-    console.warn('Media assets not yet implemented in MongoDB');
-    return { count: 0 };
+    try {
+      const db = await getDatabase();
+      const result = await db.collection(Collections.MEDIA_ASSETS).deleteMany(filter);
+      console.log(`🗑️ Deleted ${result.deletedCount} media assets`);
+      return { count: result.deletedCount };
+    } catch (error) {
+      console.error('Error deleting media assets:', error);
+      return { count: 0 };
+    }
   }
 
   async getMediaAssetById(id: string): Promise<any> {
-    console.warn('Media assets not yet implemented in MongoDB');
-    return null;
+    try {
+      const db = await getDatabase();
+      const { ObjectId } = await import('mongodb');
+      const asset = await db.collection(Collections.MEDIA_ASSETS).findOne({ _id: new ObjectId(id) });
+      return asset ? { ...asset, id: asset._id?.toString(), _id: asset._id?.toString() } : null;
+    } catch (error) {
+      console.error('Error fetching media asset by ID:', error);
+      return null;
+    }
   }
 
   async deleteMediaAssetById(id: string) {
-    console.warn('Media assets not yet implemented in MongoDB');
-    return false;
+    try {
+      const db = await getDatabase();
+      const { ObjectId } = await import('mongodb');
+      const result = await db.collection(Collections.MEDIA_ASSETS).deleteOne({ _id: new ObjectId(id) });
+      console.log(`🗑️ Media asset ${id} deleted:`, result.deletedCount > 0);
+      return result.deletedCount > 0;
+    } catch (error) {
+      console.error('Error deleting media asset by ID:', error);
+      return false;
+    }
   }
 }
 

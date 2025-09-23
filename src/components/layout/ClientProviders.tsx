@@ -1,8 +1,14 @@
 'use client';
 
+import GlobalLoading from '@/components/common/GlobalLoading';
+import CacheManager from '@/components/dev/CacheManager';
+import ServiceWorkerProvider from '@/components/providers/ServiceWorkerProvider';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
+import { LoadingProvider, useLoading } from '@/contexts/LoadingContext';
 import { TranslationProvider } from '@/contexts/TranslationContext';
+import { setupBroadcastCacheListener, setupCacheInvalidationListener } from '@/lib/cache-invalidation';
+import { useEffect } from 'react';
 
 interface ClientProvidersProps {
   children: React.ReactNode;
@@ -22,14 +28,45 @@ function CartProviderWrapper({ children }: { children: React.ReactNode }) {
   );
 }
 
+function GlobalLoadingWrapper({ children }: { children: React.ReactNode }) {
+  const { isLoading, loadingTasks } = useLoading();
+
+  return (
+    <>
+      <GlobalLoading 
+        isLoading={isLoading} 
+        loadingTasks={loadingTasks}
+      />
+      {children}
+    </>
+  );
+}
+
+function CacheInvalidationProvider() {
+  useEffect(() => {
+    // Setup cache invalidation listeners
+    setupCacheInvalidationListener();
+    setupBroadcastCacheListener();
+  }, []);
+
+  return null;
+}
+
 export default function ClientProviders({ children }: ClientProvidersProps) {
   return (
-    <TranslationProvider defaultLanguage="fr">
-      <AuthProvider>
-        <CartProviderWrapper>
-          {children}
-        </CartProviderWrapper>
-      </AuthProvider>
-    </TranslationProvider>
+    <LoadingProvider>
+      <TranslationProvider defaultLanguage="fr">
+        <AuthProvider>
+          <CartProviderWrapper>
+            <GlobalLoadingWrapper>
+              <ServiceWorkerProvider />
+              <CacheInvalidationProvider />
+              <CacheManager />
+              {children}
+            </GlobalLoadingWrapper>
+          </CartProviderWrapper>
+        </AuthProvider>
+      </TranslationProvider>
+    </LoadingProvider>
   );
 }

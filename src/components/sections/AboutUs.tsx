@@ -117,7 +117,7 @@ const AboutUs = () => {
           <div className="absolute inset-0 bg-black bg-opacity-40 z-10"></div>
         </>
       )}
-      <h2 className="sr-only">{t('section_about_us_title')}</h2>
+      <h2 className="sr-only">About Us Section</h2>
       <div className="flex max-w-[95%] flex-col items-center justify-center gap-[32px] text-center md:max-w-[700px] relative z-20">
         <h3 className={`font-lora text-[clamp(28px,18px_+_2vw,40px)] font-semibold ${content?.backgroundImage ? 'text-white' : 'text-veryDarkPurple'}`}>
           {content?.title}

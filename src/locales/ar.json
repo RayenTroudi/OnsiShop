@@ -211,5 +211,13 @@
   "admin_manage_categories": "إدارة الفئات",
   "admin_manage_translations": "إدارة الترجمات",
   "admin_recent_products": "المنتجات الأخيرة",
-  "admin_no_products_yet": "لا توجد منتجات بعد"
+  "admin_no_products_yet": "لا توجد منتجات بعد",
+  
+  "section_promotions": "العروض الترويجية",
+  "section_discounts": "خصومات خاصة",
+  "promo_learn_more": "اعرف المزيد",
+  "msg_welcome": "مرحباً",
+  "msg_login_success": "تم تسجيل الدخول بنجاح!",
+  "msg_item_added_to_cart": "تمت إضافة العنصر إلى السلة بنجاح!",
+  "msg_order_placed": "تم إجراء الطلب بنجاح!"
 }

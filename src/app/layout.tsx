@@ -47,7 +47,7 @@ export const metadata = {
 export default async function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${quicksand.variable} ${lora.variable} ${quicksand.className}`}>
-      <body className="bg-white text-veryDarkPurple">
+      <body className="bg-white text-veryDarkPurple" suppressHydrationWarning={true}>
         <ClientProviders>
           <LayoutWrapper>{children}</LayoutWrapper>
         </ClientProviders>

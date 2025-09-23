@@ -1,5 +1,6 @@
 'use client';
 
+import { useLoading } from '@/contexts/LoadingContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface LazyVideoProps {
@@ -18,6 +19,7 @@ interface LazyVideoProps {
   loadingComponent?: React.ReactNode;
   threshold?: number;
   rootMargin?: string;
+  trackGlobalLoading?: boolean;
 }
 
 const LazyVideo: React.FC<LazyVideoProps> = ({
@@ -35,7 +37,8 @@ const LazyVideo: React.FC<LazyVideoProps> = ({
   fallbackComponent,
   loadingComponent,
   threshold = 0.1,
-  rootMargin = '50px'
+  rootMargin = '50px',
+  trackGlobalLoading = false
 }) => {
   const [isIntersecting, setIsIntersecting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,6 +50,15 @@ const LazyVideo: React.FC<LazyVideoProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadingTaskId = useRef<string>();
+  
+  // Use loading context if available (but don't throw if not available)
+  let loadingContext: ReturnType<typeof useLoading> | null = null;
+  try {
+    loadingContext = useLoading();
+  } catch {
+    // Loading context not available, that's okay
+  }
 
   // Intersection Observer setup
   useEffect(() => {
@@ -79,7 +91,13 @@ const LazyVideo: React.FC<LazyVideoProps> = ({
     setIsLoading(true);
     setHasError(false);
     onLoadStart?.();
-  }, [onLoadStart]);
+    
+    // Add to global loading if tracking
+    if (trackGlobalLoading && loadingContext) {
+      loadingTaskId.current = `video-${Date.now()}-${Math.random()}`;
+      loadingContext.addLoadingTask(loadingTaskId.current);
+    }
+  }, [onLoadStart, trackGlobalLoading, loadingContext]);
 
   const handleProgress = useCallback(() => {
     if (videoRef.current) {
@@ -103,14 +121,24 @@ const LazyVideo: React.FC<LazyVideoProps> = ({
     setIsLoaded(true);
     setIsLoading(false);
     onLoadComplete?.();
-  }, [onLoadComplete]);
+    
+    // Remove from global loading if tracking
+    if (trackGlobalLoading && loadingTaskId.current && loadingContext) {
+      loadingContext.removeLoadingTask(loadingTaskId.current);
+    }
+  }, [onLoadComplete, trackGlobalLoading, loadingContext]);
 
   const handleError = useCallback((e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
     const errorMessage = `Failed to load video: ${src}`;
     setHasError(true);
     setIsLoading(false);
     onError?.(errorMessage);
-  }, [src, onError]);
+    
+    // Remove from global loading if tracking
+    if (trackGlobalLoading && loadingTaskId.current && loadingContext) {
+      loadingContext.removeLoadingTask(loadingTaskId.current);
+    }
+  }, [src, onError, trackGlobalLoading, loadingContext]);
 
   const handleLoadedMetadata = useCallback(() => {
     if (videoRef.current && autoPlay) {

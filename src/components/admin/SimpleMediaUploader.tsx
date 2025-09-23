@@ -1,6 +1,8 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import FileUploader from '@/components/upload/FileUploader';
+import VideoUploader from '@/components/upload/VideoUploader';
+import { useState } from 'react';
 
 interface SimpleMediaUploaderProps {
   section: 'hero' | 'promotions' | 'about' | 'footer' | 'contact';
@@ -19,129 +21,114 @@ export default function SimpleMediaUploader({
   title,
   description
 }: SimpleMediaUploaderProps) {
-  const [uploading, setUploading] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
   const [justUploaded, setJustUploaded] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const getAcceptTypes = () => {
-    if (mediaType === 'image') return 'image/*';
-    if (mediaType === 'video') return 'video/*';
-    return 'image/*,video/*';
+  const handleUploadThingComplete = async (url: string) => {
+    console.log(`✅ UploadThing upload completed: ${url}`);
+    
+    try {
+      // Validate the URL is from UploadThing
+      if (!url.includes('uploadthing') && !url.includes('utfs.io')) {
+        console.error('❌ Invalid URL received - not from UploadThing:', url);
+        alert('❌ Upload Error: Invalid URL format received. Please try again.');
+        return;
+      }
+
+      // Save the UploadThing URL to the appropriate content key
+      const contentKey = getContentKey();
+      if (contentKey) {
+        console.log(`💾 Saving UploadThing URL to content key: ${contentKey}`);
+        
+        // Use the specific API for the content type
+        const apiEndpoint = contentKey.includes('video') ? '/api/admin/hero-video' : '/api/content-manager';
+        
+        const requestBody = contentKey.includes('video') 
+          ? {
+              videoUrl: url,
+              metadata: {
+                section,
+                mediaType,
+                contentKey,
+                uploadedAt: new Date().toISOString()
+              }
+            }
+          : {
+              action: 'create',
+              key: contentKey,
+              value: url,
+              type: 'media'
+            };
+
+        const response = await fetch(apiEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody)
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log('✅ UploadThing URL saved successfully:', result);
+          
+          // Also create a media asset record for the stats
+          try {
+            await fetch('/api/admin/media-new', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                url,
+                section,
+                mediaType,
+                contentKey
+              })
+            });
+            console.log('📄 Media asset record created for stats');
+          } catch (assetError) {
+            console.warn('Failed to create media asset record:', assetError);
+            // Don't fail the whole process if asset creation fails
+          }
+          
+          onUploadSuccess?.(url);
+          setJustUploaded(url.split('/').pop() || 'File uploaded');
+          setTimeout(() => setJustUploaded(null), 5000);
+          
+          console.log(`✅ ${mediaType.charAt(0).toUpperCase() + mediaType.slice(1)} uploaded and saved successfully!`);
+        } else {
+          const errorData = await response.json();
+          console.error('Failed to save UploadThing URL:', errorData);
+          alert(`⚠️ Upload completed but failed to save to database: ${errorData.message || 'Unknown error'}`);
+        }
+      } else {
+        console.warn('No content key determined for:', { section, mediaType });
+        alert(`⚠️ Upload completed but no content key configured for ${section} ${mediaType}`);
+      }
+    } catch (error) {
+      console.error('Error saving UploadThing URL:', error);
+      alert(`❌ Error saving upload: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
-  const validateFile = (file: File): string | null => {
-    const isImage = file.type.startsWith('image/');
-    const isVideo = file.type.startsWith('video/');
-    
-    if (mediaType === 'image' && !isImage) {
-      return 'Please upload an image file (JPG, PNG, GIF, WebP)';
-    }
-    
-    if (mediaType === 'video' && !isVideo) {
-      return 'Please upload a video file (MP4, WebM, OGG)';
-    }
-    
-    if (!isImage && !isVideo) {
-      return 'Please upload a valid image or video file';
-    }
-    
-    const maxSizeMB = 5;
-    const fileSizeMB = file.size / (1024 * 1024);
-    
-    if (fileSizeMB > maxSizeMB) {
-      return `File too large. Maximum size is ${maxSizeMB}MB. Current size: ${Math.round(fileSizeMB * 100) / 100}MB`;
-    }
-    
+  const getContentKey = () => {
+    if (section === 'hero' && mediaType === 'video') return 'hero_background_video';
+    if (section === 'hero' && mediaType === 'image') return 'hero_background_image';
+    if (section === 'promotions' && mediaType === 'image') return 'promotion_background_image';
+    if (section === 'about' && mediaType === 'image') return 'about_background_image';
     return null;
   };
 
-  const uploadFile = async (file: File) => {
-    // Prevent duplicate uploads
-    if (uploading) {
-      console.log('⚠️  Upload already in progress, skipping');
-      return;
+  const getUploadThingEndpoint = () => {
+    if (mediaType === 'video' || (mediaType === 'both' && section === 'hero')) {
+      return 'heroVideoUploader';
     }
-    
-    const validationError = validateFile(file);
-    if (validationError) {
-      alert(validationError);
-      return;
-    }
-
-    console.log(`🚀 Starting upload for: ${file.name}`);
-    setUploading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('section', section);
-      formData.append('alt', `${section} ${mediaType}`);
-
-      const response = await fetch('/api/admin/media', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        onUploadSuccess?.(result.url);
-        
-        // Show success state
-        const fileName = file.name.length > 30 ? file.name.substring(0, 30) + '...' : file.name;
-        setJustUploaded(fileName);
-        
-        // Show success message
-        alert(`✅ ${fileName} uploaded successfully!\n\nYour ${mediaType} is now live on the website!`);
-        
-        // Reset file input and clear success after 5 seconds
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-        
-        setTimeout(() => setJustUploaded(null), 5000);
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Upload failed');
-      }
-    } catch (error) {
-      console.error('Upload error:', error);
-      alert(`❌ Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}\n\nPlease try again or use a smaller file.`);
-    } finally {
-      setUploading(false);
-    }
+    return 'mediaUploader';
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0 && files[0]) {
-      uploadFile(files[0]);
-    }
-  };
-
-  const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
-  };
-
-  const handleClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files[0]) {
-      uploadFile(files[0]);
-    }
+  const handleUploadError = (error: Error) => {
+    console.error('UploadThing error:', error);
+    alert(`❌ Upload failed: ${error.message}`);
   };
 
   return (
@@ -154,12 +141,38 @@ export default function SimpleMediaUploader({
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium text-gray-700">Current {mediaType}:</p>
-            {currentMedia.startsWith('data:') && (
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                Base64 ({(currentMedia.length / 1024).toFixed(0)} KB)
-              </span>
-            )}
+            <div className="flex gap-2">
+              {currentMedia.startsWith('data:') ? (
+                <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
+                  ⚠️ Legacy Base64 ({(currentMedia.length / 1024).toFixed(0)} KB)
+                </span>
+              ) : (
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                  ✅ UploadThing CDN
+                </span>
+              )}
+            </div>
           </div>
+          
+          {/* Migration Notice for Base64 Files */}
+          {currentMedia.startsWith('data:') && (
+            <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-400 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h4 className="text-sm font-medium text-yellow-800">Migration Recommended</h4>
+                  <p className="text-sm text-yellow-700 mt-1">
+                    This file is stored as base64 data. Upload a new file to use UploadThing's cloud storage for better performance and reliability.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="border border-gray-200 rounded-lg overflow-hidden max-w-sm relative">
             {mediaType === 'video' || currentMedia.includes('video') ? (
               <video 
@@ -182,15 +195,15 @@ export default function SimpleMediaUploader({
               />
             )}
             {currentMedia.startsWith('data:') && currentMedia.length > 1000000 && (
-              <div className="absolute top-1 right-1 bg-yellow-500 text-white text-xs px-2 py-1 rounded">
-                Large File
+              <div className="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                Large Base64
               </div>
             )}
           </div>
           <p className="text-xs text-gray-500 mt-1">
             {currentMedia.startsWith('data:') 
-              ? `Stored as base64 data (${(currentMedia.length / 1024 / 1024).toFixed(2)} MB)`
-              : `URL: ${currentMedia.substring(0, 60)}${currentMedia.length > 60 ? '...' : ''}`
+              ? `Legacy base64 storage (${(currentMedia.length / 1024 / 1024).toFixed(2)} MB) - Upload new file to migrate`
+              : `UploadThing CDN: ${currentMedia.includes('utfs.io') ? currentMedia.split('/').pop() : 'External URL'}`
             }
           </p>
         </div>
@@ -214,88 +227,83 @@ export default function SimpleMediaUploader({
         </div>
       )}
       
-      {/* Upload Area */}
-      <div
-        className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer
-          ${dragActive 
-            ? 'border-blue-400 bg-blue-50' 
-            : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-          }
-          ${uploading ? 'pointer-events-none opacity-75' : ''}
-        `}
-        onDrop={handleDrop}
-        onDragOver={handleDrag}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onClick={handleClick}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={getAcceptTypes()}
-          onChange={handleFileChange}
-          className="hidden"
-          disabled={uploading}
-        />
-        
-        {uploading ? (
-          <div className="flex flex-col items-center">
-            <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-            <p className="text-blue-600 font-semibold">Uploading...</p>
-            <p className="text-gray-500 text-sm">Please wait</p>
-          </div>
+      {/* UploadThing Upload Area */}
+      <div className="space-y-4">
+        {mediaType === 'video' || (section === 'hero' && mediaType === 'both') ? (
+          <VideoUploader
+            onUploadComplete={handleUploadThingComplete}
+            currentVideoUrl={currentMedia?.startsWith('http') ? currentMedia : undefined}
+            title={`Upload ${section === 'hero' ? 'Hero' : section.charAt(0).toUpperCase() + section.slice(1)} Video`}
+            description="Upload your video using UploadThing - secure, fast, and reliable cloud storage"
+            maxSize="32MB"
+            autoSaveToDatabase={true}
+            contentKey={getContentKey() || 'hero_background_video'}
+            className="bg-white"
+          />
         ) : (
-          <div className="flex flex-col items-center">
-            <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-full bg-gray-100">
-              {mediaType === 'video' ? (
-                <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-              ) : mediaType === 'image' ? (
-                <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              ) : (
-                <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-              )}
-            </div>
-            <p className="text-lg font-semibold text-gray-900 mb-2">
-              {dragActive ? 'Drop here!' : 'Click or drag to upload'}
-            </p>
-            <p className="text-gray-600 mb-2">
-              {mediaType === 'video' ? 'MP4, WebM, OGG' : mediaType === 'image' ? 'JPG, PNG, GIF, WebP' : 'Images or Videos'}
-            </p>
-            <p className="text-sm text-gray-500">Maximum size: 5MB</p>
+          <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-6">
+            <h4 className="text-lg font-semibold mb-4">Upload {mediaType === 'image' ? 'Image' : 'Media'}</h4>
+            <FileUploader
+              endpoint={getUploadThingEndpoint() as any}
+              onUploadComplete={(res) => {
+                if (res?.[0]) {
+                  handleUploadThingComplete(res[0].url);
+                }
+              }}
+              onUploadError={handleUploadError}
+              variant="dropzone"
+              maxFiles={1}
+            >
+              <div className="text-center space-y-2">
+                <p className="text-sm font-medium text-gray-700">
+                  Drag and drop your {mediaType} file here, or click to browse
+                </p>
+                <p className="text-xs text-gray-500">
+                  Uploaded via UploadThing • Maximum file size: 32MB
+                </p>
+              </div>
+            </FileUploader>
           </div>
         )}
       </div>
       
-      {/* Guidelines */}
-      <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
-        <h4 className="font-medium text-blue-900 mb-1">Tips for best results:</h4>
-        <ul className="text-sm text-blue-800 space-y-1">
-          {mediaType === 'video' ? (
-            <>
-              <li>• Use MP4 format for best compatibility</li>
-              <li>• Keep videos under 30 seconds for optimal loading</li>
-              <li>• Recommended resolution: 1920x1080 or 1280x720</li>
-            </>
-          ) : mediaType === 'image' ? (
-            <>
-              <li>• Use JPG or PNG for photos</li>
-              <li>• Recommended size: 1920x1080 for best quality</li>
-              <li>• WebP format offers smallest file sizes</li>
-            </>
-          ) : (
-            <>
-              <li>• Images: JPG, PNG, WebP recommended</li>
-              <li>• Videos: MP4 format for best compatibility</li>
-              <li>• Keep files under 5MB for fast loading</li>
-            </>
-          )}
-        </ul>
+      {/* UploadThing Benefits */}
+      <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+        <h4 className="font-medium text-green-900 mb-2">✨ Powered by UploadThing</h4>
+        <div className="text-sm text-green-800 space-y-2">
+          <p><strong>✅ Secure Cloud Storage:</strong> Files stored on global CDN for fast delivery</p>
+          <p><strong>🚀 Optimized Performance:</strong> Automatic compression and optimization</p>
+          <p><strong>🔒 Enterprise Security:</strong> Secure uploads with authentication</p>
+          <p><strong>📱 Multi-device Compatible:</strong> Works across all devices and browsers</p>
+        </div>
+        
+        <div className="mt-3 pt-3 border-t border-green-200">
+          <h5 className="font-medium text-green-900 mb-1">Tips for best results:</h5>
+          <ul className="text-sm text-green-800 space-y-1">
+            {mediaType === 'video' ? (
+              <>
+                <li>• Use MP4 format for best compatibility</li>
+                <li>• Recommended resolution: 1920x1080 or 1280x720</li>
+                <li>• Keep videos under 60 seconds for optimal loading</li>
+                <li>• Maximum file size: 32MB</li>
+              </>
+            ) : mediaType === 'image' ? (
+              <>
+                <li>• Use JPG, PNG, or WebP formats</li>
+                <li>• Recommended size: 1920x1080 for best quality</li>
+                <li>• WebP format offers best compression</li>
+                <li>• Maximum file size: 4MB</li>
+              </>
+            ) : (
+              <>
+                <li>• Images: JPG, PNG, WebP recommended</li>
+                <li>• Videos: MP4 format for best compatibility</li>
+                <li>• All files stored securely in the cloud</li>
+                <li>• Automatic optimization for web delivery</li>
+              </>
+            )}
+          </ul>
+        </div>
       </div>
     </div>
   );

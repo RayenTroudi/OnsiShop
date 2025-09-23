@@ -1,239 +1,191 @@
 'use client';
 
-import LazyVideo from '@/components/common/LazyVideo';
+import CachedImage from '@/components/ui/CachedImage';
+import CachedVideo from '@/components/ui/CachedVideo';
+import { useLoading } from '@/contexts/LoadingContext';
 import { useTranslation } from '@/contexts/TranslationContext';
+import { useHeroContent, useServiceWorker } from '@/hooks/useCache';
+import { preloadHeroAssets } from '@/lib/asset-cache';
 import { DEFAULT_CONTENT_VALUES, getContentValue } from '@/lib/content-manager';
-import { useCallback, useEffect, useRef, useState } from 'react';
-
-// Custom hook for intersection observer lazy loading
-const useIntersectionObserver = (options = {}) => {
-  const [isIntersecting, setIsIntersecting] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const targetRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      const entry = entries[0];
-      if (entry && entry.isIntersecting && !isLoaded) {
-        setIsIntersecting(true);
-        setIsLoaded(true);
-        observer.disconnect();
-      }
-    }, { threshold: 0.1, rootMargin: '50px', ...options });
-
-    if (targetRef.current) {
-      observer.observe(targetRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [isLoaded]);
-
-  return { ref: targetRef, isIntersecting };
-};
+import { useEffect, useRef, useState } from 'react';
 
 const HeroSection = () => {
   const { t } = useTranslation();
-  const [content, setContent] = useState<Record<string, string>>(DEFAULT_CONTENT_VALUES);
+  const { addLoadingTask, removeLoadingTask } = useLoading();
+  
+  // Use cached content with automatic background refresh
+  const {
+    data: content,
+    loading: contentLoading,
+    error: contentError,
+    fromCache,
+    refresh: refreshContent
+  } = useHeroContent();
+  
+  // Service worker for additional caching
+  const { isRegistered: swRegistered } = useServiceWorker();
+  
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>('');
   const [videoError, setVideoError] = useState<string | null>(null);
+  const [videoTaskAdded, setVideoTaskAdded] = useState(false);
   
-  // Lazy loading with intersection observer
-  const { ref: sectionRef, isIntersecting: shouldLoadMedia } = useIntersectionObserver();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   
-  // Debug logging helper (disabled)
-  const addDebugLog = useCallback((message: string) => {
-    // Debug logging disabled
-  }, []);
-  
-  const fetchContent = useCallback(async () => {
-    try {
-      addDebugLog('Fetching content...');
-      const response = await fetch('/api/content', {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache'
-        }
-      });
-      const result = await response.json();
-      if (result.success) {
-        addDebugLog('Content updated successfully');
-        setContent(result.data || {});
-        setVideoError(null);
-      }
-    } catch (error) {
-      const errorMsg = `Error fetching content: ${error}`;
-      console.error(errorMsg);
-      addDebugLog(errorMsg);
-      setVideoError(errorMsg);
-    } finally {
-      // Content loading complete
-    }
-  }, [addDebugLog]);
-
-
-
+  // Handle content loading tasks and preload assets
   useEffect(() => {
-    fetchContent();
-
-    // Use Server-Sent Events for real-time updates (better than polling)
-    let eventSource: EventSource | null = null;
+    if (contentLoading) {
+      addLoadingTask('hero-content');
+    } else {
+      removeLoadingTask('hero-content');
+    }
     
-    try {
-      eventSource = new EventSource('/api/content/stream');
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'content-update') {
-            setContent(data.content);
-          }
-        } catch (error) {
-          console.error('Error parsing SSE data:', error);
-        }
-      };
-      
-      eventSource.onerror = () => {
-        console.log('SSE connection error, falling back to manual refresh');
-      };
-    } catch (error) {
-      console.log('SSE not supported, using focus-based updates only');
+    if (contentError) {
+      setVideoError(`Content loading error: ${contentError.message}`);
+    } else {
+      setVideoError(null);
     }
 
-    // Fallback: refresh on focus (but don't poll continuously)
-    const handleFocus = () => {
-      fetchContent();
-    };
-
-    window.addEventListener('focus', handleFocus);
-    
+    // Preload hero assets when content is available
+    if (content && !contentLoading && !contentError) {
+      preloadHeroAssets(content).catch(error => {
+        console.warn('Failed to preload hero assets:', error);
+      });
+    }
+  }, [contentLoading, contentError, content, addLoadingTask, removeLoadingTask]);
+  
+  // Cleanup loading tasks on unmount
+  useEffect(() => {
     return () => {
-      window.removeEventListener('focus', handleFocus);
-      if (eventSource) {
-        eventSource.close();
-      }
+      // Use setTimeout to ensure cleanup happens after all other operations
+      setTimeout(() => {
+        removeLoadingTask('hero-content');
+        removeLoadingTask('hero-video');  
+        removeLoadingTask('hero-background-image');
+      }, 0);
     };
-  }, [fetchContent]);
+  }, []); // Empty dependency array - only run on mount/unmount
 
   // Handle video URL changes
   useEffect(() => {
-    // Use normalized key lookup for background video
-    const backgroundVideo = getContentValue(content, 'hero_background_video', DEFAULT_CONTENT_VALUES['hero_background_video']);
+    const safeContent = content || DEFAULT_CONTENT_VALUES;
+    const backgroundVideo = getContentValue(safeContent, 'hero_background_video', DEFAULT_CONTENT_VALUES['hero_background_video']);
     
-    // Validate video URL
     if (backgroundVideo && backgroundVideo !== currentVideoUrl) {
-      // Skip if the URL looks like a local file path (VS Code development issue)
+      // Skip invalid URLs
       if (backgroundVideo.includes('\\') || backgroundVideo.startsWith('file://') || backgroundVideo.includes('src/')) {
-        const warningMsg = `Skipping invalid video URL that looks like local path: ${backgroundVideo}`;
-        addDebugLog(warningMsg);
+        const warningMsg = `Skipping invalid video URL: ${backgroundVideo}`;
         setVideoError(warningMsg);
         return;
       }
       
-      // Handle different types of video URLs
       let validVideoUrl = backgroundVideo;
       
-      // If it's a base64 data URL, use it directly
-      if (backgroundVideo.startsWith('data:')) {
+      // Handle different URL types
+      if (backgroundVideo.startsWith('data:') || 
+          backgroundVideo.startsWith('/api/media/') || 
+          backgroundVideo.startsWith('http') || 
+          backgroundVideo.startsWith('/videos/')) {
         validVideoUrl = backgroundVideo;
-      }
-      // If it's a database media ID route, use it directly
-      else if (backgroundVideo.startsWith('/api/media/')) {
-        validVideoUrl = backgroundVideo;
-      }
-      // If it's an external URL, use it directly
-      else if (backgroundVideo.startsWith('http')) {
-        validVideoUrl = backgroundVideo;
-      }
-      // If it's a relative path to public folder
-      else if (backgroundVideo.startsWith('/videos/')) {
-        validVideoUrl = backgroundVideo;
-      }
-      // If it's just a filename, assume it's in videos folder
-      else if (!backgroundVideo.startsWith('/')) {
+      } else if (!backgroundVideo.startsWith('/')) {
         validVideoUrl = `/videos/${backgroundVideo}`;
       }
       
-      addDebugLog(`Video URL change detected: ${currentVideoUrl} -> ${validVideoUrl}`);
-      
-      // Set the video URL - LazyVideo component will handle the loading
-      addDebugLog(`Setting video URL: ${validVideoUrl}`);
       setCurrentVideoUrl(validVideoUrl);
-      setVideoError(null); // Reset error state
+      setVideoError(null);
+      setVideoTaskAdded(false);
     }
-  }, [content, currentVideoUrl, addDebugLog]);
+  }, [content, currentVideoUrl]);
   
-  // Use translations for text content, content management for media
+  // Get content values
   const title = t('hero_title');
   const subtitle = t('hero_subtitle');
-  const description = getContentValue(content, 'hero_description', t('hero_description')); // Fallback to translation if no custom description
-  const backgroundImage = getContentValue(content, 'hero_background_image', DEFAULT_CONTENT_VALUES['hero_background_image'] || '');
+  const safeContent = content || DEFAULT_CONTENT_VALUES;
+  const description = getContentValue(safeContent, 'hero_description', t('hero_description'));
+  const backgroundImage = getContentValue(safeContent, 'hero_background_image', DEFAULT_CONTENT_VALUES['hero_background_image'] || '');
 
   return (
     <section ref={sectionRef} className="relative h-[500px] md:h-[600px] flex items-center justify-center text-white overflow-hidden">
       {/* Background Images and Videos - Layered setup */}
       <div className="absolute inset-0 z-0">
-        {/* Background Image Layer (fallback when no video or video fails) */}
+        {/* Debug info */}
+        <div className="absolute top-4 left-4 z-50 bg-black/80 text-white p-2 text-xs">
+          <div>Video: {currentVideoUrl || 'None'}</div>
+          <div>Image: {backgroundImage || 'None'}</div>
+          <div>Error: {videoError || 'None'}</div>
+          <div>From Cache: {fromCache ? 'Yes' : 'No'}</div>
+          <div>SW: {swRegistered ? 'Yes' : 'No'}</div>
+        </div>
+        {/* Background Image - Cached */}
         {backgroundImage && !currentVideoUrl && (
-          <>
-            <div 
-              className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
-              style={{
-                backgroundImage: `url('${backgroundImage}')`
-              }}
-            />
-            {/* Hidden img tag for accessibility and SEO */}
-            <img 
-              src={backgroundImage} 
-              alt="Hero background image" 
-              className="sr-only" 
-              aria-hidden="true"
-            />
-          </>
+          <CachedImage
+            src={backgroundImage}
+            alt="Hero background image"
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority={true}
+            onLoadStart={() => addLoadingTask('hero-background-image')}
+            onLoad={() => removeLoadingTask('hero-background-image')}
+            onError={() => removeLoadingTask('hero-background-image')}
+          />
         )}
         
-        {/* Background Video - Enhanced lazy loading */}
+        {/* Background Video - Cached */}
         {currentVideoUrl && !videoError && (
-          <LazyVideo
+          <CachedVideo
+            ref={videoRef}
             src={currentVideoUrl}
+            className="absolute inset-0 w-full h-full object-cover"
             poster={backgroundImage}
-            className="absolute inset-0"
-            muted={true}
-            autoPlay={true}
-            loop={true}
-            playsInline={true}
-            threshold={0.1}
-            rootMargin="100px"
+            muted
+            autoPlay
+            loop
+            playsInline
+            preload="cache"
+            showProgress={false}
             onLoadStart={() => {
-              addDebugLog('Video loading started');
-              setIsVideoLoading(true);
+              console.log('🎬 Hero video loading started (cached)');
+              if (!videoTaskAdded) {
+                setIsVideoLoading(true);
+                addLoadingTask('hero-video');
+                setVideoTaskAdded(true);
+              }
             }}
-            onLoadComplete={() => {
-              addDebugLog('Video loading completed');
-              setIsVideoLoading(false);
+            onLoad={() => {
+              console.log('🎉 Hero cached video loaded');
+              if (videoTaskAdded) {
+                setIsVideoLoading(false);
+                removeLoadingTask('hero-video');
+                setVideoTaskAdded(false);
+              }
             }}
-            onError={(error) => {
-              addDebugLog(error);
-              setVideoError(error);
-              setIsVideoLoading(false);
+            onCacheLoad={(cached) => {
+              console.log(`📦 Hero video served from cache: ${cached}`);
+              // If video is loaded from cache, it might already be ready to play
+              if (cached && videoTaskAdded) {
+                console.log('🚀 Video served from cache, removing loading task');
+                setTimeout(() => {
+                  setIsVideoLoading(false);
+                  removeLoadingTask('hero-video');
+                  setVideoTaskAdded(false);
+                }, 100);
+              }
             }}
-            loadingComponent={
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 via-purple-700/80 to-pink-600/80 flex items-center justify-center">
-                <div className="bg-black/30 rounded-xl p-6 backdrop-blur-sm border border-white/20">
-                  <div className="flex items-center space-x-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent"></div>
-                    <div className="text-white">
-                      <div className="font-medium">Loading video...</div>
-                      <div className="text-sm opacity-80">Preparing your experience</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            }
-            fallbackComponent={
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-purple-700 to-pink-600">
-                <div className="absolute inset-0 bg-black/20" />
-              </div>
-            }
+            onError={(e) => {
+              console.error('❌ Hero cached video failed:', e);
+              setVideoError('Cached video failed to load');
+              if (videoTaskAdded) {
+                setIsVideoLoading(false);
+                removeLoadingTask('hero-video');
+                setVideoTaskAdded(false);
+              }
+            }}
+            onCacheError={(error) => {
+              console.error('❌ Hero video cache error:', error);
+              setVideoError(`Video caching failed: ${error.message}`);
+            }}
           />
         )}
         

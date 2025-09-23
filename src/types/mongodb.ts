@@ -168,6 +168,28 @@ export interface Translation {
   updatedAt: Date;
 }
 
+export interface Upload {
+  _id?: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number;
+  fileType: string;
+  uploadedBy: string; // User ID
+  uploadType: 'hero-video' | 'product-image' | 'general-media' | 'avatar' | 'document';
+  isPublic: boolean;
+  metadata?: {
+    originalName?: string;
+    width?: number;
+    height?: number;
+    duration?: number;
+    altText?: string;
+    tags?: string[];
+    relatedId?: string; // Product ID, User ID, etc.
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Helper type for creating documents without _id
 export type CreateDocument<T> = Omit<T, '_id'>;
 

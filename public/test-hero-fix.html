@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hero Video Loading Fix Test</title>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .controls { background: #f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .status { background: #e8f4fd; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        iframe { width: 100%; height: 600px; border: 1px solid #ccc; border-radius: 8px; }
+        button { background: #007cba; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #005a87; }
+    </style>
+</head>
+<body>
+    <h1>🎬 Hero Video Loading Fix</h1>
+    <p>This page tests the hero video loading completion fix.</p>
+    
+    <div class="controls">
+        <h3>Controls:</h3>
+        <button onclick="refreshHomepage()">🔄 Refresh Homepage</button>
+        <button onclick="runFix()">🔧 Run Fix</button>
+        <button onclick="checkStatus()">📊 Check Status</button>
+    </div>
+    
+    <div class="status" id="status">
+        Ready to test...
+    </div>
+    
+    <h3>Homepage:</h3>
+    <iframe src="http://localhost:3000" id="homepage-frame"></iframe>
+    
+    <script>
+        const statusDiv = document.getElementById('status');
+        const iframe = document.getElementById('homepage-frame');
+        
+        function updateStatus(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            statusDiv.innerHTML = `<strong>${timestamp}:</strong> ${message}`;
+            statusDiv.style.background = type === 'success' ? '#d4edda' : type === 'warning' ? '#fff3cd' : '#e8f4fd';
+        }
+        
+        function refreshHomepage() {
+            updateStatus('🔄 Refreshing homepage...');
+            iframe.src = iframe.src;
+        }
+        
+        function runFix() {
+            updateStatus('🔧 Running hero video fix...');
+            try {
+                if (iframe.contentWindow && iframe.contentWindow.fixHeroVideoLoading) {
+                    iframe.contentWindow.fixHeroVideoLoading();
+                    updateStatus('✅ Fix executed successfully', 'success');
+                } else {
+                    // Inject the fix script
+                    const script = iframe.contentDocument.createElement('script');
+                    script.src = '/fix-hero-video.js';
+                    iframe.contentDocument.head.appendChild(script);
+                    updateStatus('💉 Fix script injected', 'success');
+                }
+            } catch (e) {
+                updateStatus('❌ Could not run fix: ' + e.message, 'warning');
+            }
+        }
+        
+        function checkStatus() {
+            updateStatus('📊 Checking hero video status...');
+            try {
+                if (iframe.contentWindow && iframe.contentDocument) {
+                    const videos = iframe.contentDocument.querySelectorAll('video');
+                    const loadingTasks = Array.from(iframe.contentDocument.querySelectorAll('*')).filter(el => 
+                        el.textContent && el.textContent.includes('hero-video')
+                    );
+                    
+                    let message = `Found ${videos.length} videos, ${loadingTasks.length} loading tasks. `;
+                    
+                    if (videos.length > 0) {
+                        const firstVideo = videos[0];
+                        message += `Video: ${firstVideo.src ? (firstVideo.src.startsWith('data:') ? 'Cached (data URL)' : 'Network URL') : 'No src'}, `;
+                        message += `Ready: ${firstVideo.readyState >= 3 ? 'Yes' : 'No'}, `;
+                        message += `Playing: ${!firstVideo.paused ? 'Yes' : 'No'}`;
+                    }
+                    
+                    if (loadingTasks.length === 0) {
+                        message += ' ✅ No loading tasks found!';
+                        updateStatus(message, 'success');
+                    } else {
+                        message += ' ⚠️ Loading tasks still active';
+                        updateStatus(message, 'warning');
+                    }
+                } else {
+                    updateStatus('❌ Cannot access iframe content', 'warning');
+                }
+            } catch (e) {
+                updateStatus('❌ Error checking status: ' + e.message, 'warning');
+            }
+        }
+        
+        // Auto-check status when iframe loads
+        iframe.onload = function() {
+            setTimeout(() => {
+                checkStatus();
+                // Auto-inject fix script if needed
+                setTimeout(() => {
+                    try {
+                        const script = this.contentDocument.createElement('script');
+                        script.src = '/fix-hero-video.js';
+                        this.contentDocument.head.appendChild(script);
+                        updateStatus('🔧 Auto-injected fix script');
+                    } catch (e) {
+                        // Ignore cross-origin errors
+                    }
+                }, 2000);
+            }, 1000);
+        };
+        
+        // Auto-check every 3 seconds
+        setInterval(() => {
+            if (document.hasFocus()) {
+                checkStatus();
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

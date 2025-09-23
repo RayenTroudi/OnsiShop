@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Homepage Video Diagnostic</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1400px; }
+        .panel { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .iframe-container { position: relative; }
+        iframe { width: 100%; height: 600px; border: 1px solid #ddd; border-radius: 4px; }
+        .status { margin: 8px 0; padding: 8px 12px; border-radius: 4px; font-size: 14px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .warning { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        .info { background: #d1ecf1; border: 1px solid #b8daff; color: #0c5460; }
+        h2 { color: #333; margin-top: 0; }
+        .refresh-btn { background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin: 10px 0; }
+        .refresh-btn:hover { background: #0056b3; }
+        .video-inspector { border: 1px solid #ddd; border-radius: 4px; padding: 10px; margin: 10px 0; background: #f9f9f9; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Homepage Video Diagnostic</h1>
+    
+    <div class="container">
+        <div class="panel">
+            <h2>🖥️ Live Homepage</h2>
+            <button class="refresh-btn" onclick="refreshHomepage()">🔄 Refresh Homepage</button>
+            <div class="iframe-container">
+                <iframe id="homepage" src="http://localhost:3000"></iframe>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <h2>📊 Diagnostic Results</h2>
+            <button class="refresh-btn" onclick="runDiagnostics()">🔄 Run Diagnostics</button>
+            <div id="diagnostics"></div>
+        </div>
+    </div>
+    
+    <div class="panel" style="margin-top: 20px;">
+        <h2>🎬 Video Element Inspector</h2>
+        <div id="videoInspector"></div>
+    </div>
+    
+    <script>
+        function addStatus(container, message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = message;
+            container.appendChild(div);
+            console.log(message.replace(/<[^>]*>/g, '')); // Log without HTML
+        }
+        
+        function refreshHomepage() {
+            const iframe = document.getElementById('homepage');
+            iframe.src = iframe.src; // Force reload
+            
+            // Wait a bit then inspect the iframe content
+            setTimeout(() => {
+                inspectHomepageVideo();
+            }, 3000);
+        }
+        
+        async function runDiagnostics() {
+            const container = document.getElementById('diagnostics');
+            container.innerHTML = '';
+            
+            addStatus(container, '🚀 Running diagnostics...', 'info');
+            
+            // Test 1: Content API
+            try {
+                const response = await fetch('/api/content');
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    addStatus(container, '✅ Content API responding', 'success');
+                    
+                    const heroVideo = data.data?.hero_background_video;
+                    if (heroVideo) {
+                        addStatus(container, `📹 Hero video URL: <code>${heroVideo}</code>`, 'success');
+                        
+                        // Validate video URL
+                        if (heroVideo.startsWith('http') || heroVideo.startsWith('data:') || heroVideo.startsWith('/')) {
+                            addStatus(container, '✅ Valid video URL format', 'success');
+                        } else {
+                            addStatus(container, '❌ Invalid video URL format', 'error');
+                        }
+                    } else {
+                        addStatus(container, '❌ No hero_background_video in data', 'error');
+                    }
+                } else {
+                    addStatus(container, `❌ Content API error: ${data.error || 'Unknown'}`, 'error');
+                }
+            } catch (error) {
+                addStatus(container, `❌ Content API fetch failed: ${error.message}`, 'error');
+            }
+            
+            // Test 2: Video accessibility
+            try {
+                const testUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+                const headResponse = await fetch(testUrl, { method: 'HEAD' });
+                
+                if (headResponse.ok) {
+                    addStatus(container, '✅ Video file accessible via HTTP', 'success');
+                    addStatus(container, `📦 Content-Type: ${headResponse.headers.get('Content-Type')}`, 'info');
+                    
+                    const contentLength = headResponse.headers.get('Content-Length');
+                    if (contentLength) {
+                        const sizeMB = (parseInt(contentLength) / (1024 * 1024)).toFixed(2);
+                        addStatus(container, `📏 File size: ${sizeMB} MB`, 'info');
+                    }
+                } else {
+                    addStatus(container, `❌ Video file not accessible: ${headResponse.status}`, 'error');
+                }
+            } catch (error) {
+                addStatus(container, `⚠️ Video accessibility test failed: ${error.message}`, 'warning');
+            }
+            
+            // Test 3: Service Worker
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                if (registrations.length > 0) {
+                    addStatus(container, `✅ Service Worker registered (${registrations.length} registrations)`, 'success');
+                } else {
+                    addStatus(container, '⚠️ No Service Worker registrations found', 'warning');
+                }
+            } else {
+                addStatus(container, '❌ Service Worker not supported', 'error');
+            }
+            
+            // Test 4: Storage APIs
+            try {
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    addStatus(container, `✅ Cache API available (${cacheNames.length} caches)`, 'success');
+                } else {
+                    addStatus(container, '❌ Cache API not available', 'error');
+                }
+                
+                if ('indexedDB' in window) {
+                    addStatus(container, '✅ IndexedDB available', 'success');
+                } else {
+                    addStatus(container, '❌ IndexedDB not available', 'error');
+                }
+            } catch (error) {
+                addStatus(container, `⚠️ Storage test error: ${error.message}`, 'warning');
+            }
+            
+            addStatus(container, '✅ Diagnostics complete', 'success');
+        }
+        
+        function inspectHomepageVideo() {
+            const container = document.getElementById('videoInspector');
+            container.innerHTML = '';
+            
+            try {
+                const iframe = document.getElementById('homepage');
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                
+                // Find video elements
+                const videos = iframeDoc.querySelectorAll('video');
+                
+                addStatus(container, `Found ${videos.length} video element(s)`, videos.length > 0 ? 'success' : 'warning');
+                
+                videos.forEach((video, index) => {
+                    const videoInfo = document.createElement('div');
+                    videoInfo.className = 'video-inspector';
+                    
+                    let info = `<h4>Video ${index + 1}:</h4>`;
+                    info += `<strong>Source:</strong> ${video.src || 'No src'}<br>`;
+                    info += `<strong>Current Source:</strong> ${video.currentSrc || 'None'}<br>`;
+                    info += `<strong>Ready State:</strong> ${video.readyState} (${getReadyStateText(video.readyState)})<br>`;
+                    info += `<strong>Network State:</strong> ${video.networkState} (${getNetworkStateText(video.networkState)})<br>`;
+                    info += `<strong>Error:</strong> ${video.error ? `Code ${video.error.code}: ${video.error.message}` : 'None'}<br>`;
+                    info += `<strong>Paused:</strong> ${video.paused}<br>`;
+                    info += `<strong>Autoplay:</strong> ${video.autoplay}<br>`;
+                    info += `<strong>Muted:</strong> ${video.muted}<br>`;
+                    info += `<strong>Loop:</strong> ${video.loop}<br>`;
+                    info += `<strong>Preload:</strong> ${video.preload}<br>`;
+                    
+                    if (video.videoWidth && video.videoHeight) {
+                        info += `<strong>Dimensions:</strong> ${video.videoWidth}x${video.videoHeight}<br>`;
+                    }
+                    
+                    if (video.duration && !isNaN(video.duration)) {
+                        info += `<strong>Duration:</strong> ${video.duration.toFixed(2)}s<br>`;
+                    }
+                    
+                    // Check for source elements
+                    const sources = video.querySelectorAll('source');
+                    if (sources.length > 0) {
+                        info += `<strong>Source elements:</strong> ${sources.length}<br>`;
+                        sources.forEach((source, i) => {
+                            info += `&nbsp;&nbsp;${i + 1}. ${source.src} (${source.type})<br>`;
+                        });
+                    }
+                    
+                    videoInfo.innerHTML = info;
+                    container.appendChild(videoInfo);
+                });
+                
+                // Look for any video-related elements
+                const videoContainers = iframeDoc.querySelectorAll('[class*="video"], [class*="hero"]');
+                if (videoContainers.length > 0) {
+                    addStatus(container, `Found ${videoContainers.length} video-related container(s)`, 'info');
+                }
+                
+            } catch (error) {
+                addStatus(container, `❌ Cannot inspect iframe: ${error.message} (likely CORS restriction)`, 'error');
+                addStatus(container, 'ℹ️ Try opening the homepage in a new tab and inspect there', 'info');
+            }
+        }
+        
+        function getReadyStateText(state) {
+            const states = ['HAVE_NOTHING', 'HAVE_METADATA', 'HAVE_CURRENT_DATA', 'HAVE_FUTURE_DATA', 'HAVE_ENOUGH_DATA'];
+            return states[state] || 'Unknown';
+        }
+        
+        function getNetworkStateText(state) {
+            const states = ['NETWORK_EMPTY', 'NETWORK_IDLE', 'NETWORK_LOADING', 'NETWORK_NO_SOURCE'];
+            return states[state] || 'Unknown';
+        }
+        
+        // Auto-run diagnostics on load
+        document.addEventListener('DOMContentLoaded', () => {
+            runDiagnostics();
+            
+            // Auto-inspect video after homepage loads
+            setTimeout(() => {
+                inspectHomepageVideo();
+            }, 3000);
+        });
+        
+        // Listen for iframe load events
+        document.getElementById('homepage').addEventListener('load', () => {
+            setTimeout(() => {
+                inspectHomepageVideo();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

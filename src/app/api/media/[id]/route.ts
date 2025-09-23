@@ -25,15 +25,34 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       // Convert base64 to buffer
       const buffer = Buffer.from(base64Data, 'base64');
       
-      // Return video response with proper headers
+      // Generate strong ETag for media assets
+      const hash = require('crypto').createHash('md5').update(buffer).digest('hex');
+      const etag = `"${hash}"`;
+      
+      // Check if client has cached version
+      const ifNoneMatch = request.headers.get('if-none-match');
+      if (ifNoneMatch === etag) {
+        return new NextResponse(null, { status: 304 });
+      }
+      
+      // Determine cache duration based on media type
+      const isVideo = mimeType.startsWith('video/');
+      const isImage = mimeType.startsWith('image/');
+      const maxAge = isVideo ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60; // 30 days for videos, 7 days for images
+      
+      // Return media with optimized headers
       return new NextResponse(buffer, {
         status: 200,
         headers: {
           'Content-Type': mimeType,
           'Content-Length': buffer.length.toString(),
           'Accept-Ranges': 'bytes',
-          'Cache-Control': 'public, max-age=31536000', // Cache for 1 year
+          'Cache-Control': `public, max-age=${maxAge}, immutable`, // Long-term caching with immutable flag
+          'ETag': etag,
+          'Last-Modified': new Date(mediaAsset.updatedAt || Date.now()).toUTCString(),
           'Content-Disposition': `inline; filename="${mediaAsset.filename}"`,
+          'X-Media-Type': isVideo ? 'video' : isImage ? 'image' : 'unknown',
+          'X-Cache-Version': '1.1.0'
         },
       });
     } else {

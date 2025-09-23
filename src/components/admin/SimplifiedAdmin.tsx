@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import HealthMonitor from './HealthMonitor';
 import SimpleMediaUploader from './SimpleMediaUploader';
 
 interface MediaAsset {
@@ -12,7 +13,7 @@ interface MediaAsset {
   createdAt: string;
 }
 
-type ActiveSection = 'hero-video' | 'hero-image' | 'promotions' | 'about' | 'footer';
+type ActiveSection = 'hero-video' | 'hero-image' | 'promotions' | 'about' | 'footer' | 'health';
 
 export default function SimplifiedAdmin() {
   const [activeSection, setActiveSection] = useState<ActiveSection>('hero-video');
@@ -39,11 +40,14 @@ export default function SimplifiedAdmin() {
   };
 
   const handleUploadSuccess = (url: string) => {
-    // Refresh media assets after successful upload with a slight delay to avoid race conditions
+    // Refresh media assets immediately after successful upload
     console.log('✅ Upload successful, refreshing media list...');
+    fetchMediaAssets();
+    
+    // Also refresh after a short delay to ensure database consistency
     setTimeout(() => {
       fetchMediaAssets();
-    }, 500);
+    }, 1000);
   };
 
   const deleteMedia = async (id: string) => {
@@ -104,6 +108,7 @@ export default function SimplifiedAdmin() {
           { key: 'promotions', label: '🎯 Promotions', desc: 'Promotional section image' },
           { key: 'about', label: '📖 About', desc: 'About page content' },
           { key: 'footer', label: '📬 Footer', desc: 'Footer section media' },
+          { key: 'health', label: '🏥 System Health', desc: 'Database and system monitoring' },
         ].map(section => (
           <button
             key={section.key}
@@ -185,8 +190,21 @@ export default function SimplifiedAdmin() {
           />
         )}
 
+        {/* Health Monitoring Section */}
+        {activeSection === 'health' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">🏥 System Health Dashboard</h2>
+              <p className="text-gray-600 mb-6">
+                Monitor your database connections, circuit breaker status, and overall system health in real-time.
+              </p>
+              <HealthMonitor />
+            </div>
+          </div>
+        )}
+
         {/* Current Media List */}
-        {getSectionMedia(activeSection.replace('-video', '').replace('-image', '')).length > 0 && (
+        {activeSection !== 'health' && getSectionMedia(activeSection.replace('-video', '').replace('-image', '')).length > 0 && (
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">
               📁 Current Media ({getSectionMedia(activeSection.replace('-video', '').replace('-image', '')).length})

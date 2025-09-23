@@ -68,12 +68,20 @@ export default function UserMenu() {
           📦 {t('nav_orders')}
         </Link>
         {user.isAdmin && (
-          <Link
-            href="/admin"
-            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            🛠️ {t('menu_admin')}
-          </Link>
+          <>
+            <Link
+              href="/admin"
+              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              🛠️ {t('menu_admin')}
+            </Link>
+            <Link
+              href="/admin/hero-video"
+              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              🎥 Hero Video
+            </Link>
+          </>
         )}
         <button
           onClick={handleLogout}

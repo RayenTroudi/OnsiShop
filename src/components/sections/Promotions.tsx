@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 // next
 import Image from 'next/image';
+// contexts
+import { useLoading } from '@/contexts/LoadingContext';
 
 // react-scroll-parallax
 import { Parallax, ParallaxProvider } from 'react-scroll-parallax';
@@ -16,6 +18,7 @@ interface PromotionContent {
 }
 
 const Promotions = () => {
+  const { addLoadingTask, removeLoadingTask } = useLoading();
   const [content, setContent] = useState<PromotionContent>({
     backgroundImage: '',
     buttonLink: '/search/winter-2024',
@@ -25,53 +28,52 @@ const Promotions = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [hasRegisteredContentTask, setHasRegisteredContentTask] = useState(false);
+  const [hasRegisteredImageTask, setHasRegisteredImageTask] = useState(false);
+  const isMountedRef = useRef(true);
 
-  useEffect(() => {
-    const fetchContent = async () => {
-      console.log('🎯 Promotions: Fetching real content from API');
-      setImageError(false);
-      
-      try {
-        const response = await fetch('/api/content', {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache'
-          }
-        });
-        
-        const result = await response.json();
-        
-        if (result.success && result.data) {
-          const promotionContent = {
-            backgroundImage: result.data.promotion_background_image || '',
-            buttonLink: result.data.promotion_button_link || '/search/winter-2024',
-            title: result.data.promotion_title || 'Winter Collection Now Available',
-            subtitle: result.data.promotion_subtitle || 'Stay cozy and fashionable this winter with our new collection!',
-            buttonText: result.data.promotion_button_text || 'View Collection'
-          };
-          
-          console.log('✅ Promotions: Using real content');
-          console.log('   Background Image:', promotionContent.backgroundImage ? 
-            (promotionContent.backgroundImage.startsWith('data:') ? 
-              `Base64 image (${(promotionContent.backgroundImage.length / 1024).toFixed(0)}KB)` : 
-              promotionContent.backgroundImage) : 
-            'None');
-          console.log('   Title:', promotionContent.title);
-          console.log('   Subtitle:', promotionContent.subtitle);
-          
-          setContent(promotionContent);
-        } else {
-          console.log('⚠️  Promotions: API failed, using fallback content');
-          setContent({
-            backgroundImage: '',
-            buttonLink: '/search/winter-2024',
-            title: 'Winter Collection Now Available',
-            subtitle: 'Stay cozy and fashionable this winter with our new collection!',
-            buttonText: 'View Collection'
-          });
+  const fetchContent = useCallback(async () => {
+    console.log('🎯 Promotions: Fetching real content from API');
+    setImageError(false);
+    
+    if (!hasRegisteredContentTask) {
+      addLoadingTask('promotions-content');
+      setHasRegisteredContentTask(true);
+    }
+    
+    try {
+      const response = await fetch('/api/content', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache'
         }
-      } catch (error) {
-        console.error('❌ Promotions: Error fetching content:', error);
+      });
+      
+      const result = await response.json();
+      
+      if (!isMountedRef.current) return;
+      
+      if (result.success && result.data) {
+        const promotionContent = {
+          backgroundImage: result.data.promotion_background_image || '',
+          buttonLink: result.data.promotion_button_link || '/search/winter-2024',
+          title: result.data.promotion_title || 'Winter Collection Now Available',
+          subtitle: result.data.promotion_subtitle || 'Stay cozy and fashionable this winter with our new collection!',
+          buttonText: result.data.promotion_button_text || 'View Collection'
+        };
+        
+        console.log('✅ Promotions: Using real content');
+        console.log('   Background Image:', promotionContent.backgroundImage ? 
+          (promotionContent.backgroundImage.startsWith('data:') ? 
+            `Base64 image (${(promotionContent.backgroundImage.length / 1024).toFixed(0)}KB)` : 
+            promotionContent.backgroundImage) : 
+          'None');
+        console.log('   Title:', promotionContent.title);
+        console.log('   Subtitle:', promotionContent.subtitle);
+        
+        setContent(promotionContent);
+      } else {
+        console.log('⚠️  Promotions: API failed, using fallback content');
         setContent({
           backgroundImage: '',
           buttonLink: '/search/winter-2024',
@@ -79,13 +81,39 @@ const Promotions = () => {
           subtitle: 'Stay cozy and fashionable this winter with our new collection!',
           buttonText: 'View Collection'
         });
-      } finally {
-        setIsLoading(false);
       }
-    };
-    
+    } catch (error) {
+      console.error('❌ Promotions: Error fetching content:', error);
+      if (!isMountedRef.current) return;
+      
+      setContent({
+        backgroundImage: '',
+        buttonLink: '/search/winter-2024',
+        title: 'Winter Collection Now Available',
+        subtitle: 'Stay cozy and fashionable this winter with our new collection!',
+        buttonText: 'View Collection'
+      });
+    } finally {
+      if (isMountedRef.current) {
+        setIsLoading(false);
+        removeLoadingTask('promotions-content');
+      }
+    }
+  }, [addLoadingTask, removeLoadingTask, hasRegisteredContentTask]);
+
+  useEffect(() => {
     fetchContent();
-  }, []);
+    
+    // Cleanup on unmount
+    return () => {
+      isMountedRef.current = false;
+      // Defensive cleanup with timeout
+      setTimeout(() => {
+        removeLoadingTask('promotions-content');
+        removeLoadingTask('promotion-image');
+      }, 0);
+    };
+  }, [fetchContent, removeLoadingTask]);
 
   return (
     <ParallaxProvider>
@@ -99,7 +127,7 @@ const Promotions = () => {
         
 
         
-        {/* Images */}
+        {/* Images with Priority Loading */}
         {!isLoading && content.backgroundImage && (
           <>
             <Parallax speed={-50} className="relative hidden h-full w-full sm:block">
@@ -110,11 +138,28 @@ const Promotions = () => {
                 fill
                 sizes="(min-width: 768px) 100vw, 867px"
                 className="object-cover transition-opacity duration-300"
-                priority={false} // Lazy load for better performance
-                loading="lazy" // Explicit lazy loading
+                priority={true}
                 unoptimized={content.backgroundImage.includes('/uploads/') || content.backgroundImage.startsWith('data:')}
-                onError={() => setImageError(true)}
-                onLoad={() => setImageError(false)}
+                onError={() => {
+                  setImageError(true);
+                  if (hasRegisteredImageTask) {
+                    removeLoadingTask('promotion-image');
+                    setHasRegisteredImageTask(false);
+                  }
+                }}
+                onLoad={() => {
+                  setImageError(false);
+                  if (hasRegisteredImageTask) {
+                    removeLoadingTask('promotion-image');
+                    setHasRegisteredImageTask(false);
+                  }
+                }}
+                onLoadStart={() => {
+                  if (!hasRegisteredImageTask) {
+                    addLoadingTask('promotion-image');
+                    setHasRegisteredImageTask(true);
+                  }
+                }}
               />
             </Parallax>
             <div className="relative block h-full w-full sm:hidden">
@@ -125,11 +170,28 @@ const Promotions = () => {
                 fill
                 sizes="(max-width: 767px) 100vw, 867px"
                 className="object-cover transition-opacity duration-300"
-                priority={false} // Lazy load for better performance
-                loading="lazy" // Explicit lazy loading
+                priority={true}
                 unoptimized={content.backgroundImage.includes('/uploads/') || content.backgroundImage.startsWith('data:')}
-                onError={() => setImageError(true)}
-                onLoad={() => setImageError(false)}
+                onError={() => {
+                  setImageError(true);
+                  if (hasRegisteredImageTask) {
+                    removeLoadingTask('promotion-image');
+                    setHasRegisteredImageTask(false);
+                  }
+                }}
+                onLoad={() => {
+                  setImageError(false);
+                  if (hasRegisteredImageTask) {
+                    removeLoadingTask('promotion-image');
+                    setHasRegisteredImageTask(false);
+                  }
+                }}
+                onLoadStart={() => {
+                  if (!hasRegisteredImageTask) {
+                    addLoadingTask('promotion-image');
+                    setHasRegisteredImageTask(true);
+                  }
+                }}
               />
             </div>
           </>

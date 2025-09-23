@@ -81,8 +81,8 @@ function LoginForm() {
           <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <h3 className="text-sm font-medium text-blue-800 mb-2">{t('auth_demo_credentials')}</h3>
             <div className="text-xs space-y-1 text-blue-700">
-              <p><strong>{t('auth_admin')}:</strong> admin@gmail.com / admin@gmail.com</p>
-              <p><strong>{t('auth_user')}:</strong> demo@example.com / demo123</p>
+              <p><strong>{t('auth_admin')}:</strong> admin@onsishop.com / admin123</p>
+              <p><strong>{t('auth_user')}:</strong> user@onsishop.com / user123</p>
             </div>
           </div>
         </div>

@@ -211,5 +211,13 @@
   "admin_manage_categories": "Manage Categories",
   "admin_manage_translations": "Manage Translations",
   "admin_recent_products": "Recent Products",
-  "admin_no_products_yet": "No products yet"
+  "admin_no_products_yet": "No products yet",
+  
+  "section_promotions": "Promotions",
+  "section_discounts": "Special Discounts",
+  "promo_learn_more": "Learn More",
+  "msg_welcome": "Welcome",
+  "msg_login_success": "Login successful!",
+  "msg_item_added_to_cart": "Item added to cart successfully!",
+  "msg_order_placed": "Order placed successfully!"
 }

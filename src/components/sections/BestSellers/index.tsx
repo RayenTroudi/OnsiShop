@@ -27,8 +27,8 @@ const BestSellers = () => {
     // Fetch categories from the database
     const fetchCategories = async () => {
       try {
-        // Try to fetch from admin API (if user is logged in) or use fallback
-        const response = await fetch('/api/admin/categories');
+        // Use public categories API endpoint
+        const response = await fetch('/api/categories');
         if (response.ok) {
           const data = await response.json();
           setCategories(data);

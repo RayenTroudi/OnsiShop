@@ -1,27 +1,5 @@
-// next
-import dynamic from 'next/dynamic';
-
-// loading component
-import Loading from '@/components/common/Loading';
-const loading = () => <Loading />;
-
 // components
-import HeroSection from '@/components/sections/HeroSection';
-const Discounts = dynamic(() => import('@/components/sections/Discounts'), {
-  loading
-});
-const BestSellers = dynamic(() => import('@/components/sections/BestSellers'), {
-  loading
-});
-const Promotions = dynamic(() => import('@/components/sections/Promotions'), {
-  loading
-});
-const NewArrivals = dynamic(() => import('@/components/sections/NewArrivals/NewArrivals'), {
-  loading
-});
-const AboutUs = dynamic(() => import('@/components/sections/AboutUs'), {
-  loading
-});
+import HomePage from '@/components/pages/HomePage';
 
 // Removed edge runtime to fix Prisma bundling issues
 // export const runtime = 'edge';
@@ -47,15 +25,6 @@ export const metadata = {
   }
 };
 
-export default async function HomePage() {
-  return (
-    <>
-      <HeroSection />
-      <Discounts />
-      <BestSellers />
-      <Promotions />
-      <NewArrivals />
-      <AboutUs />
-    </>
-  );
+export default async function HomePageRoute() {
+  return <HomePage />;
 }

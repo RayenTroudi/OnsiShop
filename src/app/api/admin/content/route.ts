@@ -1,3 +1,4 @@
+import { createCacheInvalidationResponse, invalidateContentCache } from '@/lib/cache-invalidation';
 import { broadcastContentUpdate } from '@/lib/content-stream';
 import { dbService } from '@/lib/database';
 import { revalidatePath } from 'next/cache';
@@ -54,7 +55,13 @@ export async function POST(request: NextRequest) {
     // Broadcast update to connected clients
     broadcastContentUpdate({ [key]: value });
 
-    return NextResponse.json(newContent);
+    // Trigger cache invalidation
+    await invalidateContentCache([key]);
+
+    return createCacheInvalidationResponse(newContent, {
+      keys: ['content_data'],
+      patterns: ['content_', 'hero_']
+    });
   } catch (error) {
     console.error('Error creating content:', error);
     return NextResponse.json(
@@ -103,7 +110,14 @@ export async function PUT(request: NextRequest) {
     
     broadcastContentUpdate(updatedContentMap);
 
-    return NextResponse.json({ success: true });
+    // Trigger cache invalidation for updated keys
+    const updatedKeys = Object.keys(updatedContentMap);
+    await invalidateContentCache(updatedKeys);
+
+    return createCacheInvalidationResponse({ success: true }, {
+      keys: ['content_data'],
+      patterns: ['content_', 'hero_']
+    });
   } catch (error) {
     console.error('Error updating content:', error);
     return NextResponse.json(

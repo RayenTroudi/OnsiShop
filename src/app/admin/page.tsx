@@ -3,7 +3,6 @@
 export const dynamic = 'force-dynamic';
 
 import { useTranslation } from '@/contexts/TranslationContext';
-import { dbService } from '@/lib/database';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -18,9 +17,20 @@ export default function AdminDashboard() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load data
-        const productsData = await dbService.getProducts();
-        const categoriesData = await dbService.getCategories();
+        // Load data using API routes instead of direct DB calls
+        const [productsResponse, categoriesResponse] = await Promise.all([
+          fetch('/api/admin/products'),
+          fetch('/api/admin/categories')
+        ]);
+        
+        if (!productsResponse.ok || !categoriesResponse.ok) {
+          throw new Error('Failed to fetch data');
+        }
+        
+        const [productsData, categoriesData] = await Promise.all([
+          productsResponse.json(),
+          categoriesResponse.json()
+        ]);
         
         setProducts(productsData);
         setCategories(categoriesData);

@@ -19,7 +19,7 @@ export async function initializeDefaultVideo() {
       const now = new Date();
       const defaultVideoData = {
         filename: 'default-hero-video.mp4',
-        url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+        url: '/videos/1758289257342_CHANEL_Fall-Winter_2019_fashion_film_for_Savoir_Flair__Directed_by_VIVIENNE___TAMAS.mp4',
         type: 'video/mp4',
         section: 'hero-background',
         alt: 'Default hero background video',

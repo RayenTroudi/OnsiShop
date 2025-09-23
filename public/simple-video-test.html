@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Video Test</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 20px; 
+            font-family: Arial, sans-serif; 
+            background: #1a1a1a; 
+            color: white; 
+        }
+        
+        .hero-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+        
+        .hero-video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+        }
+        
+        .hero-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 2;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        .status { 
+            margin: 10px 0; 
+            padding: 10px; 
+            border-radius: 4px; 
+            font-size: 14px; 
+        }
+        .success { background: #1a5a1a; color: #90ff90; }
+        .error { background: #5a1a1a; color: #ff9090; }
+        .warning { background: #5a5a1a; color: #ffff90; }
+        .info { background: #1a3a5a; color: #90d0ff; }
+    </style>
+</head>
+<body>
+    <h1>🎬 Simple Video Test (No React/Next.js)</h1>
+    
+    <div id="status"></div>
+    
+    <div class="hero-container">
+        <video 
+            id="heroVideo"
+            class="hero-video"
+            autoplay 
+            muted 
+            loop 
+            playsinline
+        >
+            <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        
+        <div class="hero-content">
+            <h2>Test Hero Content</h2>
+            <p>This should show over the video background</p>
+        </div>
+    </div>
+    
+    <script>
+        const video = document.getElementById('heroVideo');
+        const status = document.getElementById('status');
+        
+        function addStatus(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            status.appendChild(div);
+            console.log(message);
+        }
+        
+        addStatus('🚀 Starting simple video test...', 'info');
+        
+        // Video event listeners
+        video.addEventListener('loadstart', () => {
+            addStatus('📡 Video loading started', 'info');
+        });
+        
+        video.addEventListener('durationchange', () => {
+            addStatus(`⏱️ Duration: ${video.duration.toFixed(2)}s`, 'info');
+        });
+        
+        video.addEventListener('loadedmetadata', () => {
+            addStatus('📊 Metadata loaded', 'success');
+            addStatus(`📐 Dimensions: ${video.videoWidth}x${video.videoHeight}`, 'info');
+        });
+        
+        video.addEventListener('loadeddata', () => {
+            addStatus('📥 First frame loaded', 'success');
+        });
+        
+        video.addEventListener('canplay', () => {
+            addStatus('▶️ Can start playing', 'success');
+        });
+        
+        video.addEventListener('canplaythrough', () => {
+            addStatus('🚀 Can play through without buffering', 'success');
+        });
+        
+        video.addEventListener('play', () => {
+            addStatus('🎬 Video started playing', 'success');
+        });
+        
+        video.addEventListener('playing', () => {
+            addStatus('📺 Video is playing', 'success');
+        });
+        
+        video.addEventListener('pause', () => {
+            addStatus('⏸️ Video paused', 'warning');
+        });
+        
+        video.addEventListener('ended', () => {
+            addStatus('🏁 Video ended', 'info');
+        });
+        
+        video.addEventListener('error', (e) => {
+            addStatus(`❌ Video error: ${e.message || 'Unknown error'}`, 'error');
+            if (video.error) {
+                const errorMessages = {
+                    1: 'MEDIA_ERR_ABORTED: Download was aborted',
+                    2: 'MEDIA_ERR_NETWORK: Network error',
+                    3: 'MEDIA_ERR_DECODE: Decoding error',
+                    4: 'MEDIA_ERR_SRC_NOT_SUPPORTED: Source not supported'
+                };
+                addStatus(`❌ Error code ${video.error.code}: ${errorMessages[video.error.code] || 'Unknown error'}`, 'error');
+            }
+        });
+        
+        video.addEventListener('abort', () => {
+            addStatus('⏹️ Video loading aborted', 'error');
+        });
+        
+        video.addEventListener('stalled', () => {
+            addStatus('⚠️ Network stalled', 'warning');
+        });
+        
+        video.addEventListener('suspend', () => {
+            addStatus('⏸️ Loading suspended', 'warning');
+        });
+        
+        video.addEventListener('waiting', () => {
+            addStatus('⏳ Waiting for data', 'warning');
+        });
+        
+        // Check video state periodically
+        setInterval(() => {
+            if (!video.paused && !video.ended) {
+                addStatus(`📈 Playing: ${video.currentTime.toFixed(1)}s / ${video.duration?.toFixed(1) || '?'}s`, 'info');
+            }
+        }, 5000);
+        
+        // Test network connectivity
+        fetch('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', {
+            method: 'HEAD'
+        })
+        .then(response => {
+            addStatus(`🌐 Network test: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+        })
+        .catch(error => {
+            addStatus(`❌ Network test failed: ${error.message}`, 'error');
+        });
+    </script>
+</body>
+</html>

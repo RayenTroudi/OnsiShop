@@ -1,4 +1,4 @@
-import { dbService } from '@/lib/database';
+import { enhancedDbService, getCircuitBreakerStatus } from '@/lib/enhanced-db';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -7,15 +7,19 @@ export async function GET() {
   try {
     console.log('🔍 Fetching content from database...');
     
+    // Check circuit breaker status
+    const breakerStatus = getCircuitBreakerStatus();
+    console.log('🔍 Circuit breaker status:', breakerStatus);
+    
     // Fetch all site content from database
-    const siteContentItems = await dbService.getAllSiteContent();
+    const siteContentItems = await enhancedDbService.getAllSiteContent();
 
     console.log(`📋 Found ${siteContentItems.length} content items`);
 
     // Convert to key-value pairs
     const contentData: Record<string, string> = {};
     
-    siteContentItems.forEach(item => {
+    siteContentItems.forEach((item: any) => {
       if (item.key && item.value !== null) {
         contentData[item.key] = item.value;
       }
@@ -31,7 +35,7 @@ export async function GET() {
     const response = {
       success: true,
       data: contentData,
-      items: siteContentItems.map(item => ({
+      items: siteContentItems.map((item: any) => ({
         key: item.key,
         value: item.value,
         updatedAt: item.updatedAt
@@ -41,17 +45,31 @@ export async function GET() {
       has_promo_image: !!promoImage
     };
 
-    return new NextResponse(JSON.stringify(response), {
+    // Generate ETag for cache validation
+    const contentString = JSON.stringify(response);
+    const etag = `"${Buffer.from(contentString).toString('base64').slice(0, 16)}"`;
+    
+    return new NextResponse(contentString, {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
+        // Enable stale-while-revalidate caching
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=300', // Cache for 1 min, stale for 5 min
+        'ETag': etag,
+        'Last-Modified': new Date().toUTCString(),
+        'Vary': 'Accept-Encoding',
+        // Add cache versioning
+        'X-Cache-Version': '1.1.0',
+        'X-Content-Hash': etag
       }
     });
   } catch (error) {
     console.error('❌ Content API error:', error);
+    
+    // Check if it's a circuit breaker error
+    if (error instanceof Error && error.message.includes('Circuit breaker is OPEN')) {
+      console.warn('🔴 Circuit breaker is open, returning cached fallback content');
+    }
     
     // Fallback content
     const fallbackContent = {
