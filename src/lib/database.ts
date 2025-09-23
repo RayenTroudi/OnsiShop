@@ -122,29 +122,45 @@ export class DatabaseService {
   // Product methods
   async getProducts() {
     const db = await getDatabase();
+    
+    // Get all products
     const products = await db.collection(Collections.PRODUCTS)
       .find({})
       .sort({ createdAt: -1 })
       .toArray();
     
-    // Populate category data for each product
-    const productsWithCategory = await Promise.all(
-      products.map(async (product) => {
-        let category = null;
-        if (product.categoryId && isValidObjectId(product.categoryId)) {
-          category = await this.getCategoryById(product.categoryId);
-        }
-        
-        return {
-          ...product,
-          id: product._id?.toString(),
-          _id: product._id?.toString(),
-          category
-        };
-      })
+    // Extract unique category IDs
+    const categoryIdsSet = new Set(
+      products
+        .map(p => p.categoryId)
+        .filter(id => id && isValidObjectId(id))
     );
+    const categoryIds = Array.from(categoryIdsSet);
     
-    return productsWithCategory;
+    // Bulk fetch all categories in one query
+    const categories = categoryIds.length > 0 
+      ? await db.collection(Collections.CATEGORIES)
+          .find({ _id: { $in: categoryIds.map(id => toObjectId(id)) } })
+          .toArray()
+      : [];
+    
+    // Create category lookup map for O(1) access
+    const categoryMap = new Map();
+    categories.forEach(cat => {
+      categoryMap.set(cat._id.toString(), {
+        ...cat,
+        id: cat._id.toString(),
+        _id: cat._id.toString()
+      });
+    });
+    
+    // Populate category data efficiently
+    return products.map(product => ({
+      ...product,
+      id: product._id?.toString(),
+      _id: product._id?.toString(),
+      category: product.categoryId ? categoryMap.get(product.categoryId) || null : null
+    }));
   }
 
   async getProductById(id: string) {
@@ -218,9 +234,10 @@ export class DatabaseService {
     const category = await this.getCategoryByHandle(categoryHandle);
     if (!category) return [];
     
-    // Then find products in that category
+    // Then find products in that category with sorting
     const products = await db.collection(Collections.PRODUCTS)
       .find({ categoryId: category.id })
+      .sort({ createdAt: -1 })
       .toArray();
     
     return products.map(product => ({
@@ -229,6 +246,128 @@ export class DatabaseService {
       _id: product._id?.toString(),
       category
     }));
+  }
+
+  // Optimized method for getting recent products (New Arrivals)
+  async getRecentProducts(limit: number = 6) {
+    const db = await getDatabase();
+    
+    // Get recent products with limit
+    const products = await db.collection(Collections.PRODUCTS)
+      .find({ availableForSale: { $ne: false } })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .toArray();
+    
+    // Extract category IDs and bulk fetch categories
+    const categoryIdsSet = new Set(
+      products
+        .map(p => p.categoryId)
+        .filter(id => id && isValidObjectId(id))
+    );
+    const categoryIds = Array.from(categoryIdsSet);
+    
+    const categories = categoryIds.length > 0 
+      ? await db.collection(Collections.CATEGORIES)
+          .find({ _id: { $in: categoryIds.map(id => toObjectId(id)) } })
+          .toArray()
+      : [];
+    
+    const categoryMap = new Map();
+    categories.forEach(cat => {
+      categoryMap.set(cat._id.toString(), {
+        ...cat,
+        id: cat._id.toString(),
+        _id: cat._id.toString()
+      });
+    });
+    
+    return products.map(product => ({
+      ...product,
+      id: product._id?.toString(),
+      _id: product._id?.toString(),
+      category: product.categoryId ? categoryMap.get(product.categoryId) || null : null
+    }));
+  }
+
+  // Optimized method for paginated products
+  async getProductsPaginated(options: {
+    page?: number;
+    limit?: number;
+    category?: string;
+    search?: string;
+  } = {}) {
+    const db = await getDatabase();
+    const { page = 1, limit = 10, category, search } = options;
+    const skip = (page - 1) * limit;
+    
+    let query: any = {};
+    
+    // Build query based on filters
+    if (category) {
+      const categoryDoc = await this.getCategoryByHandle(category);
+      if (categoryDoc) {
+        query.categoryId = categoryDoc.id;
+      }
+    }
+    
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { name: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    // Get total count for pagination
+    const totalCount = await db.collection(Collections.PRODUCTS).countDocuments(query);
+    
+    // Get products with pagination
+    const products = await db.collection(Collections.PRODUCTS)
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+    
+    // Bulk fetch categories
+    const categoryIdsSet = new Set(
+      products
+        .map(p => p.categoryId)
+        .filter(id => id && isValidObjectId(id))
+    );
+    const categoryIds = Array.from(categoryIdsSet);
+    
+    const categories = categoryIds.length > 0 
+      ? await db.collection(Collections.CATEGORIES)
+          .find({ _id: { $in: categoryIds.map(id => toObjectId(id)) } })
+          .toArray()
+      : [];
+    
+    const categoryMap = new Map();
+    categories.forEach(cat => {
+      categoryMap.set(cat._id.toString(), {
+        ...cat,
+        id: cat._id.toString(),
+        _id: cat._id.toString()
+      });
+    });
+    
+    const productsWithCategory = products.map(product => ({
+      ...product,
+      id: product._id?.toString(),
+      _id: product._id?.toString(),
+      category: product.categoryId ? categoryMap.get(product.categoryId) || null : null
+    }));
+    
+    return {
+      products: productsWithCategory,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: page,
+      hasNextPage: page < Math.ceil(totalCount / limit),
+      hasPrevPage: page > 1
+    };
   }
 
   async createProduct(data: {

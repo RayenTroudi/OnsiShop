@@ -3,8 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/products - Get all products
+// GET /api/products - Get all products (optimized)
 export async function GET(request: NextRequest) {
+  const startTime = Date.now();
+  
   try {
     const { searchParams } = new URL(request.url);
     
@@ -15,53 +17,45 @@ export async function GET(request: NextRequest) {
     const collection = searchParams.get('collection') || '';
     const search = searchParams.get('search') || '';
     
-    const offset = (page - 1) * limit;
+    console.log(`🔍 Products API: page=${page}, limit=${limit}, category=${category || collection}, search=${search}`);
 
-    let products: any[] = [];
-    let totalCount = 0;
-
-    if (search) {
-      // Search products
-      const searchResults = await dbService.searchProducts(search);
-      products = searchResults.slice(offset, offset + limit);
-      totalCount = searchResults.length;
-    } else if (category || collection) {
-      // Get products by category/collection
-      const categoryHandle = category || collection;
-      const categoryProducts = await dbService.getProductsByCategory(categoryHandle);
-      products = categoryProducts.slice(offset, offset + limit);
-      totalCount = categoryProducts.length;
-    } else {
-      // Get all products
-      const allProducts = await dbService.getProducts();
-      products = allProducts.slice(offset, offset + limit);
-      totalCount = allProducts.length;
-    }
+    // Use optimized paginated method
+    const result = await dbService.getProductsPaginated({
+      page,
+      limit,
+      category: category || collection,
+      search
+    });
 
     // Transform to Shopify format
-    const productsWithRatings = products.map((product: any) => {
-      // Transform to Shopify format with proper image structure
+    const productsWithRatings = result.products.map((product: any) => {
       const transformedProduct = dbService.transformToShopifyProduct(product);
-      
       return {
         ...transformedProduct,
         avgRating: null, // TODO: Implement ratings when needed
       };
     });
 
-    const totalPages = Math.ceil(totalCount / limit);
+    const responseTime = Date.now() - startTime;
+    console.log(`⚡ Products API completed in ${responseTime}ms (${result.products.length}/${result.totalCount} products)`);
 
-    return NextResponse.json({
+    // Add caching headers for better performance
+    const response = NextResponse.json({
       products: productsWithRatings,
       pagination: {
-        page,
+        page: result.currentPage,
         limit,
-        totalCount,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
+        totalCount: result.totalCount,
+        totalPages: result.totalPages,
+        hasNextPage: result.hasNextPage,
+        hasPrevPage: result.hasPrevPage,
       },
     });
+
+    // Cache for 2 minutes in browser, 10 minutes in CDN
+    response.headers.set('Cache-Control', 'public, max-age=120, s-maxage=600');
+    
+    return response;
   } catch (error) {
     console.error('Error fetching products:', error);
     return NextResponse.json(

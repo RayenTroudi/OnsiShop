@@ -3,25 +3,21 @@
 import { dbService } from '@/lib/database';
 
 export async function getProductsByCollection(collection: string) {
+  const startTime = Date.now();
+  
   try {
+    console.log(`🏷️ Fetching products for collection: ${collection}`);
     
-    const products = await dbService.getProducts();
-    
-    // Filter products by category handle
-    const filteredProducts = products.filter(product => {
-      const category = product.category as any;
-      if (category && category.handle === collection) {
-        return true;
-      }
-      // Fallback: match collection name with category name (case insensitive)
-      if (category && category.name && category.name.toLowerCase() === collection.toLowerCase()) {
-        return true;
-      }
-      return false;
-    });
+    // Use optimized method that filters at database level
+    const products = await dbService.getProductsByCategory(collection);
     
     // Transform to Shopify format
-    return filteredProducts.map(product => dbService.transformToShopifyProduct(product));
+    const transformedProducts = products.map(product => dbService.transformToShopifyProduct(product));
+    
+    const responseTime = Date.now() - startTime;
+    console.log(`⚡ Collection products fetched in ${responseTime}ms (${transformedProducts.length} products)`);
+    
+    return transformedProducts;
   } catch (error) {
     console.error('Error fetching products by collection:', error);
     return [];
@@ -29,17 +25,21 @@ export async function getProductsByCollection(collection: string) {
 }
 
 export async function getNewArrivalsProducts(count: number = 6) {
+  const startTime = Date.now();
+  
   try {
+    console.log(`🆕 Fetching ${count} new arrivals...`);
     
-    const products = await dbService.getProducts();
+    // Use optimized method that limits at database level
+    const products = await dbService.getRecentProducts(count);
     
-    // Transform all products to Shopify format and sort by creation date
+    // Transform to Shopify format
     const transformedProducts = products.map(product => dbService.transformToShopifyProduct(product));
     
-    // Sort by createdAt (newest first) and take the requested count
-    return transformedProducts
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, count);
+    const responseTime = Date.now() - startTime;
+    console.log(`⚡ New arrivals fetched in ${responseTime}ms (${transformedProducts.length} products)`);
+    
+    return transformedProducts;
   } catch (error) {
     console.error('Error fetching new arrivals products:', error);
     return [];
