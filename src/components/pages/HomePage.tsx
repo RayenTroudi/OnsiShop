@@ -2,7 +2,7 @@
 
 import { useLoading } from '@/contexts/LoadingContext';
 import dynamic from 'next/dynamic';
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 
 // Direct imports for components that work
 import HeroSection from '@/components/sections/HeroSection';
@@ -81,39 +81,52 @@ const AboutUs = dynamic(() => import('@/components/sections/AboutUs').catch(err 
 });
 
 export default function HomePage() {
-  const { isLoading, loadingTasks } = useLoading();
+  const { isLoading, loadingTasks, addLoadingTask, removeLoadingTask } = useLoading();
+
+  // Add section loading tasks when component mounts
+  useEffect(() => {
+    addLoadingTask('homepage-sections');
+    
+    // Simulate section loading completion
+    const timer = setTimeout(() => {
+      removeLoadingTask('homepage-sections');
+    }, 2000); // Wait 2 seconds for sections to be ready
+    
+    return () => {
+      clearTimeout(timer);
+      removeLoadingTask('homepage-sections');
+    };
+  }, [addLoadingTask, removeLoadingTask]);
 
   return (
-    <main className={isLoading ? "" : "fade-in-content"}>
-      {/* Always render HeroSection so video can load */}
+    <main className="min-h-screen">
+      {/* Always render HeroSection - it manages its own loading */}
       <Suspense fallback={<div className="w-full h-screen bg-gradient-to-br from-purple-900 to-pink-600 animate-pulse"></div>}>
         <HeroSection />
       </Suspense>
       
-      {/* Only render other sections when loading is complete */}
-      {!isLoading && (
-        <>
-          <Suspense fallback={<div className="w-full h-12 bg-purple-600 animate-pulse"></div>}>
-            <Discounts />
-          </Suspense>
-          
-          <Suspense fallback={<SectionSkeleton />}>
-            <BestSellers />
-          </Suspense>
-          
-          <Suspense fallback={<SectionSkeleton />}>
-            <Promotions />
-          </Suspense>
-          
-          <Suspense fallback={<SectionSkeleton />}>
-            <NewArrivals />
-          </Suspense>
-          
-          <Suspense fallback={<SectionSkeleton />}>
-            <AboutUs />
-          </Suspense>
-        </>
-      )}
+      {/* Render other sections immediately but they won't be visible until loading is complete */}
+      <div className={isLoading ? "opacity-0" : "opacity-100 transition-opacity duration-1000 delay-300"}>
+        <Suspense fallback={<div className="w-full h-12 bg-purple-600 animate-pulse"></div>}>
+          <Discounts />
+        </Suspense>
+        
+        <Suspense fallback={<SectionSkeleton />}>
+          <BestSellers />
+        </Suspense>
+        
+        <Suspense fallback={<SectionSkeleton />}>
+          <Promotions />
+        </Suspense>
+        
+        <Suspense fallback={<SectionSkeleton />}>
+          <NewArrivals />
+        </Suspense>
+        
+        <Suspense fallback={<SectionSkeleton />}>
+          <AboutUs />
+        </Suspense>
+      </div>
     </main>
   );
 }

@@ -2,33 +2,9 @@
 
 import { useTranslation } from '@/contexts/TranslationContext';
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-// Intersection Observer hook for lazy loading
-const useIntersectionObserver = (options = {}) => {
-  const [isIntersecting, setIsIntersecting] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const targetRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      const entry = entries[0];
-      if (entry && entry.isIntersecting && !isLoaded) {
-        setIsIntersecting(true);
-        setIsLoaded(true);
-        observer.disconnect();
-      }
-    }, { threshold: 0.1, rootMargin: '50px', ...options });
-
-    if (targetRef.current) {
-      observer.observe(targetRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [isLoaded]);
-
-  return { ref: targetRef, isIntersecting };
-};
+// Direct image loading - no lazy loading needed with UploadThing CDN
 
 interface AboutContent {
   title: string;
@@ -42,8 +18,7 @@ const AboutUs = () => {
   const [content, setContent] = useState<AboutContent | null>(null);
   const [loading, setLoading] = useState(true);
   
-  // Lazy loading with intersection observer
-  const { ref: sectionRef, isIntersecting: shouldLoadMedia } = useIntersectionObserver();
+  // Direct loading for better performance with UploadThing CDN
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -98,21 +73,19 @@ const AboutUs = () => {
 
   return (
     <section 
-      ref={sectionRef}
       className="flex items-center justify-center border-t-[1px] border-purple bg-lightPurple py-[48px] md:py-[64px] relative overflow-hidden"
     >
-      {/* Lazy-loaded background image */}
-      {content?.backgroundImage && shouldLoadMedia && (
+      {/* Direct UploadThing image loading */}
+      {content?.backgroundImage && (
         <>
           <Image
             src={content.backgroundImage}
             alt="About us background"
             fill
             className="object-cover"
-            priority={false}
-            loading="lazy"
-            quality={85}
-            unoptimized={content.backgroundImage.includes('/uploads/') || content.backgroundImage.startsWith('data:')}
+            priority={true}
+            quality={90}
+            unoptimized={content.backgroundImage.startsWith('data:')}
           />
           <div className="absolute inset-0 bg-black bg-opacity-40 z-10"></div>
         </>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Website Loading Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 8px;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .loading { background: #ffa500; color: black; }
+        .complete { background: #28a745; color: white; }
+        .info { background: #17a2b8; color: white; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #28a745);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Full Website Loading Test</h1>
+        <p>This test demonstrates the new loading behavior where the spinner only disappears when the ENTIRE website is fully loaded.</p>
+        
+        <div class="test-section">
+            <h2>Expected Behavior</h2>
+            <ul>
+                <li>✅ Spinner shows for minimum 3 seconds</li>
+                <li>✅ All website components must finish loading</li>
+                <li>✅ Hero video must be playing</li>
+                <li>✅ All sections must be ready</li>
+                <li>✅ Header, footer, and navigation must be loaded</li>
+                <li>❌ NO gaps or incomplete content visible</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>Loading Progress Simulation</h2>
+            <div id="loading-status" class="status loading">🔄 Website Loading...</div>
+            <div class="progress">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            <div id="task-list"></div>
+            <button onclick="simulateLoading()">Simulate Loading Process</button>
+        </div>
+
+        <div class="test-section">
+            <h2>Real Homepage Test</h2>
+            <p>Test the actual implementation:</p>
+            <button onclick="window.open('/', '_blank')">Test Homepage</button>
+            <button onclick="window.location.reload()">Refresh This Page</button>
+        </div>
+
+        <div class="test-section">
+            <h2>Loading Task Categories</h2>
+            <div id="categories">
+                <div>📄 Document & Fonts: <span id="core-status">Pending</span></div>
+                <div>⚙️ Core Components: <span id="components-status">Pending</span></div>
+                <div>🎬 Video Content: <span id="video-status">Pending</span></div>
+                <div>📄 Page Content: <span id="content-status">Pending</span></div>
+                <div>🧩 UI Sections: <span id="sections-status">Pending</span></div>
+                <div>⏱️ Minimum Time (3s): <span id="time-status">Pending</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentProgress = 0;
+        let simulationActive = false;
+
+        const loadingTasks = [
+            { id: 'document-ready', name: 'Document Ready', duration: 500 },
+            { id: 'fonts-loaded', name: 'Fonts Loaded', duration: 300 },
+            { id: 'website-initialization', name: 'Website Init', duration: 1000 },
+            { id: 'core-components', name: 'Core Components', duration: 1500 },
+            { id: 'layout-ready', name: 'Layout Ready', duration: 2000 },
+            { id: 'hero-content', name: 'Hero Content', duration: 800 },
+            { id: 'hero-video-preload', name: 'Video Preload', duration: 1200 },
+            { id: 'hero-video', name: 'Video Playing', duration: 600 },
+            { id: 'homepage-sections', name: 'Page Sections', duration: 2000 },
+            { id: 'main-content-ready', name: 'Main Content', duration: 2500 }
+        ];
+
+        function updateStatus(message, className = 'loading') {
+            const statusEl = document.getElementById('loading-status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${className}`;
+        }
+
+        function updateProgress(percentage) {
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = percentage + '%';
+        }
+
+        function updateTaskList(completedTasks, remainingTasks) {
+            const taskList = document.getElementById('task-list');
+            taskList.innerHTML = `
+                <div style="margin-top: 10px;">
+                    <div style="color: #28a745;">✅ Completed (${completedTasks.length}): ${completedTasks.join(', ')}</div>
+                    <div style="color: #ffa500;">🔄 Remaining (${remainingTasks.length}): ${remainingTasks.join(', ')}</div>
+                </div>
+            `;
+        }
+
+        function updateCategories(completedTasks) {
+            const coreComplete = completedTasks.includes('document-ready') && completedTasks.includes('fonts-loaded');
+            const componentsComplete = completedTasks.includes('core-components') && completedTasks.includes('layout-ready');
+            const videoComplete = completedTasks.includes('hero-video');
+            const contentComplete = completedTasks.includes('hero-content') && completedTasks.includes('main-content-ready');
+            const sectionsComplete = completedTasks.includes('homepage-sections');
+
+            document.getElementById('core-status').textContent = coreComplete ? '✅ Complete' : '🔄 Loading';
+            document.getElementById('components-status').textContent = componentsComplete ? '✅ Complete' : '🔄 Loading';
+            document.getElementById('video-status').textContent = videoComplete ? '✅ Complete' : '🔄 Loading';
+            document.getElementById('content-status').textContent = contentComplete ? '✅ Complete' : '🔄 Loading';
+            document.getElementById('sections-status').textContent = sectionsComplete ? '✅ Complete' : '🔄 Loading';
+        }
+
+        async function simulateLoading() {
+            if (simulationActive) return;
+            simulationActive = true;
+
+            updateStatus('🔄 Starting website loading simulation...');
+            updateProgress(0);
+
+            const completedTasks = [];
+            const startTime = Date.now();
+
+            // Start minimum time counter
+            setTimeout(() => {
+                document.getElementById('time-status').textContent = '✅ Complete (3s)';
+            }, 3000);
+
+            // Simulate each task
+            for (let i = 0; i < loadingTasks.length; i++) {
+                const task = loadingTasks[i];
+                const remainingTasks = loadingTasks.slice(i + 1).map(t => t.name);
+
+                updateStatus(`🔄 ${task.name}...`);
+                updateTaskList(completedTasks, [task.name, ...remainingTasks]);
+                updateCategories(completedTasks);
+
+                await new Promise(resolve => setTimeout(resolve, task.duration));
+
+                completedTasks.push(task.name);
+                const progress = ((i + 1) / loadingTasks.length) * 100;
+                updateProgress(progress);
+            }
+
+            // Wait for minimum time if not reached
+            const elapsed = Date.now() - startTime;
+            if (elapsed < 3000) {
+                updateStatus('⏱️ Waiting for minimum loading time (3s)...');
+                await new Promise(resolve => setTimeout(resolve, 3000 - elapsed));
+            }
+
+            // Final completion
+            updateStatus('🎉 ENTIRE WEBSITE FULLY LOADED!', 'complete');
+            updateTaskList(completedTasks, []);
+            updateCategories(completedTasks);
+            updateProgress(100);
+
+            setTimeout(() => {
+                updateStatus('✅ Website ready - Spinner would disappear now!', 'complete');
+            }, 800);
+
+            simulationActive = false;
+        }
+
+        // Auto-run simulation on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => simulateLoading(), 1000);
+        });
+    </script>
+</body>
+</html>

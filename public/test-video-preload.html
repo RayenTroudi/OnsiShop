@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Preloading Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .success { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border-color: #ffeaa7; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .loading-simulation {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Video Preloading Performance Test</h1>
+        <p>This test simulates the video preloading behavior implemented in the main application.</p>
+        
+        <div id="testStatus" class="status info">
+            <div class="loading-simulation"></div>
+            Ready to test video preloading...
+        </div>
+        
+        <button onclick="startPreloadTest()">Start Preload Test</button>
+        <button onclick="clearResults()">Clear Results</button>
+        
+        <h2>Test Results</h2>
+        <div id="results"></div>
+        
+        <h2>Network Performance</h2>
+        <div id="networkStats"></div>
+        
+        <h2>Simulated Loading Phases</h2>
+        <div id="loadingPhases">
+            <div class="status info">Phase 1: Initial Load (0ms) - ⏳ Waiting</div>
+            <div class="status info">Phase 2: Video Preload (0-3000ms) - ⏳ Waiting</div>
+            <div class="status info">Phase 3: Preload Complete - ⏳ Waiting</div>
+            <div class="status info">Phase 4: Spinner Disappears (3000ms+) - ⏳ Waiting</div>
+            <div class="status info">Phase 5: Instant Playback - ⏳ Waiting</div>
+        </div>
+    </div>
+
+    <script>
+        const videoUrl = 'https://utfs.io/f/1rEveYHUVj032V42w1UQTMjXHRnPoA8hBUF7ftDzWE0r12b3';
+        let startTime = 0;
+        let preloadVideo = null;
+        
+        function addResult(message, type = 'info', timestamp = null) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            
+            const time = timestamp || Date.now() - startTime;
+            div.innerHTML = `[${time}ms] ${message}`;
+            results.appendChild(div);
+            
+            // Auto-scroll to latest result
+            div.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function updatePhase(phaseNumber, status, type = 'success') {
+            const phases = document.getElementById('loadingPhases').children;
+            if (phases[phaseNumber - 1]) {
+                phases[phaseNumber - 1].className = `status ${type}`;
+                phases[phaseNumber - 1].innerHTML = phases[phaseNumber - 1].innerHTML.replace(/⏳ Waiting|✅ Complete|❌ Failed/, status);
+            }
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('testStatus');
+            statusDiv.className = `status ${type}`;
+            statusDiv.innerHTML = message;
+        }
+        
+        async function startPreloadTest() {
+            startTime = Date.now();
+            updateStatus('<div class="loading-simulation"></div>Running video preload test...', 'info');
+            
+            // Phase 1: Initial Load
+            updatePhase(1, '✅ Complete', 'success');
+            addResult('🚀 Starting video preload test', 'info');
+            addResult('📋 Using UploadThing video URL', 'info');
+            
+            try {
+                // Phase 2: Video Preload
+                updatePhase(2, '🔄 Downloading...', 'warning');
+                addResult('🎬 Creating hidden video element for preload', 'info');
+                
+                // Create hidden video element (simulating the real implementation)
+                preloadVideo = document.createElement('video');
+                preloadVideo.style.display = 'none';
+                preloadVideo.preload = 'auto';
+                preloadVideo.muted = true;
+                preloadVideo.src = videoUrl;
+                
+                document.body.appendChild(preloadVideo);
+                
+                // Track loading progress
+                const loadPromise = new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        reject(new Error('Preload timeout after 10 seconds'));
+                    }, 10000);
+                    
+                    preloadVideo.addEventListener('loadstart', () => {
+                        addResult('📡 Video download started', 'info');
+                    });
+                    
+                    preloadVideo.addEventListener('progress', () => {
+                        if (preloadVideo.buffered.length > 0) {
+                            const buffered = preloadVideo.buffered.end(0);
+                            const duration = preloadVideo.duration || 1;
+                            const percent = Math.round((buffered / duration) * 100);
+                            addResult(`📊 Buffered: ${percent}% (${buffered.toFixed(1)}s)`, 'info');
+                        }
+                    });
+                    
+                    preloadVideo.addEventListener('canplay', () => {
+                        addResult('🎯 Video can start playing', 'success');
+                    });
+                    
+                    preloadVideo.addEventListener('canplaythrough', () => {
+                        clearTimeout(timeout);
+                        const loadTime = Date.now() - startTime;
+                        addResult(`✅ Video fully preloaded in ${loadTime}ms`, 'success');
+                        updatePhase(2, '✅ Complete', 'success');
+                        resolve(loadTime);
+                    });
+                    
+                    preloadVideo.addEventListener('error', (e) => {
+                        clearTimeout(timeout);
+                        reject(new Error(`Video load error: ${e.message || 'Unknown error'}`));
+                    });
+                });
+                
+                // Wait for preload to complete
+                const preloadTime = await loadPromise;
+                
+                // Phase 3: Preload Complete
+                updatePhase(3, '✅ Complete', 'success');
+                addResult('🎉 Video preload completed successfully', 'success');
+                
+                // Simulate minimum loading time (3 seconds)
+                const elapsedTime = Date.now() - startTime;
+                const remainingTime = Math.max(0, 3000 - elapsedTime);
+                
+                if (remainingTime > 0) {
+                    addResult(`⏱️ Waiting for minimum load time (${remainingTime}ms remaining)`, 'warning');
+                    await new Promise(resolve => setTimeout(resolve, remainingTime));
+                }
+                
+                // Phase 4: Spinner Disappears
+                updatePhase(4, '✅ Complete', 'success');
+                addResult('🎯 Minimum load time met - spinner can disappear', 'success');
+                
+                // Phase 5: Instant Playback
+                updatePhase(5, '✅ Complete', 'success');
+                addResult('⚡ Video ready for instant playback!', 'success');
+                
+                // Calculate final stats
+                const totalTime = Date.now() - startTime;
+                addResult(`📈 Total test duration: ${totalTime}ms`, 'success');
+                addResult(`🚀 Video preload efficiency: ${((preloadTime / totalTime) * 100).toFixed(1)}%`, 'success');
+                
+                updateStatus('✅ Video preload test completed successfully!', 'success');
+                
+                // Update network stats
+                updateNetworkStats(preloadTime, totalTime);
+                
+            } catch (error) {
+                updatePhase(2, '❌ Failed', 'error');
+                addResult(`❌ Test failed: ${error.message}`, 'error');
+                updateStatus('❌ Video preload test failed', 'error');
+                
+                // Clean up on error
+                if (preloadVideo && preloadVideo.parentNode) {
+                    preloadVideo.parentNode.removeChild(preloadVideo);
+                }
+            }
+        }
+        
+        function updateNetworkStats(preloadTime, totalTime) {
+            const statsDiv = document.getElementById('networkStats');
+            statsDiv.innerHTML = `
+                <div class="status success">
+                    <strong>Performance Summary:</strong><br>
+                    • Video preload time: ${preloadTime}ms<br>
+                    • Total loading time: ${totalTime}ms<br>
+                    • Preload efficiency: ${((preloadTime / totalTime) * 100).toFixed(1)}%<br>
+                    • Time saved for user: ~${Math.max(0, preloadTime - 500)}ms<br>
+                    • User experience: ${preloadTime < 3000 ? 'Excellent' : preloadTime < 5000 ? 'Good' : 'Needs optimization'}
+                </div>
+            `;
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('networkStats').innerHTML = '';
+            updateStatus('Ready to test video preloading...', 'info');
+            
+            // Reset phases
+            const phases = document.getElementById('loadingPhases').children;
+            for (let i = 0; i < phases.length; i++) {
+                phases[i].className = 'status info';
+                phases[i].innerHTML = phases[i].innerHTML.replace(/✅ Complete|❌ Failed|🔄 Downloading.../, '⏳ Waiting');
+            }
+            
+            // Clean up any existing video elements
+            if (preloadVideo && preloadVideo.parentNode) {
+                preloadVideo.parentNode.removeChild(preloadVideo);
+                preloadVideo = null;
+            }
+        }
+    </script>
+</body>
+</html>

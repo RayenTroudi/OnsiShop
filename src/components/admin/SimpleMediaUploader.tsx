@@ -116,6 +116,7 @@ export default function SimpleMediaUploader({
     if (section === 'hero' && mediaType === 'image') return 'hero_background_image';
     if (section === 'promotions' && mediaType === 'image') return 'promotion_background_image';
     if (section === 'about' && mediaType === 'image') return 'about_background_image';
+    if (section === 'footer' && mediaType === 'image') return 'footer_background_image';
     return null;
   };
 

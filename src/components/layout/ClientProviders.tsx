@@ -1,6 +1,7 @@
 'use client';
 
 import GlobalLoading from '@/components/common/GlobalLoading';
+import { VideoLoadingMonitor } from '@/components/debug/VideoLoadingMonitor';
 import CacheManager from '@/components/dev/CacheManager';
 import ServiceWorkerProvider from '@/components/providers/ServiceWorkerProvider';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
@@ -62,6 +63,7 @@ export default function ClientProviders({ children }: ClientProvidersProps) {
               <ServiceWorkerProvider />
               <CacheInvalidationProvider />
               <CacheManager />
+              <VideoLoadingMonitor />
               {children}
             </GlobalLoadingWrapper>
           </CartProviderWrapper>

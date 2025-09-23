@@ -32,12 +32,12 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
   const [startTime] = useState(Date.now());
   const [minimumLoadingTimeMet, setMinimumLoadingTimeMet] = useState(false);
 
-  // Ensure minimum loading time for complete website loading
+  // Ensure minimum loading time for smooth UX and complete website loading
   useEffect(() => {
     const timer = setTimeout(() => {
       setMinimumLoadingTimeMet(true);
       console.log('⏱️ Minimum loading time met (3s) - website should be fully loaded');
-    }, 3000); // 3 seconds for full website loading
+    }, 3000); // Increased to 3 seconds for full website loading
 
     return () => clearTimeout(timer);
   }, []);
@@ -69,63 +69,55 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
     });
   }, []);
 
-  // Update main loading state - FULL WEBSITE LOADING priority
+  // Update main loading state based on tasks - STRICT video-first priority
   useEffect(() => {
     const taskArray = Array.from(loadingTasks);
     
-    // Categorize different types of loading tasks
-    const videoTasks = taskArray.filter(task => task.includes('video'));
-    const contentTasks = taskArray.filter(task => task.includes('content') || task.includes('hero-'));
-    const componentTasks = taskArray.filter(task => 
-      task.includes('header') || task.includes('footer') || task.includes('navigation') ||
-      task.includes('promotions') || task.includes('bestsellers') || task.includes('newarrivals') ||
-      task.includes('aboutus') || task.includes('section') || task.includes('component')
+    // Check for critical video loading tasks
+    const hasHeroVideo = taskArray.includes('hero-video');
+    const hasHeroVideoPreload = taskArray.includes('hero-video-preload');
+    const hasHeroContent = taskArray.includes('hero-content');
+    
+    // Video tasks that MUST complete before showing content
+    const videoTasks = ['hero-video', 'hero-video-preload'];
+    const hasAnyVideoTasks = videoTasks.some(task => taskArray.includes(task));
+    
+    // Other critical tasks
+    const criticalTasksRemaining = taskArray.filter(task => 
+      !['document-ready', 'fonts-loaded'].includes(task)
     );
-    const imageTasks = taskArray.filter(task => task.includes('image') || task.includes('background'));
-    const coreTasks = taskArray.filter(task => 
-      ['document-ready', 'fonts-loaded', 'website-initialization', 'core-components'].includes(task)
-    );
     
-    // Count all remaining tasks by category
-    const hasVideoTasks = videoTasks.length > 0;
-    const hasContentTasks = contentTasks.length > 0;
-    const hasComponentTasks = componentTasks.length > 0;
-    const hasImageTasks = imageTasks.length > 0;
-    const hasCoreTasksRemaining = coreTasks.length > 0;
+    // STRICT RULE: If ANY video task is active, keep loading regardless of timing
+    // This ensures no gap between spinner disappearing and video playing
+    const shouldBeLoading = hasAnyVideoTasks || 
+                          (criticalTasksRemaining.length > 0) || 
+                          (!hasAnyVideoTasks && !minimumLoadingTimeMet);
     
-    // STRICT RULE: ALL tasks must complete + minimum time for FULL WEBSITE loading
-    const totalActiveTasks = taskArray.length;
-    const shouldBeLoading = totalActiveTasks > 0 || !minimumLoadingTimeMet;
+    console.log(`📊 Loading tasks: ${loadingTasks.size} total`, taskArray);
+    console.log('🎬 Hero video loading:', hasHeroVideo);
+    console.log('� Hero video preload:', hasHeroVideoPreload);
+    console.log('📄 Hero content loading:', hasHeroContent);
+    console.log('🎥 ANY video tasks active:', hasAnyVideoTasks);
+    console.log('⏱️ Minimum time met:', minimumLoadingTimeMet);
+    console.log('🔄 Should keep loading:', shouldBeLoading);
     
-    console.log(`🌐 FULL WEBSITE LOADING STATUS:`);
-    console.log(`📊 Total active tasks: ${totalActiveTasks}`, taskArray);
-    console.log(`🎬 Video tasks (${videoTasks.length}):`, videoTasks);
-    console.log(`📄 Content tasks (${contentTasks.length}):`, contentTasks);
-    console.log(`🧩 Component tasks (${componentTasks.length}):`, componentTasks);
-    console.log(`🖼️ Image tasks (${imageTasks.length}):`, imageTasks);
-    console.log(`⚙️ Core tasks (${coreTasks.length}):`, coreTasks);
-    console.log(`⏱️ Minimum time met:`, minimumLoadingTimeMet);
-    console.log(`🔄 Should keep loading:`, shouldBeLoading);
-    
-    // Only update loading state if it's different
+    // Only update loading state if it's different to prevent unnecessary re-renders
     if (isLoading !== shouldBeLoading) {
       if (!shouldBeLoading) {
-        // Add delay to ensure smooth transition and complete loading
-        setTimeout(() => {
-          console.log('🎉 ENTIRE WEBSITE FULLY LOADED - hiding spinner!');
-          setIsLoading(false);
-          if (!criticalResourcesLoaded) {
-            setCriticalResourcesLoaded(true);
-            console.log('✅ All components, content, and media fully loaded!');
-          }
-        }, 800); // Longer delay for complete loading assurance
+        // NO delay when video is done - immediate transition for seamless experience
+        console.log('🎯 All video tasks complete - hiding spinner IMMEDIATELY');
+        setIsLoading(false);
+        if (!criticalResourcesLoaded) {
+          setCriticalResourcesLoaded(true);
+          console.log('🎉 Video playing - content fully loaded!');
+        }
       } else {
         setIsLoading(true);
       }
     }
   }, [loadingTasks, criticalResourcesLoaded, isLoading, minimumLoadingTimeMet]);
 
-  // Enhanced resource tracking for full website
+  // Enhanced resource tracking
   useEffect(() => {
     if (initialTasksAdded) return; // Prevent duplicate initialization
     
@@ -134,18 +126,16 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
     addLoadingTask('fonts-loaded');
     addLoadingTask('website-initialization');
     addLoadingTask('core-components');
-    addLoadingTask('layout-ready');
-    addLoadingTask('main-content-ready');
     setInitialTasksAdded(true);
     
     const checkCriticalResources = async () => {
       // Check document ready state
       const checkDocumentReady = () => {
         if (document.readyState === 'complete') {
-          setTimeout(() => removeLoadingTask('document-ready'), 300);
+          setTimeout(() => removeLoadingTask('document-ready'), 200);
         } else {
           window.addEventListener('load', () => {
-            setTimeout(() => removeLoadingTask('document-ready'), 300);
+            setTimeout(() => removeLoadingTask('document-ready'), 200);
           }, { once: true });
         }
       };
@@ -154,7 +144,7 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
       const checkFontsLoaded = () => {
         if (document.fonts) {
           document.fonts.ready.then(() => {
-            setTimeout(() => removeLoadingTask('fonts-loaded'), 300);
+            setTimeout(() => removeLoadingTask('fonts-loaded'), 200);
           });
         } else {
           // Fallback for older browsers
@@ -164,44 +154,26 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
         }
       };
 
-      // Check website initialization
+      // Check core website initialization
       const checkWebsiteInit = () => {
-        // Wait for React hydration and basic setup
+        // Wait for basic DOM and styles to be ready
         setTimeout(() => {
           removeLoadingTask('website-initialization');
         }, 1000);
       };
 
-      // Check core components ready
+      // Check core components loaded
       const checkCoreComponents = () => {
-        // Wait for main components to be rendered
+        // Wait for React hydration and core components
         setTimeout(() => {
           removeLoadingTask('core-components');
         }, 1500);
-      };
-
-      // Check layout ready
-      const checkLayoutReady = () => {
-        // Wait for layout components (header, footer)
-        setTimeout(() => {
-          removeLoadingTask('layout-ready');
-        }, 2000);
-      };
-
-      // Check main content ready
-      const checkMainContentReady = () => {
-        // Wait for main page content to be ready
-        setTimeout(() => {
-          removeLoadingTask('main-content-ready');
-        }, 2500);
       };
 
       checkDocumentReady();
       checkFontsLoaded();
       checkWebsiteInit();
       checkCoreComponents();
-      checkLayoutReady();
-      checkMainContentReady();
     };
 
     checkCriticalResources();
