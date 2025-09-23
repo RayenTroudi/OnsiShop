@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslation } from '@/contexts/TranslationContext';
+import { useCachedImage } from '@/hooks/useMediaCache';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
@@ -17,6 +18,20 @@ const AboutUs = () => {
   const { t } = useTranslation();
   const [content, setContent] = useState<AboutContent | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Cached image hook for background image
+  const {
+    url: cachedImageUrl,
+    loading: imageLoading,
+    cached: imageCached,
+    progress: imageProgress
+  } = useCachedImage({
+    src: content?.backgroundImage || '',
+    autoCache: !!content?.backgroundImage,
+    quality: 90,
+    format: 'auto',
+    preload: true
+  });
   
   // Direct loading for better performance with UploadThing CDN
 
@@ -75,30 +90,42 @@ const AboutUs = () => {
     <section 
       className="flex items-center justify-center border-t-[1px] border-purple bg-lightPurple py-[48px] md:py-[64px] relative overflow-hidden"
     >
-      {/* Direct UploadThing image loading */}
-      {content?.backgroundImage && (
+      {/* Cached UploadThing image loading */}
+      {cachedImageUrl && (
         <>
           <Image
-            src={content.backgroundImage}
+            src={cachedImageUrl}
             alt="About us background"
             fill
             className="object-cover"
             priority={true}
             quality={90}
-            unoptimized={content.backgroundImage.startsWith('data:')}
+            unoptimized={content?.backgroundImage?.startsWith('data:')}
           />
           <div className="absolute inset-0 bg-black bg-opacity-40 z-10"></div>
+          
+          {/* Cache status indicators */}
+          {imageCached && (
+            <div className="absolute top-4 right-4 z-50 bg-green-500/80 text-white px-2 py-1 text-xs rounded">
+              📦 Cached
+            </div>
+          )}
+          {imageLoading && imageProgress && (
+            <div className="absolute top-4 right-4 z-50 bg-blue-500/80 text-white px-2 py-1 text-xs rounded">
+              📥 {imageProgress.percentage}%
+            </div>
+          )}
         </>
       )}
       <h2 className="sr-only">About Us Section</h2>
       <div className="flex max-w-[95%] flex-col items-center justify-center gap-[32px] text-center md:max-w-[700px] relative z-20">
-        <h3 className={`font-lora text-[clamp(28px,18px_+_2vw,40px)] font-semibold ${content?.backgroundImage ? 'text-white' : 'text-veryDarkPurple'}`}>
+        <h3 className={`font-lora text-[clamp(28px,18px_+_2vw,40px)] font-semibold ${cachedImageUrl ? 'text-white' : 'text-veryDarkPurple'}`}>
           {content?.title}
         </h3>
-        <p className={`max-w-[90%] font-lora text-[clamp(20px,14px_+_2vw,24px)] font-medium leading-relaxed md:max-w-none md:leading-normal ${content?.backgroundImage ? 'text-gray-100' : 'text-darkPurple'}`}>
+        <p className={`max-w-[90%] font-lora text-[clamp(20px,14px_+_2vw,24px)] font-medium leading-relaxed md:max-w-none md:leading-normal ${cachedImageUrl ? 'text-gray-100' : 'text-darkPurple'}`}>
           {content?.description}
         </p>
-        <a href="/about-us" className={`btn-very-dark mt-2 text-[clamp(18px,10px_+_2vw,22px)] ${content?.backgroundImage ? 'bg-white text-gray-900 hover:bg-gray-100' : ''}`}>
+        <a href="/about-us" className={`btn-very-dark mt-2 text-[clamp(18px,10px_+_2vw,22px)] ${cachedImageUrl ? 'bg-white text-gray-900 hover:bg-gray-100' : ''}`}>
           {content?.buttonText}
         </a>
       </div>

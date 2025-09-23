@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslation } from '@/contexts/TranslationContext';
+import { useCachedImage, useCachedVideo } from '@/hooks/useMediaCache';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
@@ -21,6 +22,32 @@ const HeroSection = () => {
   });
   const [loading, setLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+  
+  // Cached image hook
+  const {
+    url: cachedImageUrl,
+    loading: imageLoading,
+    cached: imageCached,
+    progress: imageProgress
+  } = useCachedImage({
+    src: content.backgroundImage || '',
+    autoCache: !!content.backgroundImage,
+    quality: 90,
+    format: 'auto',
+    preload: true
+  });
+  
+  // Cached video hook
+  const {
+    url: cachedVideoUrl,
+    loading: videoLoading,
+    cached: videoCached,
+    progress: videoProgress
+  } = useCachedVideo({
+    src: content.backgroundVideo || '',
+    autoCache: !!content.backgroundVideo,
+    preload: true
+  });
   // Direct fetch content from UploadThing
   useEffect(() => {
     const fetchContent = async () => {
@@ -65,50 +92,76 @@ const HeroSection = () => {
       {/* Background Images and Videos - Direct UploadThing loading */}
       <div className="absolute inset-0 z-0">
         
-        {/* Background Image - Direct UploadThing */}
-        {content.backgroundImage && !content.backgroundVideo && !loading && (
-          <Image
-            src={content.backgroundImage}
-            alt="Hero background image"
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority={true}
-            quality={90}
-            unoptimized={content.backgroundImage.startsWith('data:')}
-          />
+        {/* Background Image - Cached UploadThing */}
+        {cachedImageUrl && !content.backgroundVideo && !loading && (
+          <>
+            <Image
+              src={cachedImageUrl}
+              alt="Hero background image"
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority={true}
+              quality={90}
+              unoptimized={content.backgroundImage?.startsWith('data:')}
+            />
+            {/* Cache status indicator */}
+            {imageCached && (
+              <div className="absolute top-4 right-4 z-50 bg-green-500/80 text-white px-2 py-1 text-xs rounded">
+                📦 Cached Image
+              </div>
+            )}
+            {imageLoading && imageProgress && (
+              <div className="absolute top-4 right-4 z-50 bg-blue-500/80 text-white px-2 py-1 text-xs rounded">
+                📥 Loading: {imageProgress.percentage}%
+              </div>
+            )}
+          </>
         )}
         
-        {/* Background Video - Direct UploadThing loading */}
-        {content.backgroundVideo && !loading && (
-          <video
-            ref={videoRef}
-            src={content.backgroundVideo}
-            className="absolute inset-0 w-full h-full object-cover"
-            poster={content.backgroundImage}
-            muted
-            autoPlay
-            loop
-            playsInline
-            preload="auto"
-            onLoadedData={() => {
-              console.log('📹 Hero video data loaded from UploadThing');
-              if (videoRef.current) {
-                videoRef.current.play().catch(console.warn);
-              }
-            }}
-            onPlaying={() => {
-              console.log('🎉 Hero video is playing from UploadThing CDN');
-            }}
-            onError={(e) => {
-              console.error('❌ Hero video failed to load:', e);
-            }}
-          />
+        {/* Background Video - Cached UploadThing loading */}
+        {cachedVideoUrl && !loading && (
+          <>
+            <video
+              ref={videoRef}
+              src={cachedVideoUrl}
+              className="absolute inset-0 w-full h-full object-cover"
+              poster={cachedImageUrl || content.backgroundImage}
+              muted
+              autoPlay
+              loop
+              playsInline
+              preload="auto"
+              onLoadedData={() => {
+                console.log('📹 Hero video data loaded from cache/UploadThing');
+                if (videoRef.current) {
+                  videoRef.current.play().catch(console.warn);
+                }
+              }}
+              onPlaying={() => {
+                console.log(`🎉 Hero video playing ${videoCached ? 'from cache' : 'from CDN'}`);
+              }}
+              onError={(e) => {
+                console.error('❌ Hero video failed to load:', e);
+              }}
+            />
+            {/* Cache status indicators */}
+            {videoCached && (
+              <div className="absolute top-4 left-4 z-50 bg-green-500/80 text-white px-2 py-1 text-xs rounded">
+                📦 Cached Video
+              </div>
+            )}
+            {videoLoading && videoProgress && (
+              <div className="absolute top-4 left-4 z-50 bg-blue-500/80 text-white px-2 py-1 text-xs rounded">
+                📥 Loading: {videoProgress.percentage}%
+              </div>
+            )}
+          </>
         )}
       </div>
       
       {/* Fallback gradient background */}
-      {!content.backgroundImage && !content.backgroundVideo && (
+      {!cachedImageUrl && !cachedVideoUrl && (
         <div className="absolute inset-0 z-0 bg-gradient-to-br from-purple-900 via-purple-700 to-pink-600" />
       )}
       

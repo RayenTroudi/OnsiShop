@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 // next
 import Image from 'next/image';
+// media cache
+import { useCachedImage } from '@/hooks/useMediaCache';
 
 // react-scroll-parallax
 import { Parallax, ParallaxProvider } from 'react-scroll-parallax';
@@ -24,6 +26,20 @@ const Promotions = () => {
     buttonText: 'View Collection'
   });
   const [loading, setLoading] = useState(true);
+  
+  // Cached image hook for background image
+  const {
+    url: cachedImageUrl,
+    loading: imageLoading,
+    cached: imageCached,
+    progress: imageProgress
+  } = useCachedImage({
+    src: content.backgroundImage || '',
+    autoCache: !!content.backgroundImage,
+    quality: 90,
+    format: 'auto',
+    preload: true
+  });
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -74,12 +90,12 @@ const Promotions = () => {
       <div className="relative h-[570px] overflow-hidden sm:h-screen">
         <h2 className="sr-only">Promotions</h2>
         
-        {/* Direct UploadThing Image Loading */}
-        {content.backgroundImage && !loading && (
+        {/* Cached UploadThing Image Loading */}
+        {cachedImageUrl && !loading && (
           <>
             <Parallax speed={-50} className="relative hidden h-full w-full sm:block">
               <Image
-                src={content.backgroundImage}
+                src={cachedImageUrl}
                 alt="promotion background"
                 fill
                 sizes="(min-width: 768px) 100vw, 867px"
@@ -88,10 +104,21 @@ const Promotions = () => {
                 quality={90}
                 unoptimized={content.backgroundImage.startsWith('data:')}
               />
+              {/* Cache status indicators */}
+              {imageCached && (
+                <div className="absolute top-4 right-4 z-50 bg-green-500/80 text-white px-2 py-1 text-xs rounded">
+                  📦 Cached
+                </div>
+              )}
+              {imageLoading && imageProgress && (
+                <div className="absolute top-4 right-4 z-50 bg-blue-500/80 text-white px-2 py-1 text-xs rounded">
+                  📥 {imageProgress.percentage}%
+                </div>
+              )}
             </Parallax>
             <div className="relative block h-full w-full sm:hidden">
               <Image
-                src={content.backgroundImage}
+                src={cachedImageUrl}
                 alt="promotion background"
                 fill
                 sizes="(max-width: 767px) 100vw, 867px"
@@ -100,6 +127,12 @@ const Promotions = () => {
                 quality={90}
                 unoptimized={content.backgroundImage.startsWith('data:')}
               />
+              {/* Mobile cache status */}
+              {imageCached && (
+                <div className="absolute top-4 right-4 z-50 bg-green-500/80 text-white px-2 py-1 text-xs rounded">
+                  📦 Cached
+                </div>
+              )}
             </div>
           </>
         )}
