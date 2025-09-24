@@ -6,10 +6,10 @@
 import { cleanupConnections } from '@/lib/mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function withMongoCleanup<T = any>(
-  handler: (req: NextRequest) => Promise<NextResponse<T>>,
+export async function withMongoCleanup(
+  handler: (req: NextRequest) => Promise<NextResponse<any>>,
   req: NextRequest
-): Promise<NextResponse<T>> {
+): Promise<NextResponse<any>> {
   console.log('🔄 API call started:', req.method, req.nextUrl.pathname);
   
   try {
@@ -47,10 +47,10 @@ export async function withMongoCleanup<T = any>(
 }
 
 // Helper function to wrap API route handlers
-export function withConnectionCleanup<T>(
-  handler: (req: NextRequest) => Promise<NextResponse<T>>
+export function withConnectionCleanup(
+  handler: (req: NextRequest) => Promise<NextResponse<any>>
 ) {
-  return async (req: NextRequest): Promise<NextResponse<T>> => {
+  return async (req: NextRequest): Promise<NextResponse<any>> => {
     return withMongoCleanup(handler, req);
   };
 }
