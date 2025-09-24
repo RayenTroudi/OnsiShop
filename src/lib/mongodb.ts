@@ -12,6 +12,12 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
       return { client: cachedClient, db: cachedDb };
     } catch (error) {
       console.warn('⚠️ Cached MongoDB connection is stale, reconnecting...');
+      // Force cleanup on stale connections
+      try {
+        await cachedClient.close();
+      } catch (closeError) {
+        // Ignore close errors
+      }
       cachedClient = null;
       cachedDb = null;
     }
@@ -26,44 +32,42 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
   console.log('🔌 Connecting to MongoDB...');
 
   const client = new MongoClient(uri, {
-    // Optimized for M0 cluster connection limits (max 25 connections)
-    maxPoolSize: 5, // Maintain up to 5 socket connections (reduced for M0)
-    minPoolSize: 1, // Minimum number of connections in the pool
-    maxConnecting: 2, // Maximum number of connections being created at once
+    // ULTRA-conservative settings for M0 cluster (max 25 connections)
+    maxPoolSize: 1, // ONLY 1 connection maximum
+    minPoolSize: 0, // Start with 0 connections
+    maxConnecting: 1, // Only 1 connection attempt at a time
     
-    // Aggressive timeout settings to prevent hanging
-    serverSelectionTimeoutMS: 15000, // Keep trying to send operations for 15 seconds
-    socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-    connectTimeoutMS: 15000, // Give up initial connection after 15 seconds
-    heartbeatFrequencyMS: 10000, // Check server every 10 seconds
-    maxIdleTimeMS: 10000, // Close connections after 10 seconds of inactivity (M0 optimized)
+    // ULTRA-aggressive timeout settings for M0 optimization
+    serverSelectionTimeoutMS: 5000, // Reduced to 5 seconds
+    socketTimeoutMS: 15000, // Reduced to 15 seconds  
+    connectTimeoutMS: 5000, // Reduced to 5 seconds
+    heartbeatFrequencyMS: 60000, // Check every 60 seconds (less frequent)
+    maxIdleTimeMS: 1000, // Close idle connections after 1 second (VERY aggressive)
     
-    // Retry and error handling
-    retryWrites: true, // Retry failed writes
-    retryReads: true, // Retry failed reads
+    // Additional M0 optimizations
+    retryWrites: false, // Disable retry writes to reduce connections
+    retryReads: false, // Disable retry reads to reduce connections
     
-    // Additional performance settings
-    ignoreUndefined: true, // Ignore undefined values
-    
-    // Compression for better network performance
+    // Network optimizations
+    ignoreUndefined: true,
     compressors: ['zlib'],
     
-    // Additional reliability settings
-    w: 'majority', // Write concern - wait for majority of replica set
-    readPreference: 'primaryPreferred', // Prefer primary, but allow secondary reads
-    readConcern: { level: 'majority' }, // Read concern for consistency
+    // Minimal reliability settings for M0
+    w: 1, // Changed from 'majority' to reduce load
+    readPreference: 'primary', // Always use primary to avoid extra connections
+    readConcern: { level: 'local' }, // Reduced from 'majority'
     
-    // Connection monitoring
-    monitorCommands: process.env.NODE_ENV === 'development',
+    // Disable monitoring in production for M0
+    monitorCommands: false,
     
-    // SSL/TLS settings for production
+    // Enhanced SSL settings for better reliability
     tls: true,
     tlsAllowInvalidCertificates: false,
     tlsAllowInvalidHostnames: false,
   });
 
-  // Retry logic for connection
-  const maxRetries = 3;
+  // Reduced retry logic for M0 cluster
+  const maxRetries = 2; // Reduced from 3
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -72,20 +76,48 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
       
       const db = client.db(); // Uses default database from connection string
       
-      // Test the connection
-      await client.db().admin().ping();
+      // Test the connection with shorter timeout
+      await Promise.race([
+        client.db().admin().ping(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Connection test timeout')), 5000)
+        )
+      ]);
+      
       console.log(`✅ MongoDB connected successfully (attempt ${attempt})`);
 
       cachedClient = client;
       cachedDb = db;
+      
+      // Schedule ULTRA-aggressive cleanup for M0
+      setTimeout(async () => {
+        try {
+          await cleanupConnections();
+        } catch (error) {
+          console.warn('Scheduled cleanup failed:', error);
+        }
+      }, 10000); // Cleanup after only 10 seconds
 
       return { client, db };
     } catch (error) {
       lastError = error as Error;
       console.error(`❌ MongoDB connection attempt ${attempt} failed:`, error);
       
+      // Special handling for SSL/TLS errors
+      if ((error as any).message?.includes('SSL') || (error as any).message?.includes('TLS')) {
+        console.error('🔒 SSL/TLS Error detected - this usually indicates connection pool exhaustion');
+        console.error('💡 Suggestion: Restart your application to clear the connection pool');
+      }
+      
+      // Close failed client to prevent connection leaks
+      try {
+        await client.close();
+      } catch (closeError) {
+        // Ignore close errors
+      }
+      
       if (attempt < maxRetries) {
-        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Exponential backoff, max 5s
+        const delay = Math.min(2000 * attempt, 5000); // Faster retry
         console.log(`⏳ Retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }

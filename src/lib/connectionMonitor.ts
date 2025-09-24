@@ -9,9 +9,9 @@ class ConnectionMonitor {
   private static instance: ConnectionMonitor;
   private connectionCount = 0;
   private lastCleanup = Date.now();
-  private readonly MAX_CONNECTIONS = 20; // Leave 5 connections buffer for M0 cluster
-  private readonly CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
-  private readonly WARNING_THRESHOLD = 15; // Warn when approaching limit
+  private readonly MAX_CONNECTIONS = 15; // Even more conservative for M0 (was 20)
+  private readonly CLEANUP_INTERVAL = 2 * 60 * 1000; // Every 2 minutes (was 5)
+  private readonly WARNING_THRESHOLD = 10; // Warn earlier (was 15)
 
   static getInstance(): ConnectionMonitor {
     if (!ConnectionMonitor.instance) {

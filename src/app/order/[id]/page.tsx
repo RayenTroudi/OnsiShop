@@ -209,7 +209,7 @@ export default function OrderPage({ params }: OrderPageProps) {
                   {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                 </span>
                 <span className="text-lg font-bold text-gray-900">
-                  ${order.totalAmount.toFixed(2)}
+                  {order.totalAmount.toFixed(2)} DT
                 </span>
               </div>
             </div>
@@ -240,12 +240,12 @@ export default function OrderPage({ params }: OrderPageProps) {
                         {item.product.name || item.product.title}
                       </h4>
                       <p className="text-sm text-gray-500">
-                        Quantity: {item.quantity} × ${item.price.toFixed(2)}
+                        Quantity: {item.quantity} × {item.price.toFixed(2)} DT
                       </p>
                     </div>
                     <div className="text-right">
                       <span className="font-medium text-gray-900">
-                        ${(item.quantity * item.price).toFixed(2)}
+                        {(item.quantity * item.price).toFixed(2)} DT
                       </span>
                     </div>
                   </div>

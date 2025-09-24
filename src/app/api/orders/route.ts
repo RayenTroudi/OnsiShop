@@ -1,12 +1,13 @@
 import { dbService } from '@/lib/database';
 import { sendCustomerConfirmationEmail, sendOrderNotificationEmail } from '@/lib/email';
+import { withMongoCleanup } from '@/lib/withMongoCleanup';
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
 // Get orders for authenticated user
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   try {
     const token = request.cookies.get('auth-token')?.value;
 
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
 }
 
 // Create new order
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     console.log('🛒 Order creation started...');
     const token = request.cookies.get('auth-token')?.value;
@@ -123,6 +124,12 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date()
     });
 
+    console.log('✅ Order created successfully:', {
+      orderId: newOrder.id,
+      userId: userId,
+      storedUserId: (newOrder as any).userId
+    });
+
     // Create order items and update product stock
     for (const item of enhancedCart.items) {
       await dbService.createOrderItem({
@@ -203,4 +210,13 @@ export async function POST(request: NextRequest) {
     console.error('Error creating order:', error);
     return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
   }
+}
+
+// Wrap with aggressive MongoDB cleanup
+export async function GET(request: NextRequest) {
+  return withMongoCleanup(handleGET, request);
+}
+
+export async function POST(request: NextRequest) {
+  return withMongoCleanup(handlePOST, request);
 }

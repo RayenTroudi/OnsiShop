@@ -1,14 +1,20 @@
-import { simpleDbService } from '@/lib/simple-db';
+import { withSingleConnection } from '@/lib/singleConnection';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    console.log('🔍 Fetching content from database...');
+    console.log('🔍 Fetching content from database using SINGLE connection...');
     
-    // Try simple database service first (fast path)
-    const siteContentItems = await simpleDbService.getAllSiteContent();
+    // Use single connection for M0 cluster safety
+    const siteContentItems = await withSingleConnection(async (db) => {
+      console.log('📄 Getting site_content collection with single connection');
+      const collection = db.collection('site_content');
+      const items = await collection.find({}).toArray();
+      console.log(`📋 Single connection retrieved ${items.length} items`);
+      return items;
+    });
 
     console.log(`📋 Found ${siteContentItems.length} content items`);
 

@@ -19,20 +19,43 @@ export async function GET(
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
     const userId = decoded.userId;
 
+    // Get order with security check
     const order = await dbService.findFirstOrder({
-      where: { 
-        id: params.id,
-        userId // Ensure user can only access their own orders
-      }
+      where: { id: params.id, userId }
     });
 
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
-
-    return NextResponse.json({ order });
+    
+    // Get order items with product details
+    const orderItems = await dbService.getOrderItems(order.id);
+    
+    // Populate product details for each order item
+    const itemsWithProducts = await Promise.all(
+      orderItems.map(async (item: any) => {
+        const product = await dbService.getProductById(item.productId);
+        return {
+          ...item,
+          product: product || {
+            id: item.productId,
+            name: 'Product Not Found',
+            title: 'Product Not Found',
+            image: '/images/placeholder-product.svg'
+          }
+        };
+      })
+    );
+    
+    // Add items to order
+    const enrichedOrder = {
+      ...order,
+      items: itemsWithProducts
+    };
+    
+    return NextResponse.json({ order: enrichedOrder });
   } catch (error) {
-    console.error('Error fetching order:', error);
+    console.error('❌ Error fetching order:', error);
     return NextResponse.json({ error: 'Failed to fetch order' }, { status: 500 });
   }
 }

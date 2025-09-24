@@ -1,4 +1,5 @@
 import { dbService } from '@/lib/database';
+import { withMongoCleanup } from '@/lib/withMongoCleanup';
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -7,7 +8,7 @@ export const dynamic = 'force-dynamic';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // Get cart for authenticated user
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   try {
     // Get userId from JWT token
     const token = request.cookies.get('auth-token')?.value;
@@ -124,4 +125,9 @@ export async function GET(request: NextRequest) {
       message: 'Failed to fetch cart'
     }, { status: 500 });
   }
+}
+
+// Wrap with aggressive MongoDB cleanup
+export async function GET(request: NextRequest) {
+  return withMongoCleanup(handleGET, request);
 }

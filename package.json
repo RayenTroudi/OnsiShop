@@ -20,6 +20,8 @@
     "db:monitor": "npx tsx scripts/monitor-connections.ts monitor",
     "db:status": "npx tsx scripts/monitor-connections.ts status",
     "db:cleanup": "npx tsx scripts/monitor-connections.ts cleanup",
+    "db:emergency": "node scripts/emergency-cleanup.js",
+    "db:quick-cleanup": "node scripts/quick-cleanup.js",
     "db:test": "npx tsx scripts/monitor-connections.ts test"
   },
   "dependencies": {

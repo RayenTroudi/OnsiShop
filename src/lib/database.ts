@@ -693,7 +693,19 @@ export class DatabaseService {
 
   async findFirstOrder(options: any) {
     const db = await getDatabase();
-    const filter = options.where || {};
+    let filter = options.where || {};
+    
+    // Convert 'id' field to '_id' with ObjectId if it exists
+    if (filter.id) {
+      if (isValidObjectId(filter.id)) {
+        filter._id = toObjectId(filter.id);
+        delete filter.id;
+      } else {
+        // Invalid ObjectId format
+        return null;
+      }
+    }
+    
     const order = await db.collection(Collections.ORDERS).findOne(filter);
     if (!order) return null;
     return { ...order, id: order._id?.toString(), _id: order._id?.toString() };
@@ -702,7 +714,18 @@ export class DatabaseService {
   async updateOrder(options: any) {
     const db = await getDatabase();
     const { where, data } = options;
-    const filter = where;
+    let filter = where;
+    
+    // Convert 'id' field to '_id' with ObjectId if it exists
+    if (filter.id) {
+      if (isValidObjectId(filter.id)) {
+        filter._id = toObjectId(filter.id);
+        delete filter.id;
+      } else {
+        // Invalid ObjectId format
+        return null;
+      }
+    }
     
     const result = await db.collection(Collections.ORDERS).findOneAndUpdate(
       filter,
@@ -721,6 +744,14 @@ export class DatabaseService {
     const item = { ...data, createdAt: now, updatedAt: now };
     const result = await db.collection(Collections.ORDER_ITEMS).insertOne(item);
     return { ...item, _id: result.insertedId.toString(), id: result.insertedId.toString() };
+  }
+
+  async getOrderItems(orderId: string) {
+    const db = await getDatabase();
+    const items = await db.collection(Collections.ORDER_ITEMS)
+      .find({ orderId })
+      .toArray();
+    return items.map(item => ({ ...item, id: item._id?.toString(), _id: item._id?.toString() }));
   }
 
   async clearCart(cartId: string) {

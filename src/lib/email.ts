@@ -39,7 +39,7 @@ export const sendOrderNotificationEmail = async (orderData: OrderEmailData) => {
     
     // Format order items for email
     const itemsList = orderData.items
-      .map(item => `• ${item.name} - Quantity: ${item.quantity} - Price: $${item.price.toFixed(2)}`)
+      .map(item => `• ${item.name} - Quantity: ${item.quantity} - Price: ${item.price.toFixed(2)} DT`)
       .join('\n');
 
     const emailContent = `
@@ -58,7 +58,7 @@ ${orderData.shippingAddress}
 🛒 Order Items:
 ${itemsList}
 
-💰 Total Amount: $${orderData.totalAmount.toFixed(2)}
+💰 Total Amount: ${orderData.totalAmount.toFixed(2)} DT
 
 📅 Order Date: ${new Date().toLocaleString()}
 
@@ -66,7 +66,7 @@ Please contact the customer to arrange delivery and payment.
 
 ---
 Order Management System
-${process.env.SITE_NAME || 'Your Store'}
+${process.env.SITE_NAME || 'Onsi Shop'}
     `.trim();
 
     const mailOptions = {
@@ -110,7 +110,7 @@ ${process.env.SITE_NAME || 'Your Store'}
                     <tr>
                       <td style="padding: 10px; border: 1px solid #E5E7EB;">${item.name}</td>
                       <td style="padding: 10px; text-align: center; border: 1px solid #E5E7EB;">${item.quantity}</td>
-                      <td style="padding: 10px; text-align: right; border: 1px solid #E5E7EB;">$${item.price.toFixed(2)}</td>
+                      <td style="padding: 10px; text-align: right; border: 1px solid #E5E7EB;">${item.price.toFixed(2)} DT</td>
                     </tr>
                   `).join('')}
                 </tbody>
@@ -118,7 +118,7 @@ ${process.env.SITE_NAME || 'Your Store'}
             </div>
 
             <div style="background-color: #10B981; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-              <h3 style="margin: 0;">💰 Total Amount: $${orderData.totalAmount.toFixed(2)}</h3>
+              <h3 style="margin: 0;">💰 Total Amount: ${orderData.totalAmount.toFixed(2)} DT</h3>
             </div>
 
             <div style="background-color: #FEF3C7; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
@@ -127,7 +127,7 @@ ${process.env.SITE_NAME || 'Your Store'}
 
             <div style="text-align: center; color: #6B7280; font-size: 12px; margin-top: 30px;">
               <p>Order Date: ${new Date().toLocaleString()}</p>
-              <p>Order Management System - ${process.env.SITE_NAME || 'Your Store'}</p>
+              <p>Order Management System - ${process.env.SITE_NAME || 'Onsi Shop'}</p>
             </div>
           </div>
         </div>
@@ -153,7 +153,7 @@ export const sendCustomerConfirmationEmail = async (orderData: OrderEmailData) =
     
     // Format order items for customer email
     const itemsList = orderData.items
-      .map(item => `• ${item.name} - Quantity: ${item.quantity} - $${item.price.toFixed(2)}`)
+      .map(item => `• ${item.name} - Quantity: ${item.quantity} - ${item.price.toFixed(2)} DT`)
       .join('\n');
 
     const customerEmailContent = `
@@ -168,7 +168,7 @@ Thank you for your order! We have received your order and will contact you soon 
 Order Details:
 ${itemsList}
 
-Total: $${orderData.totalAmount.toFixed(2)}
+Total: ${orderData.totalAmount.toFixed(2)} DT
 
 Shipping Address:
 ${orderData.shippingAddress}
@@ -177,7 +177,7 @@ We will contact you at ${orderData.customerPhone} or ${orderData.customerEmail} 
 
 Thank you for shopping with us!
 
-${process.env.SITE_NAME || 'Your Store'}
+${process.env.SITE_NAME || 'Onsi Shop'}
     `.trim();
 
     const customerMailOptions = {
@@ -212,7 +212,7 @@ ${process.env.SITE_NAME || 'Your Store'}
                     <tr>
                       <td style="padding: 10px; border: 1px solid #E5E7EB;">${item.name}</td>
                       <td style="padding: 10px; text-align: center; border: 1px solid #E5E7EB;">${item.quantity}</td>
-                      <td style="padding: 10px; text-align: right; border: 1px solid #E5E7EB;">$${item.price.toFixed(2)}</td>
+                      <td style="padding: 10px; text-align: right; border: 1px solid #E5E7EB;">${item.price.toFixed(2)} DT</td>
                     </tr>
                   `).join('')}
                 </tbody>
@@ -220,7 +220,7 @@ ${process.env.SITE_NAME || 'Your Store'}
             </div>
 
             <div style="background-color: #6366F1; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-              <h3 style="margin: 0;">💰 Total: $${orderData.totalAmount.toFixed(2)}</h3>
+              <h3 style="margin: 0;">💰 Total: ${orderData.totalAmount.toFixed(2)} DT</h3>
             </div>
 
             <div style="margin-bottom: 20px;">
@@ -233,7 +233,7 @@ ${process.env.SITE_NAME || 'Your Store'}
             </div>
 
             <div style="text-align: center; color: #6B7280; font-size: 12px; margin-top: 30px;">
-              <p>Thank you for shopping with ${process.env.SITE_NAME || 'us'}!</p>
+              <p>Thank you for shopping with ${process.env.SITE_NAME || 'Onsi Shop'}!</p>
               <p>Order Date: ${new Date().toLocaleString()}</p>
             </div>
           </div>
