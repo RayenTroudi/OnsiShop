@@ -29,7 +29,7 @@ function ThreeItemGridItem({
             position: size === 'full' ? 'center' : 'bottom',
             title: item.title as string,
             amount: item.priceRange?.maxVariantPrice?.amount || '0',
-            currencyCode: item.priceRange?.maxVariantPrice?.currencyCode || 'USD'
+            currencyCode: item.priceRange?.maxVariantPrice?.currencyCode || 'DT'
           }}
         />
       </Link>

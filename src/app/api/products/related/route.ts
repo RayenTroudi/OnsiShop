@@ -39,6 +39,24 @@ export async function GET(request: NextRequest) {
 
     // Fetch related products with ratings
     let relatedProducts = await dbService.getProducts() as any[];
+    
+    // Debug logging
+    console.log('Related products fetched:', relatedProducts?.length || 0);
+    if (relatedProducts && relatedProducts.length > 0) {
+      console.log('Sample related product structure:', {
+        hasRatings: 'ratings' in relatedProducts[0],
+        keys: Object.keys(relatedProducts[0]).slice(0, 10)
+      });
+    }
+
+    // Safety check for products array
+    if (!Array.isArray(relatedProducts)) {
+      console.error('Related products is not an array:', typeof relatedProducts);
+      return NextResponse.json({
+        products: [],
+        total: 0,
+      });
+    }
 
     // If not enough products from same category, fetch more from other categories
     if (relatedProducts.length < limit) {
@@ -49,23 +67,36 @@ export async function GET(request: NextRequest) {
 
     // Calculate average ratings and transform data
     const productsWithRatings = relatedProducts.map((product: any) => {
-      const ratings = product.ratings;
-      const avgRating = ratings.length > 0
-        ? ratings.reduce((sum: number, rating: any) => sum + rating.stars, 0) / ratings.length
-        : null;
+      try {
+        const ratings = product.ratings || [];
+        const avgRating = ratings.length > 0
+          ? ratings.reduce((sum: number, rating: any) => sum + (rating?.stars || 0), 0) / ratings.length
+          : null;
 
-      // Remove ratings array from response and add calculated fields
-      const { ratings: _, ...productData } = product;
-      
-      // Transform to Shopify format with proper image structure
-      const transformedProduct = dbService.transformToShopifyProduct(productData);
-      
-      return {
-        ...transformedProduct,
-        avgRating: avgRating ? Math.round(avgRating * 10) / 10 : null,
-        ratingCount: productData._count.ratings,
-      };
-    });
+        // Remove ratings array from response and add calculated fields
+        const { ratings: _, ...productData } = product;
+        
+        // Transform to Shopify format with proper image structure
+        const transformedProduct = dbService.transformToShopifyProduct(productData);
+        
+        return {
+          ...transformedProduct,
+          avgRating: avgRating ? Math.round(avgRating * 10) / 10 : null,
+          ratingCount: productData._count?.ratings || 0,
+        };
+      } catch (productError) {
+        console.error('Error processing related product:', product?.id || 'unknown', productError);
+        // Return a basic product structure if transformation fails
+        return {
+          id: product?.id || product?._id?.toString() || 'unknown',
+          title: product?.title || product?.name || 'Unknown Product',
+          handle: product?.handle || 'unknown',
+          price: product?.price || 0,
+          avgRating: null,
+          ratingCount: 0,
+        };
+      }
+    }).filter(Boolean); // Remove any null/undefined results
 
     return NextResponse.json({
       products: productsWithRatings,

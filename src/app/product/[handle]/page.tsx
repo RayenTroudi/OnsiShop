@@ -88,7 +88,7 @@ const ProductPage = async ({ params }: { params: { handle: string } }) => {
       availability: product.availableForSale
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',
-      priceCurrency: product.priceRange?.minVariantPrice?.currencyCode || 'USD',
+      priceCurrency: product.priceRange?.minVariantPrice?.currencyCode || 'DT',
       highPrice: product.priceRange?.maxVariantPrice?.amount || '0',
       lowPrice: product.priceRange?.minVariantPrice?.amount || '0'
     }

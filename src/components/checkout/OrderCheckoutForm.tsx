@@ -102,7 +102,7 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
       return;
     }
 
-    if (!cart || cart.items.length === 0) {
+    if (!cart || !cart.items || cart.items.length === 0) {
       alert(t('cart_empty_error'));
       return;
     }
@@ -153,7 +153,7 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
   }
 
   // Show empty cart message only after loading is complete
-  if (!cart || cart.items.length === 0) {
+  if (!cart || !cart.items || cart.items.length === 0) {
     return (
       <div className="max-w-md mx-auto mt-8 p-6 bg-gray-50 rounded-lg text-center">
         <p className="text-gray-600 mb-4">Your cart is empty</p>
@@ -175,21 +175,34 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
       <div className="bg-gray-50 rounded-lg p-6 mb-8">
         <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
         <div className="space-y-3">
-          {cart.items.map((item) => (
-            <div key={item.id} className="flex justify-between items-center">
-              <div>
-                <span className="font-medium">{item.product.name || item.product.title}</span>
-                <span className="text-gray-500 ml-2">× {item.quantity}</span>
-              </div>
-              <span className="font-semibold">
-                ${(item.product.price * item.quantity).toFixed(2)}
-              </span>
-            </div>
-          ))}
+          {(() => {
+            try {
+              return cart.items?.map((item) => (
+                <div key={item?.id || Math.random()} className="flex justify-between items-center">
+                  <div>
+                    <span className="font-medium">
+                      {item?.product?.name || item?.product?.title || 'Product Name Unavailable'}
+                    </span>
+                    <span className="text-gray-500 ml-2">× {item?.quantity || 0}</span>
+                  </div>
+                  <span className="font-semibold">
+                    {((item?.product?.price || 0) * (item?.quantity || 0)).toFixed(2)} DT
+                  </span>
+                </div>
+              )) || [];
+            } catch (error) {
+              console.error('Error rendering cart items in checkout:', error);
+              return (
+                <div className="text-red-500 text-center py-4">
+                  Error loading cart items. Please try refreshing the page.
+                </div>
+              );
+            }
+          })()}
           <div className="border-t pt-3 mt-3">
             <div className="flex justify-between items-center text-lg font-bold">
               <span>Total:</span>
-              <span>${cart.totalAmount.toFixed(2)}</span>
+              <span>{(cart.totalAmount || 0).toFixed(2)} DT</span>
             </div>
           </div>
         </div>

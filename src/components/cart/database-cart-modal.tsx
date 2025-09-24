@@ -189,12 +189,26 @@ export default function DatabaseCartModal({
             ) : (
               <div className="flex h-full flex-col justify-between overflow-hidden p-1">
                 <ul className="flex-grow overflow-auto py-4">
-                  {cart.items.map((item) => {
+                  {cart.items.filter(item => item.product).map((item) => {
                     const product = item.product;
-                    const imageUrl = product.image || 
-                      (product.images ? JSON.parse(product.images)[0] : null) ||
-                      '/images/placeholder-product.svg';
-                    const subtotal = product.price * item.quantity;
+                    
+                    // Add safety check for product
+                    if (!product) {
+                      console.warn('Cart item missing product data:', item);
+                      return null;
+                    }
+                    
+                    let imageUrl = '/images/placeholder-product.svg';
+                    try {
+                      imageUrl = product.image || 
+                        (product.images ? JSON.parse(product.images)[0] : null) ||
+                        '/images/placeholder-product.svg';
+                    } catch (error) {
+                      console.warn('Error parsing product images:', error);
+                      imageUrl = '/images/placeholder-product.svg';
+                    }
+                    
+                    const subtotal = (product.price || 0) * item.quantity;
 
                     return (
                       <li key={item.id} className="flex w-full flex-col border-b border-purple">
@@ -215,17 +229,17 @@ export default function DatabaseCartModal({
                                 className="h-full w-full object-cover"
                                 width={64}
                                 height={64}
-                                alt={product.name || product.title}
+                                alt={product.name || product.title || 'Product image'}
                                 src={imageUrl}
                               />
                             </div>
                             
                             <div className="flex flex-1 flex-col">
                               <span className="font-lora text-base font-bold leading-tight">
-                                {product.name || product.title}
+                                {product.name || product.title || 'Unknown Product'}
                               </span>
                               <span className="text-sm text-gray-500">
-                                Stock: {product.stock}
+                                Stock: {product.stock || 0}
                               </span>
                             </div>
                           </div>
@@ -234,7 +248,7 @@ export default function DatabaseCartModal({
                             <Price
                               className="flex justify-end space-y-2 text-right text-sm font-medium"
                               amount={subtotal.toString()}
-                              currencyCode="USD"
+                              currencyCode="DT"
                             />
                             
                             <div className="ml-auto flex h-9 flex-row items-center rounded-[8px] bg-lightPurple">
@@ -250,7 +264,7 @@ export default function DatabaseCartModal({
                               </span>
                               <button
                                 onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                disabled={isUpdating === item.id || item.quantity >= product.stock}
+                                disabled={isUpdating === item.id || item.quantity >= (product.stock || 0)}
                                 className="h-9 w-9 flex items-center justify-center hover:bg-purple/20 rounded-r-[8px] disabled:opacity-50"
                               >
                                 +
@@ -266,14 +280,14 @@ export default function DatabaseCartModal({
                 <div className="py-4 font-lora text-sm font-bold">
                   <div className="mb-3 flex items-center justify-between border-b border-purple pb-1">
                     <p>Items</p>
-                    <p className="text-right">{cart.totalItems}</p>
+                    <p className="text-right">{cart.totalItems || 0}</p>
                   </div>
                   <div className="mb-3 flex items-center justify-between border-b border-purple pb-1 pt-1">
                     <p>Subtotal</p>
                     <Price
                       className="text-right text-base"
-                      amount={cart.totalAmount.toString()}
-                      currencyCode="USD"
+                      amount={(cart.totalAmount || 0).toString()}
+                      currencyCode="DT"
                     />
                   </div>
                   <div className="mb-3 flex items-center justify-between border-b border-purple pb-1 pt-1">
@@ -284,8 +298,8 @@ export default function DatabaseCartModal({
                     <p>Total</p>
                     <Price
                       className="text-right text-base"
-                      amount={cart.totalAmount.toString()}
-                      currencyCode="USD"
+                      amount={(cart.totalAmount || 0).toString()}
+                      currencyCode="DT"
                     />
                   </div>
                 </div>
@@ -293,7 +307,7 @@ export default function DatabaseCartModal({
                 <button
                   onClick={handleCheckout}
                   className="btn-dark text-center block w-full"
-                  disabled={cart.items.length === 0}
+                  disabled={!cart.items || cart.items.length === 0}
                 >
                   Proceed to Checkout
                 </button>

@@ -53,13 +53,31 @@ export async function GET(request: NextRequest) {
     // Get cart items if cart exists
     let cartItems: any[] = [];
     if (cart) {
-      cartItems = await dbService.getCartItems(cart.id ) as any[];
+      const rawCartItems = await dbService.getCartItems(cart.id) as any[];
+      
+      // Populate product data for each cart item
+      cartItems = await Promise.all(
+        rawCartItems.map(async (item: any) => {
+          const product = await dbService.getProductById(item.productId) as any;
+          return {
+            ...item,
+            product: product || {
+              id: item.productId,
+              name: 'Product Not Found',
+              title: 'Product Not Found',
+              price: 0,
+              stock: 0
+            }
+          };
+        })
+      );
     }
 
     console.log('🛒 Cart query result:', {
       userId,
       hasCart: !!cart,
-      itemCount: cartItems.length || 0
+      itemCount: cartItems.length || 0,
+      itemsWithProducts: cartItems.filter(item => item.product).length
     });
 
     if (!cart) {
@@ -79,9 +97,12 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Calculate totals
+    // Calculate totals using product prices
     const totalItems = cartItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
-    const totalAmount = cartItems.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
+    const totalAmount = cartItems.reduce((sum: number, item: any) => {
+      const price = item.product?.price || 0;
+      return sum + (price * item.quantity);
+    }, 0);
 
     const cartWithTotals = {
       ...cart,
