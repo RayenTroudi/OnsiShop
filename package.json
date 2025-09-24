@@ -15,7 +15,12 @@
     "prettier": "prettier --write --ignore-unknown .",
     "prettier:check": "prettier --check --ignore-unknown .",
     "test": "npm run lint && npm run prettier:check",
-    "db:seed-translations": "npx tsx scripts/seed-translations.ts"
+    "db:seed-translations": "npx tsx scripts/seed-translations.ts",
+    "db:optimize": "npx tsx scripts/optimize-database.ts",
+    "db:monitor": "npx tsx scripts/monitor-connections.ts monitor",
+    "db:status": "npx tsx scripts/monitor-connections.ts status",
+    "db:cleanup": "npx tsx scripts/monitor-connections.ts cleanup",
+    "db:test": "npx tsx scripts/monitor-connections.ts test"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",

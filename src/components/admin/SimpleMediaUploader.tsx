@@ -5,7 +5,7 @@ import VideoUploader from '@/components/upload/VideoUploader';
 import { useState } from 'react';
 
 interface SimpleMediaUploaderProps {
-  section: 'hero' | 'promotions' | 'about' | 'footer' | 'contact';
+  section: 'hero' | 'promotions' | 'footer' | 'contact';
   mediaType: 'image' | 'video' | 'both';
   currentMedia?: string;
   onUploadSuccess?: (url: string) => void;
@@ -39,57 +39,23 @@ export default function SimpleMediaUploader({
       if (contentKey) {
         console.log(`💾 Saving UploadThing URL to content key: ${contentKey}`);
         
-        // Use the specific API for the content type
-        const apiEndpoint = contentKey.includes('video') ? '/api/admin/hero-video' : '/api/content-manager';
-        
-        const requestBody = contentKey.includes('video') 
-          ? {
-              videoUrl: url,
-              metadata: {
-                section,
-                mediaType,
-                contentKey,
-                uploadedAt: new Date().toISOString()
-              }
-            }
-          : {
-              action: 'create',
-              key: contentKey,
-              value: url,
-              type: 'media'
-            };
-
-        const response = await fetch(apiEndpoint, {
+        // Use unified API endpoint for all media (handles both content updates and media assets)
+        const response = await fetch('/api/admin/media-new', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify({
+            url,
+            section,
+            mediaType,
+            contentKey
+          })
         });
 
         if (response.ok) {
           const result = await response.json();
-          console.log('✅ UploadThing URL saved successfully:', result);
-          
-          // Also create a media asset record for the stats
-          try {
-            await fetch('/api/admin/media-new', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                url,
-                section,
-                mediaType,
-                contentKey
-              })
-            });
-            console.log('📄 Media asset record created for stats');
-          } catch (assetError) {
-            console.warn('Failed to create media asset record:', assetError);
-            // Don't fail the whole process if asset creation fails
-          }
+          console.log('✅ UploadThing URL and media asset saved successfully:', result);
           
           onUploadSuccess?.(url);
           setJustUploaded(url.split('/').pop() || 'File uploaded');
@@ -115,8 +81,6 @@ export default function SimpleMediaUploader({
     if (section === 'hero' && mediaType === 'video') return 'hero_background_video';
     if (section === 'hero' && mediaType === 'image') return 'hero_background_image';
     if (section === 'promotions' && mediaType === 'image') return 'promotion_background_image';
-    if (section === 'about' && mediaType === 'image') return 'about_background_image';
-    if (section === 'footer' && mediaType === 'image') return 'footer_background_image';
     return null;
   };
 

@@ -9,6 +9,10 @@ export const { GET, POST } = createRouteHandler({
   config: {
     logLevel: "Info",
     isDev: process.env.NODE_ENV === "development",
-    callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/api/uploadthing`,
+    callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/uploadthing`,
   },
 });
+
+// Add request timeout for the route
+export const maxDuration = 30; // 30 seconds timeout
+export const runtime = 'nodejs';

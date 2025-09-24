@@ -1,5 +1,6 @@
 'use client';
 
+import FileUploader from '@/components/upload/FileUploader';
 import { useTranslation } from '@/contexts/TranslationContext';
 import { useEffect, useState } from 'react';
 import HeroVideoManager from './HeroVideoManager';
@@ -23,7 +24,7 @@ interface MediaAsset {
   updatedAt: string;
 }
 
-type ContentSection = 'hero-video' | 'promotions' | 'about' | 'footer' | 'contact';
+type ContentSection = 'hero-video' | 'promotions' | 'contact';
 
 export default function ContentAdmin() {
   const { t } = useTranslation();
@@ -37,9 +38,9 @@ export default function ContentAdmin() {
   // New content/media form states
   const [newContentKey, setNewContentKey] = useState('');
   const [newContentValue, setNewContentValue] = useState('');
-  const [newMediaFile, setNewMediaFile] = useState<File | null>(null);
   const [newMediaSection, setNewMediaSection] = useState('');
   const [newMediaAlt, setNewMediaAlt] = useState('');
+  const [debugInfo, setDebugInfo] = useState('');
 
   useEffect(() => {
     fetchContent();
@@ -218,83 +219,102 @@ export default function ContentAdmin() {
     }
   };
 
-  const uploadMedia = async () => {
-    if (!newMediaFile) {
-      alert('Please select a file');
-      return;
-    }
-
-    // Check file size before upload
-    const fileSizeMB = newMediaFile.size / (1024 * 1024);
-    const isVideo = newMediaFile.type.startsWith('video/');
-    const isImage = newMediaFile.type.startsWith('image/');
+  const handleUploadThingComplete = async (url: string) => {
+    console.log(`✅ UploadThing upload completed: ${url}`);
+    console.log(`📍 Current section input: "${newMediaSection}"`);
     
-    let maxSizeMB: number;
-    if (isVideo) {
-      maxSizeMB = 5; // Reduced from 50MB to 5MB for database storage
-    } else if (isImage) {
-      maxSizeMB = 5; // Reduced to 5MB for better performance
-    } else {
-      maxSizeMB = 5;
-    }
-
-    if (fileSizeMB > maxSizeMB) {
-      alert(`File too large. Maximum size is ${maxSizeMB}MB for ${newMediaFile.type.split('/')[0]} files.\nCurrent file size: ${Math.round(fileSizeMB * 100) / 100}MB\n\nPlease compress your file or use a smaller file.`);
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', newMediaFile);
-    formData.append('section', newMediaSection);
-    formData.append('alt', newMediaAlt);
-
     try {
-      const response = await fetch('/api/admin/media', {
+      // Validate the URL is from UploadThing
+      if (!url.includes('uploadthing') && !url.includes('utfs.io')) {
+        console.error('❌ Invalid URL received - not from UploadThing:', url);
+        alert('❌ Upload Error: Invalid URL format received. Please try again.');
+        return;
+      }
+
+      // Determine content key based on section (use newMediaSection or fallback to activeSection)
+      let contentKey = null;
+      const section = (newMediaSection || activeSection).toLowerCase();
+      console.log(`🔍 Processing section: "${section}" (from input: "${newMediaSection}", active: "${activeSection}")`);
+      
+      if (section === 'promotions' || section === 'promotion') {
+        contentKey = 'promotion_background_image';
+        console.log(`📝 Set contentKey for promotions: ${contentKey}`);
+      } else if (section === 'hero') {
+        contentKey = 'hero_background_image';
+        console.log(`📝 Set contentKey for hero: ${contentKey}`);
+      } else if (section === 'contact') {
+        contentKey = 'contact_background_image';
+        console.log(`📝 Set contentKey for contact: ${contentKey}`);
+      } else {
+        console.warn(`❌ Unknown section: "${section}"`);
+        console.warn(`❌ Available sections: promotions, hero, contact`);
+        console.warn(`❌ Input was: "${newMediaSection}", active section: "${activeSection}"`);
+      }
+      
+      if (!contentKey) {
+        console.error(`💥 No contentKey determined for section "${section}"`);
+        alert(`❌ Error: Unknown section "${section}". Please select a valid section.`);
+        return;
+      }
+
+      // Save to database using unified API
+      console.log(`🚀 Sending API request with:`, {
+        url,
+        section: newMediaSection || activeSection,
+        mediaType: 'image',
+        contentKey
+      });
+      
+      const response = await fetch('/api/admin/media-new', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url,
+          section: newMediaSection || activeSection,
+          mediaType: 'image',
+          contentKey
+        })
       });
 
+      console.log(`📡 API Response status: ${response.status} ${response.statusText}`);
+
       if (response.ok) {
-        const newAsset = await response.json();
-        setMediaAssets(assets => [...assets, newAsset]);
-        setNewMediaFile(null);
+        const result = await response.json();
+        console.log('✅ UploadThing URL saved successfully:', result);
+        
+        // Refresh content and media data immediately
+        console.log('🔄 Refreshing content data...');
+        await fetchContent();
+        
+        // Also refresh after a short delay to ensure database consistency (matching SimplifiedAdmin pattern)
+        setTimeout(async () => {
+          console.log('🔄 Second refresh after delay...');
+          await fetchContent();
+        }, 1000);
+        
+        // Reset form
+        console.log('🧹 Resetting form fields...');
         setNewMediaSection('');
         setNewMediaAlt('');
-        alert('Media uploaded successfully!');
-      } else {
-        // Try to parse error response
-        let errorMessage = 'Failed to upload media';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-          if (errorData.details) {
-            errorMessage += `\n\nDetails: ${errorData.details}`;
-          }
-        } catch (parseError) {
-          // If response is not JSON, handle common HTTP status codes
-          if (response.status === 413) {
-            errorMessage = `File too large for server. The server has a request size limit.\n\nFile size: ${Math.round(fileSizeMB * 100) / 100}MB\n\nPlease use a smaller file (under 5MB recommended).`;
-          } else if (response.status === 400) {
-            errorMessage = 'Invalid file or request. Please check the file type and try again.';
-          } else if (response.status === 500) {
-            errorMessage = 'Server error occurred while processing the file. Please try again or use a smaller file.';
-          }
-        }
+        setDebugInfo(`✅ Last upload: ${section} - ${contentKey} - ${url.split('/').pop()}`);
         
-        alert(errorMessage);
+        alert(`✅ Upload successful! Media saved to ${section} section.`);
+      } else {
+        const errorData = await response.json();
+        console.error('❌ Failed to save UploadThing URL:', errorData);
+        alert(`⚠️ Upload completed but failed to save to database: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error('Error uploading media:', error);
-      let errorMessage = 'Network error occurred while uploading media.';
-      
-      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        errorMessage = 'Network error: Could not connect to server. Please check your internet connection and try again.';
-      } else if (error instanceof SyntaxError && error.message.includes('JSON')) {
-        errorMessage = `Server returned an invalid response. This usually means the file is too large.\n\nFile size: ${Math.round(fileSizeMB * 100) / 100}MB\n\nPlease try with a smaller file (under 5MB).`;
-      }
-      
-      alert(errorMessage);
+      console.error('Error saving UploadThing URL:', error);
+      alert(`❌ Error saving upload: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  };
+
+  const handleUploadError = (error: Error) => {
+    console.error('UploadThing error:', error);
+    alert(`❌ Upload failed: ${error.message}`);
   };
 
   const filteredContent = contentItems.filter(item => {
@@ -346,8 +366,6 @@ export default function ContentAdmin() {
         {[
           { key: 'hero-video', label: 'Hero Video' },
           { key: 'promotions', label: 'Promotions' },
-          { key: 'about', label: 'About' },
-          { key: 'footer', label: 'Footer' },
           { key: 'contact', label: 'Contact' },
         ].map(section => (
           <button
@@ -450,41 +468,26 @@ export default function ContentAdmin() {
           <div className="p-6">
             {/* Upload New Media */}
             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <h3 className="text-lg font-medium mb-3">Upload New Media</h3>
-              <div className="space-y-3">
-                <div>
-                  <input
-                    type="file"
-                    accept="image/*,video/*"
-                    onChange={(e) => setNewMediaFile(e.target.files?.[0] || null)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  <div className="mt-1 text-xs text-gray-500">
-                    <div>• Images: JPEG, PNG, GIF, WebP (max 5MB)</div>
-                    <div>• Videos: MP4, WebM, OGG (max 5MB)</div>
-                    <div>• For larger files, consider compressing before upload</div>
-                  </div>
-                  {newMediaFile && (
-                    <div className="mt-2 p-2 bg-blue-50 rounded text-sm">
-                      <div className="font-medium text-blue-800">Selected File:</div>
-                      <div className="text-blue-700">
-                        {newMediaFile.name} ({Math.round(newMediaFile.size / (1024 * 1024) * 100) / 100}MB)
-                      </div>
-                      {newMediaFile.size > 5 * 1024 * 1024 && (
-                        <div className="text-red-600 font-medium mt-1">
-                          ⚠️ File is too large. Please use a file under 5MB.
-                        </div>
-                      )}
-                    </div>
-                  )}
+              <h3 className="text-lg font-medium mb-3">Upload New Media via UploadThing</h3>
+              {debugInfo && (
+                <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
+                  <strong>Debug:</strong> {debugInfo}
                 </div>
-                <input
-                  type="text"
-                  placeholder="Section (hero, about, footer, etc.)"
-                  value={newMediaSection}
+              )}
+              <div className="space-y-3">
+                <select
+                  value={newMediaSection || activeSection}
                   onChange={(e) => setNewMediaSection(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
+                >
+                  <option value="">Select a section...</option>
+                  <option value="promotions">Promotions</option>
+                  <option value="hero">Hero</option>
+                  <option value="contact">Contact</option>
+                </select>
+                <div className="text-xs text-gray-500 mt-1">
+                  💡 Auto-filled with current section: {activeSection}
+                </div>
                 <input
                   type="text"
                   placeholder="Alt text (for accessibility)"
@@ -492,13 +495,40 @@ export default function ContentAdmin() {
                   onChange={(e) => setNewMediaAlt(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
-                <button
-                  onClick={uploadMedia}
-                  disabled={!newMediaFile || newMediaFile.size > 5 * 1024 * 1024}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Upload
-                </button>
+                
+                {(newMediaSection || activeSection) && (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                    <FileUploader
+                      endpoint="mediaUploader"
+                      onUploadComplete={(res) => {
+                        if (res?.[0]) {
+                          handleUploadThingComplete(res[0].url);
+                        }
+                      }}
+                      onUploadError={handleUploadError}
+                      variant="dropzone"
+                      maxFiles={1}
+                    >
+                      <div className="text-center space-y-2">
+                        <p className="text-sm font-medium text-gray-700">
+                          Drag and drop your image here, or click to browse
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Uploaded via UploadThing • Maximum file size: 32MB
+                        </p>
+                        <p className="text-xs text-blue-600">
+                          Will be saved to: {newMediaSection || activeSection} section
+                        </p>
+                      </div>
+                    </FileUploader>
+                  </div>
+                )}
+                
+                {!(newMediaSection || activeSection) && (
+                  <div className="text-sm text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    ⚠️ Please select a section first using the dropdown above
+                  </div>
+                )}
               </div>
             </div>
 

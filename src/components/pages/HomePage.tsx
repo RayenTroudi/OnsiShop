@@ -72,13 +72,7 @@ const NewArrivals = dynamic(() => import('@/components/sections/NewArrivals/NewA
   loading: () => <SectionSkeleton />
 });
 
-const AboutUs = dynamic(() => import('@/components/sections/AboutUs').catch(err => {
-  console.error('Failed to load AboutUs component:', err);
-  return { default: () => <SectionError error="About Us section failed to load" retry={() => window.location.reload()} /> };
-}), {
-  ssr: false,
-  loading: () => <SectionSkeleton />
-});
+
 
 export default function HomePage() {
   const { isLoading, loadingTasks, addLoadingTask, removeLoadingTask } = useLoading();
@@ -121,10 +115,6 @@ export default function HomePage() {
         
         <Suspense fallback={<SectionSkeleton />}>
           <NewArrivals />
-        </Suspense>
-        
-        <Suspense fallback={<SectionSkeleton />}>
-          <AboutUs />
         </Suspense>
       </div>
     </main>

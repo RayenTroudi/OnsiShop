@@ -3,7 +3,7 @@
  * Tracks and manages database connections for M0 cluster limits
  */
 
-import { getConnectionCount, cleanupConnections } from './mongodb';
+import { cleanupConnections, getConnectionCount } from './mongodb';
 
 class ConnectionMonitor {
   private static instance: ConnectionMonitor;

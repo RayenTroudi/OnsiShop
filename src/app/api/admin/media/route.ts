@@ -135,12 +135,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Create media asset record
+    const now = new Date();
     const mediaAsset = await dbService.createMediaAsset({
       filename: file.name,
       url: mediaUrl,
-      alt: alt || null,
+      alt: alt || undefined,
       type: file.type,
-      section: section || null
+      section: section || undefined,
+      createdAt: now,
+      updatedAt: now
     });
 
     // Revalidate relevant pages when media is uploaded
@@ -162,8 +165,6 @@ export async function POST(request: NextRequest) {
         // Non-hero videos
         if (normalizedSection === 'promotion' || normalizedSection === 'promotions') {
           contentKey = 'promotion_background_video';
-        } else if (normalizedSection === 'about') {
-          contentKey = 'about_background_video';
         } else {
           contentKey = `${normalizedSection}_background_video`;
         }
@@ -172,9 +173,6 @@ export async function POST(request: NextRequest) {
         if (normalizedSection === 'hero') {
           contentKey = 'hero_background_image';
           console.log('🖼️ Updating hero background image content key');
-        } else if (normalizedSection === 'about') {
-          contentKey = 'about_background_image';
-          console.log('📖 Updating about background image content key');
         } else if (normalizedSection === 'promotion' || normalizedSection === 'promotions') {
           contentKey = 'promotion_background_image';
           console.log('🎯 Updating promotion background image content key');

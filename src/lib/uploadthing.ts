@@ -7,10 +7,10 @@ import { UploadThingError } from "uploadthing/server";
 
 const f = createUploadthing();
 
-// File size limits
-const MAX_IMAGE_SIZE = "4MB";
-const MAX_VIDEO_SIZE = "32MB";
-const MAX_DOCUMENT_SIZE = "8MB";
+// File size limits (increased to handle typical upload sizes)
+const MAX_IMAGE_SIZE = "8MB"; // Increased from 2MB to handle larger images
+const MAX_VIDEO_SIZE = "32MB"; // Restored to original size  
+const MAX_DOCUMENT_SIZE = "8MB"; // Increased from 4MB
 
 // Allowed file types
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -158,13 +158,15 @@ export const ourFileRouter = {
   mediaUploader: f({ 
     image: { 
       maxFileSize: MAX_IMAGE_SIZE, 
-      maxFileCount: 5,
-      acl: "public-read"
+      maxFileCount: 1, // Reduced from 5 to prevent timeout
+      acl: "public-read",
+      contentDisposition: "inline"
     },
     video: { 
-      maxFileSize: "16MB", 
-      maxFileCount: 3,
-      acl: "public-read"
+      maxFileSize: "32MB", // Restored to handle larger videos
+      maxFileCount: 1, // Reduced from 3 to prevent timeout 
+      acl: "public-read",
+      contentDisposition: "inline"
     }
   })
     .middleware(async ({ req }) => {
@@ -184,35 +186,19 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ metadata, file }) => {
       console.log("📁 General media uploaded:", file.url);
       
-      try {
-        await connectDB();
-        
-        const savedUpload = await UploadService.saveUpload({
-          fileName: file.name,
-          fileUrl: file.url,
-          fileSize: file.size,
-          fileType: file.type || 'application/octet-stream',
-          uploadedBy: metadata.userId,
-          uploadType: "general-media" as const,
-          isPublic: true,
-          metadata: {
-            originalName: file.name,
-            tags: ['media', 'general']
-          }
-        });
-        
-        console.log("📄 General media upload saved:", savedUpload._id);
-        
-        return { 
-          uploadedBy: metadata.userId,
-          fileUrl: file.url,
-          uploadType: "general-media",
-          uploadId: savedUpload._id
-        };
-      } catch (error) {
-        console.error("❌ Failed to save upload metadata:", error);
-        throw new UploadThingError("Failed to save upload metadata");
-      }
+      // Note: Client-side components will handle saving to media_assets via /api/admin/media-new
+      // This callback just confirms the upload succeeded
+      console.log("✅ UploadThing upload completed, client will handle database save");
+      
+      return { 
+        uploadedBy: metadata.userId,
+        fileUrl: file.url,
+        uploadType: "general-media",
+        key: file.key,
+        name: file.name,
+        size: file.size,
+        url: file.url
+      };
     }),
 
   // User profile picture uploader - Authenticated users

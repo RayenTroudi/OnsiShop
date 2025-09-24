@@ -90,6 +90,8 @@ export class SimpleDbService {
   async createMediaAsset(asset: any) {
     try {
       console.log('🔄 Simple DB: Creating media asset...');
+      console.log('📦 Asset data to insert:', JSON.stringify(asset, null, 2));
+      
       const { db } = await connectToDatabase();
       
       const result = await db.collection('media_assets')
@@ -99,11 +101,15 @@ export class SimpleDbService {
           updatedAt: new Date()
         });
       
-      console.log('✅ Simple DB: Media asset created');
-      return {
+      console.log('✅ Simple DB: Media asset created with ID:', result.insertedId);
+      
+      const createdAsset = {
         _id: result.insertedId,
         ...asset
       };
+      
+      console.log('🎯 Returning media asset:', JSON.stringify(createdAsset, null, 2));
+      return createdAsset;
     } catch (error) {
       console.error('❌ Simple DB: Failed to create media asset:', error);
       throw error;

@@ -1,3 +1,4 @@
+import { verifyAuth } from '@/lib/auth';
 import { broadcastContentUpdate } from '@/lib/content-stream';
 import { simpleDbService } from '@/lib/simple-db';
 import { revalidatePath } from 'next/cache';
@@ -35,8 +36,12 @@ export async function GET() {
 // POST - Save UploadThing URL to content (replaces old base64 upload logic)
 export async function POST(request: NextRequest) {
   try {
-    const { url, section, mediaType, contentKey } = await request.json();
+    console.log('🚀 MEDIA-NEW API CALLED - Starting upload processing...');
+    
+    const body = await request.json();
+    const { url, section, mediaType, contentKey } = body;
 
+    console.log('📦 Request body received:', JSON.stringify(body, null, 2));
     console.log(`📁 Saving UploadThing URL:`);
     console.log(`   URL: ${url}`);
     console.log(`   Section: ${section}`);
@@ -58,10 +63,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create media asset record for stats and management
+    // Get authenticated user
+    const user = verifyAuth(request);
+    const userId = user ? user.userId : "68cd59c40c1556c8b019d1a8"; // Fallback to default user ID
+
+    console.log('👤 Authentication result:', { hasUser: !!user, userId });
+
+    // Extract file info from UploadThing URL
     const fileName = url.split('/').pop() || 'uploaded-file';
-    const fileType = mediaType === 'video' ? 'video/mp4' : 'image/jpeg';
+    const fileType = mediaType === 'video' ? 'video/mp4' : 
+                    mediaType === 'image' ? 'image/jpeg' : 
+                    'application/octet-stream';
     
+    // Determine uploadType based on section
+    const uploadType = section === 'hero' && mediaType === 'video' ? 'hero-video' : 
+                      section === 'hero' && mediaType === 'image' ? 'hero-image' :
+                      section === 'promotions' ? 'promotion-image' : 
+                      `${section}-${mediaType}`;
+
+    console.log('🔧 Generated upload details:', {
+      fileName,
+      fileType,
+      uploadType
+    });
+
     // For hero videos, clean up old ones first
     if (section === 'hero' && mediaType === 'video') {
       console.log('🧹 Cleaning up old hero videos...');
@@ -71,17 +96,48 @@ export async function POST(request: NextRequest) {
       });
     }
     
+    // Create media asset record with complete structure matching user's requirements
+    console.log('💾 About to create media asset with data:', {
+      fileName,
+      fileUrl: url,
+      fileSize: 0,
+      fileType,
+      uploadedBy: userId,
+      uploadType,
+      isPublic: true,
+      metadata: {
+        section: section,
+        mediaType: mediaType,
+        contentKey: contentKey || null,
+        uploadedVia: 'UploadThing',
+        originalFilename: fileName
+      }
+    });
+
     const mediaAsset = await simpleDbService.createMediaAsset({
-      filename: fileName,
-      url: url,
-      alt: `${section} ${mediaType}`,
-      type: fileType,
-      section: section || null,
+      fileName: fileName, // Note: Using fileName instead of filename to match user's example
+      fileUrl: url,       // Note: Using fileUrl instead of url to match user's example
+      fileSize: 0,        // UploadThing doesn't provide size in URL, set to 0 or fetch separately
+      fileType: fileType,
+      uploadedBy: userId,
+      uploadType: uploadType,
+      isPublic: true,
+      metadata: {
+        section: section,
+        mediaType: mediaType,
+        contentKey: contentKey || null,
+        uploadedVia: 'UploadThing',
+        originalFilename: fileName
+      },
       createdAt: new Date(),
       updatedAt: new Date()
     });
     
-    console.log('📄 Created media asset record:', mediaAsset._id);
+    console.log('✅ Media asset created successfully:', {
+      id: mediaAsset._id,
+      fileName: mediaAsset.fileName,
+      uploadType: mediaAsset.uploadType
+    });
 
     // Update the content key if provided
     if (contentKey) {

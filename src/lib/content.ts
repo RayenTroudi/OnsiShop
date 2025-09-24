@@ -55,13 +55,8 @@ export const DEFAULT_CONTENT_VALUES = {
   'promotion_button_text': 'View Collection',
   'promotion_button_link': '/search/winter-2024',
   'promotion_background_image': '/images/placeholder.jpg',
-  'about_title': 'Perfect blend of Japanese and Western fashion',
-  'about_description': 'We strive to create pieces that are both unique and timeless and take pride in offering high-quality clothing that is both comfortable and stylish.',
-  'about_button_text': 'About Us',
-  'about_background_image': '/images/placeholder.jpg',
   'footer_company_name': 'Clothing Store',
   'footer_description': 'Your fashion destination',
-  'footer_background_image': '/images/placeholder.jpg',
   'contact_email': 'contact@clothingstore.com',
   'contact_phone': '+1 (555) 123-4567',
   'contact_address': '123 Fashion Street, Style City, SC 12345'

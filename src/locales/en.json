@@ -89,11 +89,8 @@
   "checkout_place_order": "Place Order",
   "checkout_order_summary": "Order Summary",
   
-  "about_title": "About Us",
-  "about_description": "Learn more about our company and mission",
-  "about_mission": "Our Mission",
-  "about_vision": "Our Vision",
-  "about_team": "Our Team",
+
+
   
   "contact_title": "Contact Us",
   "contact_get_in_touch": "Get in Touch",
@@ -192,7 +189,7 @@
   "auth_continue_checkout": "Please sign in to continue with your order",
   "auth_signing_in": "Signing in...",
   
-  "about_button_text": "Learn More",
+
   "nav_navigation": "Navigation",
   "section_best_sellers": "Best Sellers",
   "promo_free_shipping": "Free Shipping",

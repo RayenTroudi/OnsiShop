@@ -14,40 +14,66 @@ interface MediaAsset {
   createdAt: string;
 }
 
-type ActiveSection = 'hero-video' | 'hero-image' | 'promotions' | 'about' | 'footer' | 'health';
+type ActiveSection = 'hero-video' | 'hero-image' | 'promotions' | 'health';
 
 export default function SimplifiedAdmin() {
   const [activeSection, setActiveSection] = useState<ActiveSection>('hero-video');
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
+  const [content, setContent] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchMediaAssets();
+    fetchContent();
   }, []);
 
   const fetchMediaAssets = async () => {
     try {
-      setLoading(true);
       const response = await fetch('/api/admin/media');
       if (response.ok) {
         const assets = await response.json();
-        setMediaAssets(assets);
+        // Filter out any assets with invalid data to prevent runtime errors
+        const validAssets = assets.filter((asset: any) => 
+          asset && 
+          typeof asset === 'object' && 
+          asset.filename && 
+          asset.url && 
+          asset.type &&
+          typeof asset.type === 'string'
+        );
+        setMediaAssets(validAssets);
       }
     } catch (error) {
       console.error('Error fetching media:', error);
+      setMediaAssets([]); // Set empty array on error to prevent undefined issues
+    }
+  };
+
+  const fetchContent = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/content');
+      if (response.ok) {
+        const result = await response.json();
+        setContent(result.success ? result.data : {});
+      }
+    } catch (error) {
+      console.error('Error fetching content:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleUploadSuccess = (url: string) => {
-    // Refresh media assets immediately after successful upload
-    console.log('✅ Upload successful, refreshing media list...');
+    // Refresh both media assets and content after successful upload
+    console.log('✅ Upload successful, refreshing media and content...');
     fetchMediaAssets();
+    fetchContent();
     
     // Also refresh after a short delay to ensure database consistency
     setTimeout(() => {
       fetchMediaAssets();
+      fetchContent();
     }, 1000);
   };
 
@@ -72,11 +98,11 @@ export default function SimplifiedAdmin() {
   };
 
   const getCurrentMedia = (section: string, type: 'image' | 'video') => {
-    const asset = mediaAssets.find(asset => 
-      asset.section === section && 
-      (type === 'image' ? asset.type.startsWith('image/') : asset.type.startsWith('video/'))
-    );
-    return asset?.url;
+    // Get current media from content API (content keys) not media assets
+    if (section === 'hero' && type === 'video') return content['hero_background_video'];
+    if (section === 'hero' && type === 'image') return content['hero_background_image'];
+    if (section === 'promotions' && type === 'image') return content['promotion_background_image'];
+    return undefined;
   };
 
   const getSectionMedia = (section: string) => {
@@ -107,8 +133,6 @@ export default function SimplifiedAdmin() {
           { key: 'hero-video', label: '🎬 Hero Video', desc: 'Homepage background video' },
           { key: 'hero-image', label: '🖼️ Hero Image', desc: 'Homepage background image' },
           { key: 'promotions', label: '🎯 Promotions', desc: 'Promotional section image' },
-          { key: 'about', label: '📖 About', desc: 'About page content' },
-          { key: 'footer', label: '📬 Footer', desc: 'Footer section media' },
           { key: 'health', label: '🏥 System Health', desc: 'Database and system monitoring' },
         ].map(section => (
           <button
@@ -175,30 +199,6 @@ export default function SimplifiedAdmin() {
           />
         )}
 
-        {/* About Section */}
-        {activeSection === 'about' && (
-          <SimpleMediaUploader
-            section="about"
-            mediaType="both"
-            currentMedia={getCurrentMedia('about', 'image') || getCurrentMedia('about', 'video')}
-            onUploadSuccess={handleUploadSuccess}
-            title="📖 About Section Media"
-            description="Upload images or videos for your About page or About section. This helps tell your brand story visually."
-          />
-        )}
-
-        {/* Footer Section */}
-        {activeSection === 'footer' && (
-          <SimpleMediaUploader
-            section="footer"
-            mediaType="image"
-            currentMedia={getCurrentMedia('footer', 'image')}
-            onUploadSuccess={handleUploadSuccess}
-            title="📬 Footer Background"
-            description="Upload background images or logos for your website footer section."
-          />
-        )}
-
         {/* Health Monitoring Section */}
         {activeSection === 'health' && (
           <div className="space-y-6">
@@ -222,13 +222,13 @@ export default function SimplifiedAdmin() {
               {getSectionMedia(activeSection.replace('-video', '').replace('-image', '')).map((asset) => (
                 <div key={asset.id} className="border border-gray-200 rounded-lg overflow-hidden">
                   <div className="aspect-video bg-gray-100 flex items-center justify-center">
-                    {asset.type.startsWith('image/') ? (
+                    {asset.type && asset.type.startsWith('image/') ? (
                       <img
                         src={asset.url}
                         alt={asset.filename}
                         className="w-full h-full object-cover"
                       />
-                    ) : asset.type.startsWith('video/') ? (
+                    ) : asset.type && asset.type.startsWith('video/') ? (
                       <video
                         src={asset.url}
                         className="w-full h-full object-cover"
@@ -244,7 +244,7 @@ export default function SimplifiedAdmin() {
                   <div className="p-3">
                     <p className="font-medium text-gray-900 truncate">{asset.filename}</p>
                     <p className="text-sm text-gray-500">
-                      {asset.type} • {new Date(asset.createdAt).toLocaleDateString()}
+                      {asset.type || 'Unknown type'} • {new Date(asset.createdAt).toLocaleDateString()}
                     </p>
                     <button
                       onClick={() => deleteMedia(asset.id)}
@@ -263,32 +263,38 @@ export default function SimplifiedAdmin() {
       {/* Quick Stats */}
       <div className="mt-8 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
         <h4 className="font-semibold text-indigo-900 mb-2">📊 Quick Stats</h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-indigo-600">
-              {mediaAssets.filter(a => a.type.startsWith('image/')).length}
-            </div>
-            <div className="text-indigo-700">Images</div>
+        {loading ? (
+          <div className="text-center py-4">
+            <div className="text-indigo-600">Loading stats...</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">
-              {mediaAssets.filter(a => a.type.startsWith('video/')).length}
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-indigo-600">
+                {mediaAssets.filter(a => a.type && a.type.startsWith('image/')).length}
+              </div>
+              <div className="text-indigo-700">Images</div>
             </div>
-            <div className="text-purple-700">Videos</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {mediaAssets.filter(a => a.section === 'hero').length}
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600">
+                {mediaAssets.filter(a => a.type && a.type.startsWith('video/')).length}
+              </div>
+              <div className="text-purple-700">Videos</div>
             </div>
-            <div className="text-green-700">Hero Media</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600">
-              {mediaAssets.filter(a => a.section === 'promotions').length}
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">
+                {mediaAssets.filter(a => a.section === 'hero').length}
+              </div>
+              <div className="text-green-700">Hero Media</div>
             </div>
-            <div className="text-orange-700">Promotions</div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-600">
+                {mediaAssets.filter(a => a.section === 'promotions').length}
+              </div>
+              <div className="text-orange-700">Promotions</div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

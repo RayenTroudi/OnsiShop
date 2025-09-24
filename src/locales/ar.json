@@ -88,11 +88,7 @@
   "checkout_place_order": "تأكيد الطلب",
   "checkout_order_summary": "ملخص الطلب",
   
-  "about_title": "من نحن",
-  "about_description": "تعرف على شركتنا ومهمتنا",
-  "about_mission": "مهمتنا",
-  "about_vision": "رؤيتنا",
-  "about_team": "فريقنا",
+
   
   "contact_title": "اتصل بنا",
   "contact_get_in_touch": "تواصل معنا",
@@ -192,7 +188,7 @@
   "auth_continue_checkout": "يرجى تسجيل الدخول للمتابعة مع طلبك",
   "auth_signing_in": "جاري تسجيل الدخول...",
   
-  "about_button_text": "اعرف المزيد",
+
   "nav_navigation": "التنقل",
   "section_best_sellers": "الأكثر مبيعاً",
   "promo_free_shipping": "شحن مجاني",

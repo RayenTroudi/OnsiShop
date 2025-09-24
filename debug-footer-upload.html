@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Footer Upload Debug</title>
+</head>
+<body>
+    <h1>Footer Upload Debug Test</h1>
+    
+    <script>
+        // Test footer upload directly
+        async function testFooterUpload() {
+            console.log('🔍 Testing footer upload...');
+            
+            const testData = {
+                url: "https://utfs.io/f/footer-debug-test-" + Date.now(),
+                section: "footer",
+                mediaType: "image",
+                contentKey: "footer_background_image"
+            };
+            
+            console.log('📤 Sending test data:', testData);
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/admin/media-new', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                console.log('📡 Response status:', response.status);
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Success:', result);
+                } else {
+                    const error = await response.json();
+                    console.error('❌ Error:', error);
+                }
+            } catch (error) {
+                console.error('💥 Network error:', error);
+            }
+        }
+        
+        // Test on page load
+        testFooterUpload();
+        
+        // Add button to test again
+        document.body.innerHTML += '<button onclick="testFooterUpload()">Test Footer Upload Again</button>';
+    </script>
+</body>
+</html>

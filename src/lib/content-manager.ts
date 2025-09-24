@@ -12,11 +12,6 @@ export const DEFAULT_CONTENT_VALUES = {
   hero_background_image: '',
   hero_background_video: '',
   
-  // About Section
-  about_title: 'About Our Store',
-  about_description: 'We are passionate about bringing you the finest clothing at affordable prices. Our curated collection features the latest trends and timeless classics.',
-  about_background_image: '',
-  
   // Promotions
   promotion_title: 'Winter Collection Now Available',
   promotion_subtitle: 'Stay cozy and fashionable this winter with our new collection!',
@@ -38,10 +33,8 @@ export const DEFAULT_CONTENT_VALUES = {
 export const SECTION_CONTENT_MAPPING = {
   'hero': 'hero_background_video',
   'hero-background': 'hero_background_video',
-  'about': 'about_background_image',
   'promotion': 'promotion_background_image',
-  'promotions': 'promotion_background_image',
-  'footer': 'footer_background_image'
+  'promotions': 'promotion_background_image'
 };
 
 // Normalize content keys (convert dots to underscores for consistency)

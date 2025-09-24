@@ -86,3 +86,34 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// DELETE - Remove hero video
+export async function DELETE() {
+  try {
+    console.log('🗑️ Removing hero video...');
+    
+    // Clear the hero_background_video content key
+    await simpleDbService.upsertSiteContent('hero_background_video', '');
+    
+    // Revalidate pages to update cache
+    revalidatePath('/');
+    revalidatePath('/admin');
+    
+    console.log('✅ Hero video removed successfully');
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Hero video removed successfully'
+    });
+    
+  } catch (error) {
+    console.error('❌ Failed to remove hero video:', error);
+    return NextResponse.json(
+      { 
+        error: 'Failed to remove hero video',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
+  }
+}

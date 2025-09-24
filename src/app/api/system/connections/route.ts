@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { connectionMonitor, withConnectionMonitoring } from '@/lib/connectionMonitor';
-import { checkMongoDBHealth, getConnectionCount } from '@/lib/mongodb';
+import { checkMongoDBHealth } from '@/lib/mongodb';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
