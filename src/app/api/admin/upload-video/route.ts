@@ -41,12 +41,15 @@ export async function POST(request: NextRequest) {
     const filename = `hero-video-${timestamp}-${randomString}.${file.type.split('/')[1]}`;
 
     // Store in database
+    const now = new Date();
     const mediaAsset = await dbService.createMediaAsset({
       filename,
       url: dataUrl, // Store the complete data URL
       type: file.type,
       section: 'hero-background',
-      alt: 'Hero background video'
+      alt: 'Hero background video',
+      createdAt: now,
+      updatedAt: now
     });
 
     if (!mediaAsset) {
