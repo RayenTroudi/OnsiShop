@@ -336,6 +336,7 @@ export class AppwriteDbService {
     availableForSale?: boolean;
     images?: string[];
     stock?: number;
+    categoryId?: string | null;
   }) {
     try {
       const doc = await serverDatabases.createDocument(
@@ -351,6 +352,7 @@ export class AppwriteDbService {
           compareAtPrice: data.compareAtPrice || null,
           availableForSale: data.availableForSale ?? true,
           images: data.images || [],
+          categoryId: data.categoryId || null,
         }
       );
       
