@@ -196,9 +196,28 @@ export default function OrdersPage() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {order.items.slice(0, 3).map((item, index) => {
-                      const imageUrl = item.product.image || 
-                        (item.product.images ? JSON.parse(item.product.images)[0] : null) ||
-                        '/images/placeholder.jpg';
+                      // Safely parse image URL
+                      let imageUrl = '/images/placeholder.jpg';
+                      
+                      if (item.product.image) {
+                        imageUrl = item.product.image;
+                      } else if (item.product.images) {
+                        try {
+                          // Check if it's already a URL string
+                          if (typeof item.product.images === 'string' && item.product.images.startsWith('http')) {
+                            imageUrl = item.product.images;
+                          } else {
+                            // Try to parse as JSON array
+                            const parsedImages = JSON.parse(item.product.images);
+                            imageUrl = Array.isArray(parsedImages) ? parsedImages[0] : parsedImages;
+                          }
+                        } catch {
+                          // If parsing fails, use as-is if it's a URL, otherwise use placeholder
+                          if (typeof item.product.images === 'string' && item.product.images.startsWith('http')) {
+                            imageUrl = item.product.images;
+                          }
+                        }
+                      }
 
                       return (
                         <div key={index} className="flex items-center space-x-3">

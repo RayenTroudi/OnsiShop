@@ -61,10 +61,11 @@ const HeroSection = () => {
         const result = await response.json();
         
         if (result.success && result.data) {
+          // Always use translations for text content, only use API for media
           setContent({
-            title: result.data.hero_title || t('hero_title'),
-            subtitle: result.data.hero_subtitle || t('hero_subtitle'),
-            description: result.data.hero_description || t('hero_description'),
+            title: t('hero_title'),
+            subtitle: t('hero_subtitle'),
+            description: t('hero_description'),
             backgroundImage: result.data.hero_background_image,
             backgroundVideo: result.data.hero_background_video
           });
@@ -76,9 +77,26 @@ const HeroSection = () => {
               result.data.hero_background_image) : 
             'None');
           console.log('   Background Video:', result.data.hero_background_video || 'None');
+        } else {
+          // If API fails, use translations
+          setContent({
+            title: t('hero_title'),
+            subtitle: t('hero_subtitle'),
+            description: t('hero_description'),
+            backgroundImage: undefined,
+            backgroundVideo: undefined
+          });
         }
       } catch (error) {
         console.error('❌ Hero: Error fetching content:', error);
+        // If API fails, use translations
+        setContent({
+          title: t('hero_title'),
+          subtitle: t('hero_subtitle'),
+          description: t('hero_description'),
+          backgroundImage: undefined,
+          backgroundVideo: undefined
+        });
       } finally {
         setLoading(false);
       }

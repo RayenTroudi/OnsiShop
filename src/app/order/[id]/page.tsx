@@ -220,9 +220,28 @@ export default function OrderPage({ params }: OrderPageProps) {
             <h3 className="text-sm font-medium text-gray-900 mb-3">Order Items</h3>
             <div className="space-y-3">
               {order.items.map((item, index) => {
-                const imageUrl = item.product.image || 
-                  (item.product.images ? JSON.parse(item.product.images)[0] : null) ||
-                  '/images/placeholder-product.svg';
+                // Safely parse image URL
+                let imageUrl = '/images/placeholder-product.svg';
+                
+                if (item.product.image) {
+                  imageUrl = item.product.image;
+                } else if (item.product.images) {
+                  try {
+                    // Check if it's already a URL string
+                    if (typeof item.product.images === 'string' && item.product.images.startsWith('http')) {
+                      imageUrl = item.product.images;
+                    } else {
+                      // Try to parse as JSON array
+                      const parsedImages = JSON.parse(item.product.images);
+                      imageUrl = Array.isArray(parsedImages) ? parsedImages[0] : parsedImages;
+                    }
+                  } catch {
+                    // If parsing fails, use as-is if it's a URL, otherwise use placeholder
+                    if (typeof item.product.images === 'string' && item.product.images.startsWith('http')) {
+                      imageUrl = item.product.images;
+                    }
+                  }
+                }
 
                 return (
                   <div key={index} className="flex items-center space-x-4">

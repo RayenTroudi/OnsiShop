@@ -3,6 +3,9 @@
   "hero_subtitle": "اكتشف منتجات رائعة بأسعار مذهلة",
   "hero_description": "تسوق أحدث الصيحات واعثر على أسلوبك المثالي مع مجموعتنا المختارة من المنتجات المتميزة.",
   "hero_cta": "تسوق الآن",
+  "hero_cta_primary": "تسوق الجديد",
+  "hero_cta_secondary": "عرض جميع المنتجات",
+  "hero_eyebrow": "مجموعة ربيع 2025",
   "hero_explore": "استكشف المنتجات",
   
   "nav_home": "الرئيسية",
@@ -146,7 +149,10 @@
   "nav_orders": "الطلبات",
   
   "section_new_arrivals": "وصل حديثاً",
+  "section_new_arrivals_eyebrow": "وصل للتو",
+  "section_new_arrivals_description": "اكتشف أحدث الإضافات إلى مجموعتنا",
   "button_view_more": "عرض المزيد",
+  "button_view_all": "عرض الكل",
   "button_add_to_cart": "إضافة إلى السلة",
   "button_adding": "جاري الإضافة...",
   "cart_added_success": "تم الإضافة إلى السلة!",
@@ -208,6 +214,15 @@
   "admin_manage_translations": "إدارة الترجمات",
   "admin_recent_products": "المنتجات الأخيرة",
   "admin_no_products_yet": "لا توجد منتجات بعد",
+  
+  "trust_free_shipping": "شحن مجاني",
+  "trust_free_shipping_desc": "للطلبات فوق 50$",
+  "trust_easy_returns": "إرجاع سهل",
+  "trust_easy_returns_desc": "سياسة إرجاع لمدة 30 يوماً",
+  "trust_secure_payment": "دفع آمن",
+  "trust_secure_payment_desc": "تشفير SSL للدفع",
+  "trust_support": "دعم 24/7",
+  "trust_support_desc": "دائماً هنا لمساعدتك",
   
   "section_promotions": "العروض الترويجية",
   "section_discounts": "خصومات خاصة",

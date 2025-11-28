@@ -22,7 +22,36 @@ async function handleGET(request: NextRequest) {
       orderBy: { createdAt: 'desc' }
     });
 
-    return NextResponse.json({ orders });
+    // Populate each order with its items and product details
+    const ordersWithItems = await Promise.all(
+      orders.map(async (order: any) => {
+        const orderItems = await dbService.getOrderItems(order.id);
+        
+        // Enhance order items with product details
+        const itemsWithProducts = await Promise.all(
+          orderItems.map(async (item: any) => {
+            const product = await dbService.getProductById(item.productId);
+            return {
+              ...item,
+              product: product || {
+                id: item.productId,
+                name: 'Unknown Product',
+                title: 'Unknown Product',
+                price: item.price,
+                image: '/images/placeholder-product.svg'
+              }
+            };
+          })
+        );
+
+        return {
+          ...order,
+          items: itemsWithProducts
+        };
+      })
+    );
+
+    return NextResponse.json({ orders: ordersWithItems });
   } catch (error) {
     console.error('Error fetching orders:', error);
     return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 });
