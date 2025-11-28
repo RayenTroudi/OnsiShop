@@ -1,5 +1,5 @@
+import { dbService } from '@/lib/appwrite/database';
 import { broadcastContentUpdate } from '@/lib/content-stream';
-import { dbService } from '@/lib/database';
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 

@@ -9,37 +9,25 @@ import { useEffect, useState } from 'react';
 export default function AdminDashboard() {
   const { t } = useTranslation();
   const [products, setProducts] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
   const [contentCount, setContentCount] = useState(0);
-  const [translationCount, setTranslationCount] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         // Load data using API routes instead of direct DB calls
-        const [productsResponse, categoriesResponse] = await Promise.all([
-          fetch('/api/admin/products'),
-          fetch('/api/admin/categories')
-        ]);
+        const productsResponse = await fetch('/api/admin/products');
         
-        if (!productsResponse.ok || !categoriesResponse.ok) {
+        if (!productsResponse.ok) {
           throw new Error('Failed to fetch data');
         }
         
-        const [productsData, categoriesData] = await Promise.all([
-          productsResponse.json(),
-          categoriesResponse.json()
-        ]);
+        const productsData = await productsResponse.json();
         
         setProducts(productsData);
-        setCategories(categoriesData);
         
         // Fetch content count
         fetchContentCount();
-        
-        // Fetch translation count
-        fetchTranslationCount();
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       }
@@ -62,18 +50,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const fetchTranslationCount = async () => {
-    try {
-      const response = await fetch('/api/translations?language=fr');
-      const result = await response.json();
-      if (response.ok && result) {
-        setTranslationCount(Object.keys(result).length);
-      }
-    } catch (error) {
-      console.error('Error fetching translation count:', error);
-    }
-  };
-
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -85,7 +61,7 @@ export default function AdminDashboard() {
   return (
     <div className="px-4 py-6 sm:px-0">
       {/* Dashboard Stats */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5 mb-8">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
@@ -100,26 +76,6 @@ export default function AdminDashboard() {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">{t('admin_total_products')}</dt>
                   <dd className="text-lg font-medium text-gray-900">{products.length}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">{t('nav_categories')}</dt>
-                  <dd className="text-lg font-medium text-gray-900">{categories.length}</dd>
                 </dl>
               </div>
             </div>
@@ -167,26 +123,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">{t('admin_translation_keys')}</dt>
-                  <dd className="text-lg font-medium text-gray-900">{translationCount}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Quick Actions */}
@@ -202,15 +138,6 @@ export default function AdminDashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
               {t('admin_add_product')}
-            </Link>
-            <Link
-              href="/admin/categories/new"
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-              </svg>
-              {t('admin_add_category')}
             </Link>
             <Link
               href="/admin/content"
@@ -229,15 +156,6 @@ export default function AdminDashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
               {t('admin_manage_products')}
-            </Link>
-            <Link
-              href="/admin/categories"
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-              </svg>
-              {t('admin_manage_categories')}
             </Link>
           </div>
         </div>

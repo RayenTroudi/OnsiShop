@@ -1,28 +1,26 @@
-import { dbService } from '@/lib/database';
+import { verifyAuth } from '@/lib/appwrite/auth';
+import { dbService } from '@/lib/appwrite/database';
 import { withMongoCleanup } from '@/lib/withMongoCleanup';
-import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-
 // Get cart for authenticated user
 async function handleGET(request: NextRequest) {
   try {
-    // Get userId from JWT token
-    const token = request.cookies.get('auth-token')?.value;
+    // Get user from Appwrite session
+    const user = await verifyAuth();
 
     console.log('🛒 Cart GET API Debug:', {
-      hasToken: !!token,
-      tokenLength: token?.length || 0
+      hasUser: !!user,
+      userId: user?.id
     });
 
-    if (!token) {
-      console.log('🚫 No auth token found in cart GET API');
+    if (!user) {
+      console.log('🚫 No auth user found in cart GET API');
       return NextResponse.json({ 
         success: true,
-        message: 'No authentication token found',
+        message: 'No authentication found',
         data: {
           id: null,
           userId: null,
@@ -35,18 +33,7 @@ async function handleGET(request: NextRequest) {
       });
     }
 
-    let userId: string;
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-      userId = decoded.userId;
-      console.log('✅ Cart GET token verified, userId:', userId);
-    } catch (jwtError) {
-      console.log('❌ Cart GET JWT verification failed:', jwtError);
-      return NextResponse.json({
-        success: false,
-        message: 'Invalid authentication token'
-      }, { status: 401 });
-    }
+    const userId = user.id;
 
     // Get cart and items separately (compatibility layer doesn't support include)
     const cart = await dbService.getCartByUserId(userId) as any;

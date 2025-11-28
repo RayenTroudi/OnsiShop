@@ -1,4 +1,4 @@
-import { dbService } from '@/lib/database';
+import { dbService } from '@/lib/appwrite/database';
 import { Metadata } from 'next';
 
 import Grid from '@/components/grid';

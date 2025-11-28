@@ -4,10 +4,8 @@ import DeleteProductButton from '@/components/product/DeleteProductButton';
 import ProductRating from '@/components/product/ProductRating';
 import ProductReviews from '@/components/product/ProductReviews';
 import RelatedProducts from '@/components/product/RelatedProducts';
-import { dbService } from '@/lib/database';
-import jwt from 'jsonwebtoken';
+import { verifyAuth } from '@/lib/appwrite/auth';
 import type { Metadata } from 'next';
-import { cookies } from 'next/headers';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Suspense } from 'react';
@@ -47,16 +45,7 @@ interface Product {
 // Check if current user is admin
 async function isCurrentUserAdmin(): Promise<boolean> {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('token')?.value;
-
-    if (!token) {
-      return false;
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
-    const user = await dbService.getUserById(decoded.userId );
-
+    const user = await verifyAuth();
     return user?.role === 'admin';
   } catch (error) {
     return false;

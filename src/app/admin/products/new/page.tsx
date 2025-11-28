@@ -5,62 +5,19 @@ export const dynamic = 'force-dynamic';
 import ImageUpload from '@/components/admin/ImageUpload';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-
-interface Category {
-  id: string;
-  name: string;
-  handle: string;
-  description?: string;
-}
-
-interface ProductVariant {
-  id: string;
-  title: string;
-  price: number;
-  availableForSale: boolean;
-  selectedOptions: { name: string; value: string }[];
-}
+import { useState } from 'react';
 
 export default function NewProductPage() {
   const router = useRouter();
-  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
-    handle: '',
     description: '',
     price: 0,
     compareAtPrice: 0,
-    categoryId: '',
     images: [''],
-    tags: '',
     availableForSale: true,
   });
-  
-  const [variants, setVariants] = useState<ProductVariant[]>([{
-    id: 'variant_1',
-    title: 'Default',
-    price: 0,
-    availableForSale: true,
-    selectedOptions: [],
-  }]);
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch('/api/admin/categories');
-      if (response.ok) {
-        const cats = await response.json();
-        setCategories(cats);
-      }
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -69,14 +26,6 @@ export default function NewProductPage() {
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : 
               type === 'number' ? parseFloat(value) || 0 : value
     }));
-
-    // Auto-generate handle from title
-    if (name === 'title') {
-      setFormData(prev => ({
-        ...prev,
-        handle: value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-      }));
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,11 +36,6 @@ export default function NewProductPage() {
       const productData = {
         ...formData,
         images: formData.images.filter(img => img.trim() !== ''),
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag !== ''),
-        variants: variants.map(variant => ({
-          ...variant,
-          price: formData.price, // Use main price for variants
-        })),
       };
 
       const response = await fetch('/api/admin/products', {
@@ -116,216 +60,167 @@ export default function NewProductPage() {
   };
 
   return (
-    <div className="px-4 py-6 sm:px-0">
-      <div className="md:flex md:items-center md:justify-between">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            Add New Product
-          </h1>
-        </div>
-        <div className="mt-4 flex md:mt-0 md:ml-4">
-          <Link
-            href="/admin/products"
-            className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            Cancel
-          </Link>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="mt-8 space-y-8 divide-y divide-gray-200">
-        <div className="space-y-8 divide-y divide-gray-200">
-          {/* Basic Information */}
-          <div>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg leading-6 font-medium text-gray-900">Product Information</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Basic information about your product.
-              </p>
+              <h1 className="text-3xl font-bold text-gray-900">Add New Product</h1>
+              <p className="mt-2 text-sm text-gray-600">Create a new product for your store</p>
             </div>
+            <Link
+              href="/admin/products"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to Products
+            </Link>
+          </div>
+        </div>
 
-            <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-              <div className="sm:col-span-4">
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                  Product Title
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
+              <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+              <p className="mt-1 text-sm text-gray-500">Essential details about your product</p>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2" suppressHydrationWarning>
+                  Product Title <span className="text-red-500">*</span>
                 </label>
-                <div className="mt-1">
-                  <input
-                    type="text"
-                    name="title"
-                    id="title"
-                    required
-                    value={formData.title}
-                    onChange={handleInputChange}
-                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                  />
-                </div>
+                <input
+                  type="text"
+                  name="title"
+                  id="title"
+                  required
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Classic Cotton T-Shirt"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                />
               </div>
 
-              <div className="sm:col-span-4">
-                <label htmlFor="handle" className="block text-sm font-medium text-gray-700">
-                  Handle (URL slug)
-                </label>
-                <div className="mt-1">
-                  <input
-                    type="text"
-                    name="handle"
-                    id="handle"
-                    required
-                    value={formData.handle}
-                    onChange={handleInputChange}
-                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                  />
-                </div>
-              </div>
-
-              <div className="sm:col-span-6">
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
                   Description
                 </label>
-                <div className="mt-1">
-                  <textarea
-                    id="description"
-                    name="description"
-                    rows={3}
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md"
-                  />
-                </div>
+                <textarea
+                  id="description"
+                  name="description"
+                  rows={4}
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Describe your product features, materials, and benefits..."
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
+                />
               </div>
 
-              <div className="sm:col-span-2">
-                <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700">
-                  Category
-                </label>
-                <div className="mt-1">
-                  <select
-                    id="categoryId"
-                    name="categoryId"
-                    required
-                    value={formData.categoryId}
-                    onChange={handleInputChange}
-                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                  >
-                    <option value="">Select a category</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="sm:col-span-2">
-                <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-                  Price ($)
-                </label>
-                <div className="mt-1">
-                  <input
-                    type="number"
-                    name="price"
-                    id="price"
-                    min="0"
-                    step="0.01"
-                    required
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                  />
-                </div>
-              </div>
-
-              <div className="sm:col-span-2">
-                <label htmlFor="compareAtPrice" className="block text-sm font-medium text-gray-700">
-                  Compare at Price ($)
-                </label>
-                <div className="mt-1">
-                  <input
-                    type="number"
-                    name="compareAtPrice"
-                    id="compareAtPrice"
-                    min="0"
-                    step="0.01"
-                    value={formData.compareAtPrice}
-                    onChange={handleInputChange}
-                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                  />
-                </div>
-              </div>
-
-              <div className="sm:col-span-6">
-                <label htmlFor="tags" className="block text-sm font-medium text-gray-700">
-                  Tags (comma separated)
-                </label>
-                <div className="mt-1">
-                  <input
-                    type="text"
-                    name="tags"
-                    id="tags"
-                    value={formData.tags}
-                    onChange={handleInputChange}
-                    placeholder="casual, cotton, summer"
-                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                  />
-                </div>
-              </div>
-
-              <div className="sm:col-span-6">
-                <div className="flex items-center">
-                  <input
-                    id="availableForSale"
-                    name="availableForSale"
-                    type="checkbox"
-                    checked={formData.availableForSale}
-                    onChange={handleInputChange}
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="availableForSale" className="ml-2 block text-sm text-gray-900">
-                    Available for sale
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2" suppressHydrationWarning>
+                    Price ($) <span className="text-red-500">*</span>
                   </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" suppressHydrationWarning>$</span>
+                    <input
+                      type="number"
+                      name="price"
+                      id="price"
+                      min="0"
+                      step="0.01"
+                      required
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      placeholder="0.00"
+                      className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    />
+                  </div>
                 </div>
+
+                <div>
+                  <label htmlFor="compareAtPrice" className="block text-sm font-medium text-gray-700 mb-2" suppressHydrationWarning>
+                    Compare Price ($)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" suppressHydrationWarning>$</span>
+                    <input
+                      type="number"
+                      name="compareAtPrice"
+                      id="compareAtPrice"
+                      min="0"
+                      step="0.01"
+                      value={formData.compareAtPrice}
+                      onChange={handleInputChange}
+                      placeholder="0.00"
+                      className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">Original price for sale display</p>
+                </div>
+              </div>
+
+              <div className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <input
+                  id="availableForSale"
+                  name="availableForSale"
+                  type="checkbox"
+                  checked={formData.availableForSale}
+                  onChange={handleInputChange}
+                  className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
+                />
+                <label htmlFor="availableForSale" className="ml-3 block text-sm font-medium text-gray-900 cursor-pointer">
+                  Available for sale
+                  <span className="block text-xs font-normal text-gray-500 mt-0.5">Product will be visible and purchasable in your store</span>
+                </label>
               </div>
             </div>
           </div>
 
-          {/* Images */}
-          <div className="pt-8">
-            <div>
-              <h3 className="text-lg leading-6 font-medium text-gray-900">Product Images</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Add images for your product. You can upload files or enter URLs.
-              </p>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
+              <h3 className="text-lg font-semibold text-gray-900">Product Images</h3>
+              <p className="mt-1 text-sm text-gray-500">Upload or add URLs for product images (first image will be the main image)</p>
             </div>
-
-            <div className="mt-6">
+            
+            <div className="p-6">
               <ImageUpload 
                 images={formData.images}
                 onImagesChange={(newImages) => setFormData(prev => ({ ...prev, images: newImages }))}
               />
             </div>
           </div>
-        </div>
 
-        <div className="pt-5">
-          <div className="flex justify-end">
+          <div className="flex items-center justify-end gap-4 pt-6">
             <Link
               href="/admin/products"
-              className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="px-6 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
             >
               Cancel
             </Link>
             <button
               type="submit"
               disabled={isLoading}
-              className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              className="px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              {isLoading ? 'Creating...' : 'Create Product'}
+              {isLoading ? (
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Creating...
+                </span>
+              ) : (
+                'Create Product'
+              )}
             </button>
           </div>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

@@ -1,35 +1,41 @@
-import { Collections, getDatabase } from '@/lib/mongodb';
-import type { CreateDocument, Upload } from '@/types/mongodb';
-import { Collection } from 'mongodb';
+import { COLLECTION_IDS, appwriteConfig } from '@/lib/appwrite/config';
+import { ID, serverDatabases } from '@/lib/appwrite/server';
+import { Query } from 'node-appwrite';
+
+const databaseId = appwriteConfig.databaseId;
 
 export class UploadService {
-  private static async getCollection(): Promise<Collection<Upload>> {
-    const db = await getDatabase();
-    return db.collection<Upload>(Collections.UPLOADS);
-  }
-
   /**
-   * Save upload metadata to database
+   * Save upload metadata to database (Appwrite Storage)
    */
-  static async saveUpload(uploadData: Omit<CreateDocument<Upload>, 'createdAt' | 'updatedAt'>): Promise<Upload> {
+  static async saveUpload(uploadData: any): Promise<any> {
     try {
-      const collection = await this.getCollection();
-      
-      const newUpload: CreateDocument<Upload> = {
+      // Convert metadata object to JSON string for Appwrite
+      const dataToSave = {
         ...uploadData,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        metadata: typeof uploadData.metadata === 'object' 
+          ? JSON.stringify(uploadData.metadata) 
+          : uploadData.metadata,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
 
-      const result = await collection.insertOne(newUpload);
-      
-      const saved = await collection.findOne({ _id: result.insertedId });
-      if (!saved) {
-        throw new Error('Failed to retrieve saved upload');
-      }
+      const doc = await serverDatabases.createDocument(
+        databaseId,
+        COLLECTION_IDS.UPLOADS,
+        ID.unique(),
+        dataToSave
+      );
 
-      console.log(`✅ Upload saved to database: ${saved._id}`);
-      return saved;
+      console.log(`✅ Upload saved to database: ${doc.$id}`);
+      return {
+        ...doc,
+        id: doc.$id,
+        _id: doc.$id,
+        metadata: typeof doc.metadata === 'string' 
+          ? JSON.parse(doc.metadata) 
+          : doc.metadata,
+      };
     } catch (error) {
       console.error('❌ Failed to save upload to database:', error);
       throw error;
@@ -39,21 +45,25 @@ export class UploadService {
   /**
    * Get uploads by user ID
    */
-  static async getUploadsByUser(userId: string, uploadType?: Upload['uploadType']): Promise<Upload[]> {
+  static async getUploadsByUser(userId: string, uploadType?: string): Promise<any[]> {
     try {
-      const collection = await this.getCollection();
+      const queries = [Query.equal('uploadedBy', userId)];
       
-      const filter: any = { uploadedBy: userId };
       if (uploadType) {
-        filter.uploadType = uploadType;
+        queries.push(Query.equal('uploadType', uploadType));
       }
 
-      const uploads = await collection
-        .find(filter)
-        .sort({ createdAt: -1 })
-        .toArray();
+      const response = await serverDatabases.listDocuments(
+        databaseId,
+        COLLECTION_IDS.UPLOADS,
+        [...queries, Query.orderDesc('createdAt')]
+      );
 
-      return uploads;
+      return response.documents.map(doc => ({
+        ...doc,
+        id: doc.$id,
+        _id: doc.$id,
+      }));
     } catch (error) {
       console.error('❌ Failed to fetch uploads:', error);
       throw error;
@@ -63,18 +73,25 @@ export class UploadService {
   /**
    * Get uploads by type
    */
-  static async getUploadsByType(uploadType: Upload['uploadType'], limit?: number): Promise<Upload[]> {
+  static async getUploadsByType(uploadType: string, limit?: number): Promise<any[]> {
     try {
-      const collection = await this.getCollection();
-      
-      let query = collection.find({ uploadType }).sort({ createdAt: -1 });
+      const queries = [Query.equal('uploadType', uploadType), Query.orderDesc('createdAt')];
       
       if (limit) {
-        query = query.limit(limit);
+        queries.push(Query.limit(limit));
       }
 
-      const uploads = await query.toArray();
-      return uploads;
+      const response = await serverDatabases.listDocuments(
+        databaseId,
+        COLLECTION_IDS.UPLOADS,
+        queries
+      );
+
+      return response.documents.map(doc => ({
+        ...doc,
+        id: doc.$id,
+        _id: doc.$id,
+      }));
     } catch (error) {
       console.error('❌ Failed to fetch uploads by type:', error);
       throw error;
@@ -84,12 +101,24 @@ export class UploadService {
   /**
    * Get upload by file URL
    */
-  static async getUploadByUrl(fileUrl: string): Promise<Upload | null> {
+  static async getUploadByUrl(fileUrl: string): Promise<any | null> {
     try {
-      const collection = await this.getCollection();
+      const response = await serverDatabases.listDocuments(
+        databaseId,
+        COLLECTION_IDS.UPLOADS,
+        [Query.equal('fileUrl', fileUrl)]
+      );
       
-      const upload = await collection.findOne({ fileUrl });
-      return upload;
+      if (response.documents.length === 0) return null;
+      
+      const doc = response.documents[0];
+      if (!doc) return null;
+      
+      return {
+        ...doc,
+        id: doc.$id,
+        _id: doc.$id,
+      };
     } catch (error) {
       console.error('❌ Failed to fetch upload by URL:', error);
       throw error;
@@ -99,23 +128,24 @@ export class UploadService {
   /**
    * Update upload metadata
    */
-  static async updateUpload(uploadId: string, updateData: Partial<Upload>): Promise<Upload | null> {
+  static async updateUpload(uploadId: string, updateData: any): Promise<any | null> {
     try {
-      const collection = await this.getCollection();
-      
-      const result = await collection.findOneAndUpdate(
-        { _id: uploadId as any },
-        { 
-          $set: { 
-            ...updateData, 
-            updatedAt: new Date() 
-          } 
-        },
-        { returnDocument: 'after' }
+      const doc = await serverDatabases.updateDocument(
+        databaseId,
+        COLLECTION_IDS.UPLOADS,
+        uploadId,
+        {
+          ...updateData,
+          updatedAt: new Date().toISOString(),
+        }
       );
 
       console.log(`✅ Upload updated: ${uploadId}`);
-      return result || null;
+      return {
+        ...doc,
+        id: doc.$id,
+        _id: doc.$id,
+      };
     } catch (error) {
       console.error('❌ Failed to update upload:', error);
       throw error;
@@ -123,40 +153,40 @@ export class UploadService {
   }
 
   /**
-   * Delete upload record (doesn't delete the actual file from UploadThing)
+   * Delete upload record (doesn't delete the actual file from Appwrite Storage)
    */
   static async deleteUpload(uploadId: string): Promise<boolean> {
     try {
-      const collection = await this.getCollection();
+      await serverDatabases.deleteDocument(
+        databaseId,
+        COLLECTION_IDS.UPLOADS,
+        uploadId
+      );
       
-      const result = await collection.deleteOne({ _id: uploadId as any });
-      
-      if (result.deletedCount > 0) {
-        console.log(`✅ Upload deleted: ${uploadId}`);
-        return true;
-      }
-      
-      return false;
+      console.log(`✅ Upload deleted: ${uploadId}`);
+      return true;
     } catch (error) {
       console.error('❌ Failed to delete upload:', error);
-      throw error;
+      return false;
     }
   }
 
   /**
    * Get recent uploads (for admin dashboard)
    */
-  static async getRecentUploads(limit: number = 10): Promise<Upload[]> {
+  static async getRecentUploads(limit: number = 10): Promise<any[]> {
     try {
-      const collection = await this.getCollection();
-      
-      const uploads = await collection
-        .find({})
-        .sort({ createdAt: -1 })
-        .limit(limit)
-        .toArray();
+      const response = await serverDatabases.listDocuments(
+        databaseId,
+        COLLECTION_IDS.UPLOADS,
+        [Query.orderDesc('createdAt'), Query.limit(limit)]
+      );
 
-      return uploads;
+      return response.documents.map(doc => ({
+        ...doc,
+        id: doc.$id,
+        _id: doc.$id,
+      }));
     } catch (error) {
       console.error('❌ Failed to fetch recent uploads:', error);
       throw error;
@@ -172,27 +202,27 @@ export class UploadService {
     totalSize: number;
   }> {
     try {
-      const collection = await this.getCollection();
-      
-      const [totalUploads, uploadsByType, sizeStats] = await Promise.all([
-        collection.countDocuments({}),
-        collection.aggregate([
-          { $group: { _id: '$uploadType', count: { $sum: 1 } } }
-        ]).toArray(),
-        collection.aggregate([
-          { $group: { _id: null, totalSize: { $sum: '$fileSize' } } }
-        ]).toArray()
-      ]);
+      // Get all uploads
+      const response = await serverDatabases.listDocuments(
+        databaseId,
+        COLLECTION_IDS.UPLOADS,
+        [Query.limit(10000)]
+      );
 
-      const typeStats: Record<string, number> = {};
-      uploadsByType.forEach((item: any) => {
-        typeStats[item._id] = item.count;
+      const totalUploads = response.total;
+      const uploadsByType: Record<string, number> = {};
+      let totalSize = 0;
+
+      response.documents.forEach((doc: any) => {
+        const type = doc.uploadType || 'unknown';
+        uploadsByType[type] = (uploadsByType[type] || 0) + 1;
+        totalSize += doc.fileSize || 0;
       });
 
       return {
         totalUploads,
-        uploadsByType: typeStats,
-        totalSize: sizeStats[0]?.totalSize || 0
+        uploadsByType,
+        totalSize
       };
     } catch (error) {
       console.error('❌ Failed to fetch upload stats:', error);

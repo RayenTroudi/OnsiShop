@@ -2,11 +2,9 @@
 
 import CartIconWrapper from '@/components/cart/CartIconWrapper';
 import Logo from '@/components/layout/Logo';
-import { getMenu } from '@/lib/mock-shopify';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { Suspense, useEffect, useState } from 'react';
-import ClientMenu from './ClientMenu';
+import { Suspense, useState } from 'react';
 import LanguageSelector from './LanguageSelector';
 import SearchIcon from './SearchIcon';
 import UserMenu from './UserMenu';
@@ -29,46 +27,7 @@ interface Category {
 
 export default function ClientHeader() {
   const [menu, setMenu] = useState<Array<{ title: string; path: string; items: any[] }>>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch('/api/categories');
-        const categories: Category[] = await response.json();
-        
-        // Transform categories into menu format
-        const categoryMenu = categories.map(category => ({
-          title: category.name,
-          path: `/search/${category.handle}`,
-          items: []
-        }));
-        
-        // Use categories if available, otherwise fallback to mock menu
-        if (categoryMenu.length > 0) {
-          setMenu(categoryMenu);
-        } else {
-          // Fallback to mock menu
-          const mockMenu = await getMenu('main-menu');
-          setMenu(mockMenu);
-        }
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        // Use mock menu as fallback
-        try {
-          const mockMenu = await getMenu('main-menu');
-          setMenu(mockMenu);
-        } catch (mockError) {
-          console.error('Error fetching mock menu:', mockError);
-          setMenu([]);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCategories();
-  }, []);
+  const [loading, setLoading] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 flex w-full items-center justify-center border-b border-purple/20 bg-white/90 px-4 py-2 shadow-sm backdrop-blur-md md:h-20 md:py-0 xl:px-12">
@@ -98,15 +57,7 @@ export default function ClientHeader() {
           
           {/* Desktop menu */}
           <div className="hidden md:flex md:flex-1 md:justify-center">
-            {loading ? (
-              <div className="flex items-center space-x-4">
-                <div className="h-6 w-20 animate-pulse rounded bg-gray-200"></div>
-                <div className="h-6 w-24 animate-pulse rounded bg-gray-200"></div>
-                <div className="h-6 w-16 animate-pulse rounded bg-gray-200"></div>
-              </div>
-            ) : (
-              <ClientMenu initialMenu={menu} />
-            )}
+            {/* Menu removed - showing only logo and actions */}
           </div>
           
           {/* Right side actions */}

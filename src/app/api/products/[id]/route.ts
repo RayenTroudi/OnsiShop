@@ -1,5 +1,5 @@
-import { dbService } from '@/lib/database';
-import jwt from 'jsonwebtoken';
+import { requireAdmin } from '@/lib/appwrite/auth';
+import { dbService } from '@/lib/appwrite/database';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -56,31 +56,10 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Check authentication
-    const cookieStore = cookies();
-    const token = cookieStore.get('token')?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      );
-    }
-
     // Check if user is admin
-    const user = await dbService.getUserById(decoded.userId );
+    const user = await requireAdmin();
 
-    if (!user || user.role !== 'admin') {
+    if (!user) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
@@ -161,20 +140,10 @@ export async function DELETE(
       );
     }
 
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      );
-    }
-
     // Check if user is admin
-    const user = await dbService.getUserById(decoded.userId );
+    const user = await requireAdmin();
 
-    if (!user || user.role !== 'admin') {
+    if (!user) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }

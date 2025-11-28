@@ -1,9 +1,8 @@
 /**
- * MongoDB Connection Cleanup Middleware
- * ULTRA-aggressive cleanup for M0 cluster limits
+ * Cleanup Middleware (Deprecated)
+ * Appwrite handles cleanup automatically
  */
 
-import { cleanupConnections } from '@/lib/mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function withMongoCleanup(
@@ -18,29 +17,14 @@ export async function withMongoCleanup(
     
     console.log('✅ API call completed successfully');
     
-    // IMMEDIATE cleanup after successful API calls (critical for M0)
-    setTimeout(async () => {
-      try {
-        await cleanupConnections();
-        console.log('🧹 FORCED cleanup after successful API call');
-      } catch (error) {
-        console.warn('⚠️ Post-API cleanup failed:', error);
-      }
-    }, 50); // Cleanup after just 50ms
-    
     return response;
   } catch (error) {
     console.error('❌ API call failed:', error);
     
-    // IMMEDIATE force cleanup on errors (might be connection-related)
+    // No cleanup needed with Appwrite
     setTimeout(async () => {
-      try {
-        await cleanupConnections();
-        console.log('🧹 EMERGENCY cleanup after API error');
-      } catch (cleanupError) {
-        console.warn('⚠️ Emergency cleanup failed:', cleanupError);
-      }
-    }, 10); // Emergency cleanup after just 10ms
+      console.log('🧹 Cleanup not needed with Appwrite');
+    }, 10);
     
     throw error;
   }

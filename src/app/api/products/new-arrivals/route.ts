@@ -1,5 +1,5 @@
+import { dbService } from '@/lib/appwrite/database';
 import { withConnectionMonitoring } from '@/lib/connectionMonitor';
-import { dbService } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';

@@ -1,4 +1,4 @@
-import { verifyAuth } from '@/lib/auth';
+import { verifyAuth } from '@/lib/appwrite/auth';
 import { broadcastContentUpdate } from '@/lib/content-stream';
 import { simpleDbService } from '@/lib/simple-db';
 import { revalidatePath } from 'next/cache';
@@ -33,7 +33,7 @@ export async function GET() {
   }
 }
 
-// POST - Save UploadThing URL to content (replaces old base64 upload logic)
+// POST - Save Appwrite Storage URL to content (replaces old base64 upload logic)
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 MEDIA-NEW API CALLED - Starting upload processing...');
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     const { url, section, mediaType, contentKey } = body;
 
     console.log('📦 Request body received:', JSON.stringify(body, null, 2));
-    console.log(`📁 Saving UploadThing URL:`);
+    console.log(`📁 Saving Appwrite Storage URL:`);
     console.log(`   URL: ${url}`);
     console.log(`   Section: ${section}`);
     console.log(`   Media Type: ${mediaType}`);
@@ -50,26 +50,26 @@ export async function POST(request: NextRequest) {
 
     if (!url || !url.startsWith('http')) {
       return NextResponse.json(
-        { error: 'Valid UploadThing URL is required' },
+        { error: 'Valid URL is required' },
         { status: 400 }
       );
     }
 
-    // Validate that it's a proper UploadThing URL
-    if (!url.includes('uploadthing') && !url.includes('utfs.io')) {
+    // Validate that it's a proper Appwrite Storage URL
+    if (!url.includes('appwrite.io') && !url.includes('/storage/buckets/')) {
       return NextResponse.json(
-        { error: 'Only UploadThing URLs are allowed' },
+        { error: 'Only Appwrite Storage URLs are allowed' },
         { status: 400 }
       );
     }
 
     // Get authenticated user
-    const user = verifyAuth(request);
-    const userId = user ? user.userId : "68cd59c40c1556c8b019d1a8"; // Fallback to default user ID
+    const user = await verifyAuth();
+    const userId = user ? user.id : "68cd59c40c1556c8b019d1a8"; // Fallback to default user ID
 
     console.log('👤 Authentication result:', { hasUser: !!user, userId });
 
-    // Extract file info from UploadThing URL
+    // Extract file info from Appwrite Storage URL
     const fileName = url.split('/').pop() || 'uploaded-file';
     const fileType = mediaType === 'video' ? 'video/mp4' : 
                     mediaType === 'image' ? 'image/jpeg' : 
@@ -90,53 +90,49 @@ export async function POST(request: NextRequest) {
     // For hero videos, clean up old ones first
     if (section === 'hero' && mediaType === 'video') {
       console.log('🧹 Cleaning up old hero videos...');
-      await simpleDbService.deleteMediaAssets({
-        section: 'hero',
-        type: { $regex: '^video/' }
-      });
+      const oldHeroVideos = await simpleDbService.getMediaAssets();
+      const heroVideoIds = oldHeroVideos
+        .filter((a: any) => a.section === 'hero' && a.type?.startsWith('video/'))
+        .map((a: any) => a.id || a.$id);
+      if (heroVideoIds.length > 0) {
+        await simpleDbService.deleteMediaAssets(heroVideoIds);
+      }
     }
     
     // Create media asset record with complete structure matching user's requirements
     console.log('💾 About to create media asset with data:', {
-      fileName,
-      fileUrl: url,
+      filename: fileName,
+      url: url,
       fileSize: 0,
-      fileType,
+      type: fileType,
       uploadedBy: userId,
       uploadType,
       isPublic: true,
+      section: section,
       metadata: {
         section: section,
         mediaType: mediaType,
         contentKey: contentKey || null,
-        uploadedVia: 'UploadThing',
+        uploadedVia: 'Appwrite',
         originalFilename: fileName
       }
     });
 
     const mediaAsset = await simpleDbService.createMediaAsset({
-      fileName: fileName, // Note: Using fileName instead of filename to match user's example
-      fileUrl: url,       // Note: Using fileUrl instead of url to match user's example
-      fileSize: 0,        // UploadThing doesn't provide size in URL, set to 0 or fetch separately
-      fileType: fileType,
-      uploadedBy: userId,
-      uploadType: uploadType,
-      isPublic: true,
-      metadata: {
-        section: section,
-        mediaType: mediaType,
-        contentKey: contentKey || null,
-        uploadedVia: 'UploadThing',
-        originalFilename: fileName
-      },
-      createdAt: new Date(),
-      updatedAt: new Date()
+      filename: fileName,  // Appwrite schema uses 'filename' (lowercase)
+      url: url,            // Appwrite schema uses 'url' (not fileUrl)
+      fileId: '',          // Optional field for Appwrite file ID
+      alt: '',             // Alternative text for accessibility
+      type: fileType,      // MIME type
+      section: section,    // Section identifier (hero, promotions, etc.)
     });
     
+    const asset = mediaAsset as any;
     console.log('✅ Media asset created successfully:', {
-      id: mediaAsset._id,
-      fileName: mediaAsset.fileName,
-      uploadType: mediaAsset.uploadType
+      id: asset._id || asset.id || asset.$id,
+      filename: asset.filename,
+      type: asset.type,
+      section: asset.section
     });
 
     // Update the content key if provided
@@ -157,11 +153,16 @@ export async function POST(request: NextRequest) {
       success: true,
       url,
       mediaAsset,
-      message: 'UploadThing URL and media asset saved successfully'
+      message: 'Appwrite Storage URL and media asset saved successfully'
     });
     
   } catch (error) {
-    console.error('Error saving UploadThing URL:', error);
+    console.error('❌ Error saving Appwrite Storage URL:', error);
+    console.error('Error details:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
     
     // Check if it's a circuit breaker error
     if (error instanceof Error && error.message.includes('Circuit breaker is OPEN')) {
@@ -175,8 +176,13 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    // Return detailed error message
+    const errorMessage = error instanceof Error ? error.message : 'Failed to save Appwrite Storage URL';
     return NextResponse.json(
-      { error: 'Failed to save UploadThing URL' },
+      { 
+        error: errorMessage,
+        message: errorMessage
+      },
       { status: 500 }
     );
   }
@@ -196,7 +202,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete the media asset
-    await simpleDbService.deleteMediaAssets({ _id: id });
+    await simpleDbService.deleteMediaAssets([id]);
 
     // Revalidate pages
     revalidatePath('/');

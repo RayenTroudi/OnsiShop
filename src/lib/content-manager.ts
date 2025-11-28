@@ -1,5 +1,5 @@
 // Unified Content Management System
-import { dbService } from './database';
+import { dbService } from './appwrite/database';
 
 // Default content values with standardized naming
 export const DEFAULT_CONTENT_VALUES = {
@@ -108,10 +108,11 @@ export async function migrateLegacyContent() {
     const allContent = await dbService.getAllSiteContent();
     
     for (const item of allContent) {
-      const normalizedKey = normalizeContentKey(item.key);
+      const content = item as any;
+      const normalizedKey = normalizeContentKey(content.key);
       
       // If the key has dots or mixed case, normalize it
-      if (item.key !== normalizedKey) {
+      if (content.key !== normalizedKey) {
         // Check if normalized version already exists
         const existing = await dbService.getSiteContentByKey(normalizedKey);
         
@@ -120,7 +121,7 @@ export async function migrateLegacyContent() {
           const now = new Date();
           await dbService.createSiteContent({
             key: normalizedKey, 
-            value: item.value,
+            value: content.value,
             createdAt: now,
             updatedAt: now
           });

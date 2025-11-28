@@ -1,4 +1,4 @@
-import { dbService } from '@/lib/database';
+import { dbService } from '@/lib/appwrite/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
@@ -16,10 +16,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Media not found' }, { status: 404 });
     }
 
+    const asset = mediaAsset as any;
+
     // Check if it's a data URL (base64 encoded)
-    if (mediaAsset.url.startsWith('data:')) {
+    if (asset.url.startsWith('data:')) {
       // Extract base64 data
-      const [metadata, base64Data] = mediaAsset.url.split(',');
+      const [metadata, base64Data] = asset.url.split(',');
       const mimeType = metadata.match(/:(.*?);/)?.[1] || 'video/mp4';
       
       // Convert base64 to buffer
@@ -49,15 +51,15 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           'Accept-Ranges': 'bytes',
           'Cache-Control': `public, max-age=${maxAge}, immutable`, // Long-term caching with immutable flag
           'ETag': etag,
-          'Last-Modified': new Date(mediaAsset.updatedAt || Date.now()).toUTCString(),
-          'Content-Disposition': `inline; filename="${mediaAsset.filename}"`,
+          'Last-Modified': new Date(asset.updatedAt || Date.now()).toUTCString(),
+          'Content-Disposition': `inline; filename="${asset.filename}"`,
           'X-Media-Type': isVideo ? 'video' : isImage ? 'image' : 'unknown',
           'X-Cache-Version': '1.1.0'
         },
       });
     } else {
       // If it's a regular URL, redirect to it
-      return NextResponse.redirect(mediaAsset.url);
+      return NextResponse.redirect(asset.url);
     }
 
   } catch (error) {

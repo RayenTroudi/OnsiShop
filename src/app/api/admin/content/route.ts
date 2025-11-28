@@ -1,6 +1,6 @@
+import { dbService } from '@/lib/appwrite/database';
 import { createCacheInvalidationResponse, invalidateContentCache } from '@/lib/cache-invalidation';
 import { broadcastContentUpdate } from '@/lib/content-stream';
-import { dbService } from '@/lib/database';
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 

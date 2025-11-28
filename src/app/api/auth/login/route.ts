@@ -1,9 +1,12 @@
-import { dbService } from '@/lib/database';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { appwriteConfig } from '@/lib/appwrite/config';
+import { dbService } from '@/lib/appwrite/database';
+import { SignJWT } from 'jose';
 import { NextRequest, NextResponse } from 'next/server';
+import { Account, Client } from 'node-appwrite';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'your-secret-key-here-change-in-production'
+);
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,60 +19,88 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user by email
-    const user = await dbService.getUserByEmail(email);
+    // Create Appwrite session (Appwrite handles password verification)
+    try {
+      // Create a session client
+      const client = new Client()
+        .setEndpoint(appwriteConfig.endpoint)
+        .setProject(appwriteConfig.projectId);
+      
+      const account = new Account(client);
+      const session = await account.createEmailPasswordSession(email, password);
+      
+      console.log('✅ Session created:', {
+        sessionId: session.$id,
+        userId: session.userId,
+        expire: session.expire,
+      });
+      
+      // Fetch user document from database
+      const user = await dbService.getUserByEmail(email) as any;
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      );
-    }
+      if (!user) {
+        return NextResponse.json(
+          { error: 'User data not found' },
+          { status: 404 }
+        );
+      }
 
-    // Check password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      );
-    }
-
-    // Create JWT token
-    const token = jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email, 
-        name: user.name,
-        isAdmin: user.role === 'admin' 
-      },
-      JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    // Set cookie
-    const response = NextResponse.json({
-      message: 'Login successful',
-      success: true,
-      token: token, // Include token for API access
-      user: {
-        id: user.id,
+      // Create JWT token with user data
+      const token = await new SignJWT({
+        userId: user.id,
+        accountId: user.accountId,
         email: user.email,
         name: user.name,
-        isAdmin: user.role === 'admin',
-      },
-    });
+        role: user.role,
+      })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setExpirationTime('1y')
+        .setIssuedAt()
+        .sign(JWT_SECRET);
 
-    response.cookies.set('auth-token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24, // 24 hours
-      path: '/', // Ensure cookie is available site-wide
-    });
+      const response = NextResponse.json({
+        message: 'Login successful',
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          isAdmin: user.role === 'admin',
+        },
+      });
 
-    return response;
+      // Set JWT token cookie
+      response.cookies.set({
+        name: 'auth-token',
+        value: token,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365, // 1 year
+      });
+
+      // Also set Appwrite session cookie for potential direct Appwrite API calls
+      response.cookies.set({
+        name: `a_session_${appwriteConfig.projectId.toLowerCase()}`,
+        value: session.$id,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+      });
+
+      console.log('✅ Login successful, cookies set');
+      return response;
+    } catch (authError: any) {
+      console.error('Auth error:', authError);
+      // Invalid credentials
+      return NextResponse.json(
+        { error: 'Invalid email or password' },
+        { status: 401 }
+      );
+    }
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(

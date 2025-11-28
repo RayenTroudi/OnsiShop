@@ -1,6 +1,7 @@
-import { connectToDatabase } from './mongodb';
+// This file is deprecated - Appwrite handles all database operations
+// Kept for backwards compatibility
 
-// Circuit breaker implementation for MongoDB operations
+// Circuit breaker implementation (deprecated - Appwrite manages this)
 class CircuitBreaker {
   private failures = 0;
   private lastFailureTime = 0;
@@ -68,172 +69,86 @@ class CircuitBreaker {
   }
 }
 
-// Global circuit breaker instance
-const mongoCircuitBreaker = new CircuitBreaker(3, 20000, 45000); // 3 failures, 20s timeout, 45s window
+// Global circuit breaker instance (deprecated)
+const mongoCircuitBreaker = new CircuitBreaker(3, 20000, 45000);
 
-// Enhanced database operation wrapper with timeout and retry logic
+// Enhanced database operation wrapper (deprecated - use Appwrite)
 export async function withDatabaseOperation<T>(
   operation: () => Promise<T>,
   operationName: string = 'Database Operation',
-  timeoutMs: number = 25000 // 25 second timeout
+  timeoutMs: number = 25000
 ): Promise<T> {
-  return mongoCircuitBreaker.execute(async () => {
-    console.log(`🔄 Starting ${operationName}...`);
-    
-    // Create a timeout promise
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => {
-        reject(new Error(`${operationName} timed out after ${timeoutMs}ms`));
-      }, timeoutMs);
-    });
-
-    try {
-      // Race between the operation and the timeout
-      const result = await Promise.race([
-        operation(),
-        timeoutPromise
-      ]);
-      
-      console.log(`✅ ${operationName} completed successfully`);
-      return result;
-    } catch (error) {
-      console.error(`❌ ${operationName} failed:`, error);
-      
-      // If it's a timeout error, try to recover gracefully
-      if (error instanceof Error && error.message.includes('timed out')) {
-        console.warn(`⏱️ ${operationName} timed out, attempting graceful recovery...`);
-        
-        // Try to close any hanging connections
-        try {
-          const { client } = await connectToDatabase();
-          // Force close any hanging operations
-          await client.db().admin().command({ ping: 1 });
-        } catch (recoveryError) {
-          console.error('Failed to recover from timeout:', recoveryError);
-        }
-      }
-      
-      throw error;
-    }
-  });
+  // Just execute the operation - Appwrite handles timeouts and retries
+  return operation();
 }
 
-// Get circuit breaker status
+// Get circuit breaker status (deprecated)
 export function getCircuitBreakerStatus() {
-  return mongoCircuitBreaker.getState();
+  return {
+    state: 'CLOSED',
+    failures: 0,
+    lastFailureTime: 0
+  };
 }
 
-// Reset circuit breaker (for admin use)
+// Reset circuit breaker (deprecated)
 export function resetCircuitBreaker() {
-  mongoCircuitBreaker.reset();
+  // No-op - Appwrite manages this
 }
 
-// Health check with circuit breaker
+// Health check (deprecated)
 export async function performHealthCheck(): Promise<boolean> {
   try {
-    return await withDatabaseOperation(async () => {
-      const { db } = await connectToDatabase();
-      await db.admin().ping();
-      return true;
-    }, 'MongoDB Health Check', 10000); // 10s timeout for health checks
+    // Appwrite health is managed automatically
+    return true;
   } catch (error) {
     console.error('Health check failed:', error);
     return false;
   }
 }
 
-// Enhanced database service methods
+// Enhanced database service methods (deprecated - use @/lib/appwrite/database instead)
 export class EnhancedDbService {
   async getAllSiteContent() {
-    return withDatabaseOperation(async () => {
-      const { db } = await connectToDatabase();
-      return await db.collection('site_content')
-        .find({})
-        .sort({ key: 1 })
-        .maxTimeMS(20000) // 20s query timeout
-        .toArray();
-    }, 'Get All Site Content');
+    // Deprecated - use dbService from @/lib/appwrite/database
+    throw new Error('EnhancedDbService is deprecated - use @/lib/appwrite/database instead');
   }
 
   async getSiteContentByKey(key: string) {
-    return withDatabaseOperation(async () => {
-      const { db } = await connectToDatabase();
-      return await db.collection('site_content')
-        .findOne({ key }, { maxTimeMS: 15000 }); // 15s query timeout
-    }, `Get Site Content: ${key}`);
+    // Deprecated - use dbService from @/lib/appwrite/database
+    throw new Error('EnhancedDbService is deprecated - use @/lib/appwrite/database instead');
   }
 
   async upsertSiteContent(key: string, value: string) {
-    return withDatabaseOperation(async () => {
-      const { db } = await connectToDatabase();
-      const now = new Date();
-      
-      return await db.collection('site_content')
-        .findOneAndUpdate(
-          { key },
-          { 
-            $set: { 
-              key,
-              value,
-              updatedAt: now
-            },
-            $setOnInsert: {
-              createdAt: now
-            }
-          },
-          { 
-            upsert: true, 
-            returnDocument: 'after',
-            maxTimeMS: 20000 // 20s operation timeout
-          }
-        );
-    }, `Upsert Site Content: ${key}`);
+    // Deprecated - use dbService from @/lib/appwrite/database
+    throw new Error('EnhancedDbService is deprecated - use @/lib/appwrite/database instead');
   }
 
-  async getMediaAssets() {
-    return withDatabaseOperation(async () => {
-      const { db } = await connectToDatabase();
-      return await db.collection('media_assets')
-        .find({})
-        .sort({ createdAt: -1 })
-        .maxTimeMS(20000)
-        .toArray();
-    }, 'Get Media Assets');
+  async getMediaAssets(filters?: any) {
+    // Deprecated - use dbService from @/lib/appwrite/database
+    throw new Error('EnhancedDbService is deprecated - use @/lib/appwrite/database instead');
   }
 
-  async createMediaAsset(asset: any) {
-    return withDatabaseOperation(async () => {
-      const { db } = await connectToDatabase();
-      const result = await db.collection('media_assets')
-        .insertOne({
-          ...asset,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        });
-      
-      return {
-        _id: result.insertedId,
-        ...asset
-      };
-    }, 'Create Media Asset');
+  async createMediaAsset(data: any) {
+    // Deprecated - use dbService from @/lib/appwrite/database
+    throw new Error('EnhancedDbService is deprecated - use @/lib/appwrite/database instead');
   }
 
-  async deleteMediaAssets(filter: any) {
-    return withDatabaseOperation(async () => {
-      const { db } = await connectToDatabase();
-      return await db.collection('media_assets')
-        .deleteMany(filter);
-    }, 'Delete Media Assets');
+  async deleteMediaAssetById(id: string) {
+    // Deprecated - use dbService from @/lib/appwrite/database
+    throw new Error('EnhancedDbService is deprecated - use @/lib/appwrite/database instead');
   }
 
-  async deleteSiteContent(key: string) {
-    return withDatabaseOperation(async () => {
-      const { db } = await connectToDatabase();
-      return await db.collection('site_content')
-        .deleteOne({ key });
-    }, `Delete Site Content: ${key}`);
+  async updateMediaAsset(id: string, updates: any) {
+    // Deprecated - use dbService from @/lib/appwrite/database
+    throw new Error('EnhancedDbService is deprecated - use @/lib/appwrite/database instead');
+  }
+
+  deleteSiteContent(key: string) {
+    // Deprecated - use dbService from @/lib/appwrite/database
+    throw new Error('EnhancedDbService is deprecated - use @/lib/appwrite/database instead');
   }
 }
 
-// Export enhanced service instance
+// Export enhanced service instance (deprecated)
 export const enhancedDbService = new EnhancedDbService();

@@ -1,5 +1,4 @@
-import { getCircuitBreakerStatus, performHealthCheck, resetCircuitBreaker } from '@/lib/enhanced-db';
-import { connectToDatabase } from '@/lib/mongodb';
+import { serverDatabases } from '@/lib/appwrite/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -9,11 +8,14 @@ export async function GET() {
   try {
     const startTime = Date.now();
     
-    // Get circuit breaker status
-    const circuitBreakerStatus = getCircuitBreakerStatus();
-    
-    // Perform database health check
-    const dbHealthy = await performHealthCheck();
+    // Perform Appwrite health check
+    let dbHealthy = false;
+    try {
+      await serverDatabases.list();
+      dbHealthy = true;
+    } catch (error) {
+      console.error('Appwrite health check failed:', error);
+    }
     
     const responseTime = Date.now() - startTime;
     
@@ -22,16 +24,10 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       responseTime: `${responseTime}ms`,
       database: {
-        connected: dbHealthy,
-        circuitBreaker: {
-          state: circuitBreakerStatus.state,
-          failures: circuitBreakerStatus.failures,
-          lastFailureTime: circuitBreakerStatus.lastFailureTime ? 
-            new Date(circuitBreakerStatus.lastFailureTime).toISOString() : null
-        }
+        connected: dbHealthy
       },
       services: {
-        mongodb: dbHealthy ? 'up' : 'down',
+        appwrite: dbHealthy ? 'up' : 'down',
         uploadthing: 'external', // We can't easily check UploadThing health
         api: 'up'
       }
@@ -57,8 +53,7 @@ export async function GET() {
         timestamp: new Date().toISOString(),
         error: error instanceof Error ? error.message : 'Unknown error',
         database: {
-          connected: false,
-          circuitBreaker: getCircuitBreakerStatus()
+          connected: false
         }
       },
       { status: 500 }
@@ -80,12 +75,12 @@ export async function POST(request: NextRequest) {
     }
     
     if (action === 'reset-circuit-breaker') {
-      resetCircuitBreaker();
-      console.log('🔄 Circuit breaker manually reset by admin');
+      // Circuit breaker not applicable with Appwrite
+      console.log('🔄 Circuit breaker reset requested (N/A for Appwrite)');
       
       return NextResponse.json({
         success: true,
-        message: 'Circuit breaker reset successfully',
+        message: 'Action acknowledged (not applicable with Appwrite)',
         timestamp: new Date().toISOString()
       });
     }
@@ -109,29 +104,15 @@ export async function PUT() {
   try {
     const startTime = Date.now();
     
-    // Detailed MongoDB connection test
+    // Detailed Appwrite connection test
     let connectionDetails = null;
-    let collectionsInfo = null;
     
     try {
-      const { client, db } = await connectToDatabase();
-      
-      // Test basic connection
-      const adminDb = client.db().admin();
-      const serverStatus = await adminDb.serverStatus();
-      
-      // Get collection stats
-      const collections = await db.listCollections().toArray();
-      collectionsInfo = collections.map(col => col.name);
+      const databases = await serverDatabases.list();
       
       connectionDetails = {
-        serverStatus: {
-          version: serverStatus.version,
-          uptime: serverStatus.uptime,
-          connections: serverStatus.connections
-        },
-        collections: collectionsInfo,
-        databaseName: db.databaseName
+        databases: databases.total,
+        service: 'Appwrite Cloud'
       };
       
     } catch (dbError) {
@@ -139,17 +120,16 @@ export async function PUT() {
     }
     
     const responseTime = Date.now() - startTime;
-    const circuitBreakerStatus = getCircuitBreakerStatus();
     
     return NextResponse.json({
       status: connectionDetails ? 'detailed-healthy' : 'detailed-unhealthy',
       timestamp: new Date().toISOString(),
       responseTime: `${responseTime}ms`,
-      circuitBreaker: circuitBreakerStatus,
-      mongodb: connectionDetails,
+      appwrite: connectionDetails,
       environment: {
         nodeEnv: process.env.NODE_ENV,
-        hasMongoUri: !!process.env.MONGODB_URI,
+        hasAppwriteEndpoint: !!process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT,
+        hasAppwriteProjectId: !!process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID,
         hasUploadthingSecret: !!process.env.UPLOADTHING_SECRET,
         hasUploadthingAppId: !!process.env.UPLOADTHING_APP_ID
       }

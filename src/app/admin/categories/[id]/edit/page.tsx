@@ -1,6 +1,6 @@
 'use client';
 
-import { dbService } from '@/lib/database';
+import { dbService } from '@/lib/appwrite/database';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';

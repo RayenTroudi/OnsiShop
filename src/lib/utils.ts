@@ -11,8 +11,17 @@ export const ensureStartsWith = (stringToCheck: string, startsWith: string) =>
   stringToCheck.startsWith(startsWith) ? stringToCheck : `${startsWith}${stringToCheck}`;
 
 export const validateEnvironmentVariables = () => {
-  // Custom e-commerce app - no external dependencies required
-  console.log('Custom e-commerce app initialized');
+  // Kept for backward compatibility; prefer using env.ts
+  try {
+    // Lazy import to avoid cycles
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { logEnvSummary } = require('./env');
+    if (typeof logEnvSummary === 'function') {
+      logEnvSummary();
+    }
+  } catch {
+    // No-op if env module not available
+  }
 };
 
 // from https://stackoverflow.com/a/31615643

@@ -1,13 +1,12 @@
 // Debug endpoint to check what content is being returned
-import { connectToDatabase } from '@/lib/mongodb';
+import { dbService } from '@/lib/appwrite/database';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    console.log('🔍 Debug: Fetching content from database...');
-    const { db } = await connectToDatabase();
+    console.log('🔍 Debug: Fetching content from Appwrite database...');
     
-    const content = await db.collection('content').find({}).toArray();
+    const content = await dbService.getAllSiteContent();
     
     console.log('📋 Debug: Raw content from DB:', content);
     

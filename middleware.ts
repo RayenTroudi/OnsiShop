@@ -32,7 +32,13 @@ export function middleware(request: NextRequest) {
     return response;
   }
   
-  return NextResponse.next();
+  // Add baseline security headers
+  const res = NextResponse.next();
+  res.headers.set('X-Frame-Options', 'SAMEORIGIN');
+  res.headers.set('X-Content-Type-Options', 'nosniff');
+  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  return res;
 }
 
 export const config = {

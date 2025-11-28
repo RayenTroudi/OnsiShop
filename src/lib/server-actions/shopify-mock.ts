@@ -1,6 +1,6 @@
 'use server';
 
-import { dbService } from '@/lib/database';
+import { dbService } from '@/lib/appwrite/database';
 
 export async function getShopifyMockData(query: string, variables?: any) {
   

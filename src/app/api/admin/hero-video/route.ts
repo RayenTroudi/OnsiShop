@@ -1,5 +1,6 @@
-import { requireAdmin } from '@/lib/auth';
-import { dbService } from '@/lib/database';
+import { requireAdmin } from '@/lib/appwrite/auth';
+import { dbService } from '@/lib/appwrite/database';
+import { deleteFileByUrl } from '@/lib/appwrite/storage';
 import { UploadService } from '@/lib/uploadService';
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
@@ -32,9 +33,9 @@ export async function GET(request: NextRequest) {
 
 // POST - Update hero video URL (called after UploadThing upload)
 export async function POST(request: NextRequest) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof NextResponse) {
-    return authResult;
+  const user = await requireAdmin();
+  if (!user) {
+    return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 
   const maxRetries = 3;
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🎬 Processing hero video update:', { videoUrl, uploadId });
+    console.log('Processing hero video update:', { videoUrl, uploadId });
 
     // Retry logic for database operations
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -137,13 +138,29 @@ export async function POST(request: NextRequest) {
 
 // DELETE - Remove hero video
 export async function DELETE(request: NextRequest) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof NextResponse) {
-    return authResult;
+  const user = await requireAdmin();
+  if (!user) {
+    return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 
   try {
-    console.log('🗑️ Removing hero video');
+    console.log('Removing hero video');
+    
+    // Get current video URL to delete from storage
+    const heroVideoContent = await dbService.getSiteContentByKey('hero_background_video');
+    const currentVideoUrl = (heroVideoContent as any)?.value;
+    
+    // Delete the video file from Appwrite Storage if it exists
+    if (currentVideoUrl && typeof currentVideoUrl === 'string' && 
+        (currentVideoUrl.includes('appwrite.io') || currentVideoUrl.includes('/storage/buckets/'))) {
+      try {
+        await deleteFileByUrl(currentVideoUrl);
+        console.log('Deleted video from Appwrite Storage:', currentVideoUrl);
+      } catch (error) {
+        console.warn('Failed to delete video from Appwrite Storage:', error);
+        // Continue with removal even if file deletion fails
+      }
+    }
     
     // Remove the hero video URL from site content
     await dbService.upsertSiteContent('hero_background_video', '');

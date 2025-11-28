@@ -1,31 +1,29 @@
-import jwt from 'jsonwebtoken';
+// This file is deprecated - use @/lib/appwrite/auth instead
+// All authentication now handled by Appwrite Account API
+
+import { verifyAuth as appwriteVerifyAuth } from '@/lib/appwrite/auth';
 import { NextRequest, NextResponse } from 'next/server';
 
 export function authMiddleware(handler: Function) {
   return async (request: NextRequest, ...args: any[]) => {
     try {
-      // Get token from Authorization header
-      const authHeader = request.headers.get('authorization');
-      const token = authHeader?.replace('Bearer ', '');
+      const user = await appwriteVerifyAuth();
 
-      if (!token) {
+      if (!user) {
         return NextResponse.json({
           success: false,
           message: 'Authentication required'
         }, { status: 401 });
       }
-
-      // Verify JWT token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
       
-      // Add user info to request (in a real app, you'd attach this properly)
-      (request as any).user = decoded;
+      // Add user info to request
+      (request as any).user = user;
 
       return handler(request, ...args);
     } catch (error) {
       return NextResponse.json({
         success: false,
-        message: 'Invalid or expired token'
+        message: 'Invalid or expired session'
       }, { status: 401 });
     }
   };

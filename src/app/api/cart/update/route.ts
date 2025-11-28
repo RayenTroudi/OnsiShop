@@ -1,4 +1,4 @@
-import { dbService } from '@/lib/database';
+import { dbService } from '@/lib/appwrite/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';

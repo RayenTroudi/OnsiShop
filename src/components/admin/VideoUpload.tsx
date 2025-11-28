@@ -55,7 +55,7 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
         });
       }, 200);
 
-      const response = await fetch('/api/upload/video', {
+      const response = await fetch('/api/appwrite/upload/video', {
         method: 'POST',
         body: formData,
       });

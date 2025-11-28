@@ -26,24 +26,30 @@ const Promotions = () => {
     buttonText: 'View Collection'
   });
   const [loading, setLoading] = useState(true);
+  const [imageReady, setImageReady] = useState(false);
   
-  // Cached image hook for background image
+  // Cached image hook for background image - only initialize when we have an image URL
   const {
     url: cachedImageUrl,
     loading: imageLoading,
     cached: imageCached,
     progress: imageProgress
   } = useCachedImage({
-    src: content.backgroundImage || '',
+    src: content.backgroundImage || '/images/placeholder.jpg',
     autoCache: !!content.backgroundImage,
     quality: 90,
     format: 'auto',
-    preload: true
+    preload: true,
+    onLoad: () => setImageReady(true),
+    onError: (error) => {
+      console.error('Image loading error:', error);
+      setImageReady(false);
+    }
   });
 
   useEffect(() => {
     const fetchContent = async () => {
-      console.log('🎯 Promotions: Direct UploadThing fetch from API');
+      console.log('🎯 Promotions: Fetching content from API');
       
       try {
         const response = await fetch('/api/content', {
@@ -64,7 +70,7 @@ const Promotions = () => {
             buttonText: result.data.promotion_button_text || 'View Collection'
           };
           
-          console.log('✅ Promotions: UploadThing content loaded');
+          console.log('✅ Promotions: Content loaded successfully');
           console.log('   Background Image:', promotionContent.backgroundImage ? 
             (promotionContent.backgroundImage.startsWith('data:') ? 
               `Base64 image (${(promotionContent.backgroundImage.length / 1024).toFixed(0)}KB)` : 
@@ -90,8 +96,8 @@ const Promotions = () => {
       <div className="relative h-[570px] overflow-hidden sm:h-screen">
         <h2 className="sr-only">Promotions</h2>
         
-        {/* Cached UploadThing Image Loading */}
-        {cachedImageUrl && !loading && (
+        {/* Cached Appwrite Image Loading */}
+        {cachedImageUrl && (
           <>
             <Parallax speed={-50} className="relative hidden h-full w-full sm:block">
               <Image

@@ -1,4 +1,4 @@
-import { dbService } from '@/lib/database';
+import { dbService } from '@/lib/appwrite/database';
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 

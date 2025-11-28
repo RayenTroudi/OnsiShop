@@ -1,5 +1,5 @@
-import { dbService } from '@/lib/database';
-import jwt from 'jsonwebtoken';
+import { verifyAuth } from '@/lib/appwrite/auth';
+import { dbService } from '@/lib/appwrite/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -10,14 +10,13 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const token = request.cookies.get('auth-token')?.value;
+    const user = await verifyAuth();
 
-    if (!token) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
-    const userId = decoded.userId;
+    const userId = user.id;
     const itemId = params.id;
 
     console.log('🗑️ Remove cart item:', { userId, itemId });

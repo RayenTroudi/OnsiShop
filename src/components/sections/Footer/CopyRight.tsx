@@ -51,7 +51,7 @@ const CopyRight = () => {
 
   if (!content) {
     return (
-      <div className="animate-pulse">
+      <div className="animate-pulse" suppressHydrationWarning>
         <div className="h-4 bg-gray-300 rounded w-32 mb-1"></div>
         <div className="h-4 bg-gray-300 rounded w-28"></div>
       </div>
@@ -59,11 +59,14 @@ const CopyRight = () => {
   }
   
   return (
-    <p className="text-center text-darkPurple">
-      {content.copyright}
-      <br />
-      {content.allRightsReserved}
-    </p>
+    <div className="flex flex-col items-center gap-[8px]" suppressHydrationWarning>
+      <p className="text-center text-[clamp(14px,12px_+_0.5vw,16px)] font-medium text-veryDarkPurple">
+        {content.copyright}
+      </p>
+      <p className="text-center text-[clamp(12px,10px_+_0.5vw,14px)] text-gray-600">
+        {content.allRightsReserved}
+      </p>
+    </div>
   );
 };
 

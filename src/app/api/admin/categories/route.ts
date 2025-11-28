@@ -1,11 +1,11 @@
-import { requireAdmin } from '@/lib/auth';
-import { dbService } from '@/lib/database';
+import { requireAdmin } from '@/lib/appwrite/auth';
+import { dbService } from '@/lib/appwrite/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof NextResponse) {
-    return authResult;
+  const user = await requireAdmin();
+  if (!user) {
+    return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 
   try {
@@ -30,9 +30,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof NextResponse) {
-    return authResult;
+  const user = await requireAdmin();
+  if (!user) {
+    return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 
   try {
@@ -65,9 +65,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof NextResponse) {
-    return authResult;
+  const user = await requireAdmin();
+  if (!user) {
+    return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 
   try {
@@ -100,9 +100,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof NextResponse) {
-    return authResult;
+  const user = await requireAdmin();
+  if (!user) {
+    return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 
   try {

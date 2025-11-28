@@ -1,5 +1,5 @@
+import { dbService } from '@/lib/appwrite/database';
 import { withConnectionMonitoring } from '@/lib/connectionMonitor';
-import { dbService } from '@/lib/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -72,31 +72,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const { cookies } = await import('next/headers');
-    const jwt = await import('jsonwebtoken');
+    const { requireAdmin } = await import('@/lib/appwrite/auth');
     
-    const cookieStore = cookies();
-    const token = cookieStore.get('token')?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      );
-    }
-
-    // Check if user is admin
-    const user = await dbService.getUserById(decoded.userId);
+    const user = await requireAdmin();
 
     if (!user || user.role !== 'admin') {
       return NextResponse.json(

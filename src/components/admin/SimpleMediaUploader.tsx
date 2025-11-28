@@ -1,6 +1,6 @@
 'use client';
 
-import FileUploader from '@/components/upload/FileUploader';
+import AppwriteFileUploader from '@/components/upload/AppwriteFileUploader';
 import VideoUploader from '@/components/upload/VideoUploader';
 import { useState } from 'react';
 
@@ -23,21 +23,23 @@ export default function SimpleMediaUploader({
 }: SimpleMediaUploaderProps) {
   const [justUploaded, setJustUploaded] = useState<string | null>(null);
 
-  const handleUploadThingComplete = async (url: string) => {
-    console.log(`✅ UploadThing upload completed: ${url}`);
+  const handleAppwriteUploadComplete = async (url: string) => {
+    console.log(`Upload completed: ${url}`);
     
     try {
-      // Validate the URL is from UploadThing
-      if (!url.includes('uploadthing') && !url.includes('utfs.io')) {
-        console.error('❌ Invalid URL received - not from UploadThing:', url);
-        alert('❌ Upload Error: Invalid URL format received. Please try again.');
+      // Validate the URL is from Appwrite
+      const isAppwrite = url.includes('appwrite.io') || url.includes('/storage/buckets/');
+      
+      if (!isAppwrite) {
+        console.error('Invalid URL received - not from Appwrite:', url);
+        alert('Upload Error: Invalid URL format received. Please try again.');
         return;
       }
 
-      // Save the UploadThing URL to the appropriate content key
+      // Save the URL to the appropriate content key
       const contentKey = getContentKey();
       if (contentKey) {
-        console.log(`💾 Saving UploadThing URL to content key: ${contentKey}`);
+        console.log(`Saving URL to content key: ${contentKey}`);
         
         // Use unified API endpoint for all media (handles both content updates and media assets)
         const response = await fetch('/api/admin/media-new', {
@@ -55,24 +57,24 @@ export default function SimpleMediaUploader({
 
         if (response.ok) {
           const result = await response.json();
-          console.log('✅ UploadThing URL and media asset saved successfully:', result);
+          console.log('✅ URL and media asset saved successfully:', result);
           
           onUploadSuccess?.(url);
           setJustUploaded(url.split('/').pop() || 'File uploaded');
           setTimeout(() => setJustUploaded(null), 5000);
           
-          console.log(`✅ ${mediaType.charAt(0).toUpperCase() + mediaType.slice(1)} uploaded and saved successfully!`);
+          console.log(`${mediaType.charAt(0).toUpperCase() + mediaType.slice(1)} uploaded and saved successfully!`);
         } else {
           const errorData = await response.json();
-          console.error('Failed to save UploadThing URL:', errorData);
-          alert(`⚠️ Upload completed but failed to save to database: ${errorData.message || 'Unknown error'}`);
+          console.error('Failed to save Appwrite Storage URL:', errorData);
+          alert(`⚠️ Upload completed but failed to save to database: ${errorData.message || errorData.error || 'Unknown error'}`);
         }
       } else {
         console.warn('No content key determined for:', { section, mediaType });
         alert(`⚠️ Upload completed but no content key configured for ${section} ${mediaType}`);
       }
     } catch (error) {
-      console.error('Error saving UploadThing URL:', error);
+      console.error('Error saving Appwrite Storage URL:', error);
       alert(`❌ Error saving upload: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
@@ -84,16 +86,9 @@ export default function SimpleMediaUploader({
     return null;
   };
 
-  const getUploadThingEndpoint = () => {
-    if (mediaType === 'video' || (mediaType === 'both' && section === 'hero')) {
-      return 'heroVideoUploader';
-    }
-    return 'mediaUploader';
-  };
-
   const handleUploadError = (error: Error) => {
-    console.error('UploadThing error:', error);
-    alert(`❌ Upload failed: ${error.message}`);
+    console.error('Appwrite upload error:', error);
+    alert(`Upload failed: ${error.message}`);
   };
 
   return (
@@ -109,11 +104,15 @@ export default function SimpleMediaUploader({
             <div className="flex gap-2">
               {currentMedia.startsWith('data:') ? (
                 <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
-                  ⚠️ Legacy Base64 ({(currentMedia.length / 1024).toFixed(0)} KB)
+                  Legacy Base64 ({(currentMedia.length / 1024).toFixed(0)} KB)
+                </span>
+              ) : currentMedia.includes('appwrite.io') ? (
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                  Appwrite Cloud Storage
                 </span>
               ) : (
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
-                  ✅ UploadThing CDN
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                  Cloud Storage
                 </span>
               )}
             </div>
@@ -131,7 +130,7 @@ export default function SimpleMediaUploader({
                 <div className="ml-3">
                   <h4 className="text-sm font-medium text-yellow-800">Migration Recommended</h4>
                   <p className="text-sm text-yellow-700 mt-1">
-                    This file is stored as base64 data. Upload a new file to use UploadThing's cloud storage for better performance and reliability.
+                    This file is stored as base64 data. Upload a new file to use Appwrite Cloud Storage for better performance and reliability.
                   </p>
                 </div>
               </div>
@@ -168,7 +167,7 @@ export default function SimpleMediaUploader({
           <p className="text-xs text-gray-500 mt-1">
             {currentMedia.startsWith('data:') 
               ? `Legacy base64 storage (${(currentMedia.length / 1024 / 1024).toFixed(2)} MB) - Upload new file to migrate`
-              : `UploadThing CDN: ${currentMedia.includes('utfs.io') ? currentMedia.split('/').pop() : 'External URL'}`
+              : `Appwrite Cloud Storage: ${currentMedia.split('/').pop()}`
             }
           </p>
         </div>
@@ -185,21 +184,21 @@ export default function SimpleMediaUploader({
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-green-800">
-                ✅ Upload successful! "{justUploaded}" is now live on your website.
+                Upload successful! "{justUploaded}" is now live on your website.
               </p>
             </div>
           </div>
         </div>
       )}
       
-      {/* UploadThing Upload Area */}
+      {/* Appwrite Upload Area */}
       <div className="space-y-4">
         {mediaType === 'video' || (section === 'hero' && mediaType === 'both') ? (
           <VideoUploader
-            onUploadComplete={handleUploadThingComplete}
+            onUploadComplete={handleAppwriteUploadComplete}
             currentVideoUrl={currentMedia?.startsWith('http') ? currentMedia : undefined}
             title={`Upload ${section === 'hero' ? 'Hero' : section.charAt(0).toUpperCase() + section.slice(1)} Video`}
-            description="Upload your video using UploadThing - secure, fast, and reliable cloud storage"
+            description="Upload your video using Appwrite Storage - secure, fast cloud storage"
             maxSize="32MB"
             autoSaveToDatabase={true}
             contentKey={getContentKey() || 'hero_background_video'}
@@ -208,67 +207,19 @@ export default function SimpleMediaUploader({
         ) : (
           <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-6">
             <h4 className="text-lg font-semibold mb-4">Upload {mediaType === 'image' ? 'Image' : 'Media'}</h4>
-            <FileUploader
-              endpoint={getUploadThingEndpoint() as any}
+            <AppwriteFileUploader
+              uploadType={mediaType}
               onUploadComplete={(res) => {
-                if (res?.[0]) {
-                  handleUploadThingComplete(res[0].url);
+                if (res?.url) {
+                  handleAppwriteUploadComplete(res.url);
                 }
               }}
               onUploadError={handleUploadError}
-              variant="dropzone"
               maxFiles={1}
-            >
-              <div className="text-center space-y-2">
-                <p className="text-sm font-medium text-gray-700">
-                  Drag and drop your {mediaType} file here, or click to browse
-                </p>
-                <p className="text-xs text-gray-500">
-                  Uploaded via UploadThing • Maximum file size: 32MB
-                </p>
-              </div>
-            </FileUploader>
+              maxSizeMB={mediaType === 'image' ? 8 : 32}
+            />
           </div>
         )}
-      </div>
-      
-      {/* UploadThing Benefits */}
-      <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-        <h4 className="font-medium text-green-900 mb-2">✨ Powered by UploadThing</h4>
-        <div className="text-sm text-green-800 space-y-2">
-          <p><strong>✅ Secure Cloud Storage:</strong> Files stored on global CDN for fast delivery</p>
-          <p><strong>🚀 Optimized Performance:</strong> Automatic compression and optimization</p>
-          <p><strong>🔒 Enterprise Security:</strong> Secure uploads with authentication</p>
-          <p><strong>📱 Multi-device Compatible:</strong> Works across all devices and browsers</p>
-        </div>
-        
-        <div className="mt-3 pt-3 border-t border-green-200">
-          <h5 className="font-medium text-green-900 mb-1">Tips for best results:</h5>
-          <ul className="text-sm text-green-800 space-y-1">
-            {mediaType === 'video' ? (
-              <>
-                <li>• Use MP4 format for best compatibility</li>
-                <li>• Recommended resolution: 1920x1080 or 1280x720</li>
-                <li>• Keep videos under 60 seconds for optimal loading</li>
-                <li>• Maximum file size: 32MB</li>
-              </>
-            ) : mediaType === 'image' ? (
-              <>
-                <li>• Use JPG, PNG, or WebP formats</li>
-                <li>• Recommended size: 1920x1080 for best quality</li>
-                <li>• WebP format offers best compression</li>
-                <li>• Maximum file size: 4MB</li>
-              </>
-            ) : (
-              <>
-                <li>• Images: JPG, PNG, WebP recommended</li>
-                <li>• Videos: MP4 format for best compatibility</li>
-                <li>• All files stored securely in the cloud</li>
-                <li>• Automatic optimization for web delivery</li>
-              </>
-            )}
-          </ul>
-        </div>
       </div>
     </div>
   );

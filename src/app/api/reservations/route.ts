@@ -1,30 +1,20 @@
-import { dbService } from '@/lib/database';
-import jwt from 'jsonwebtoken';
+import { verifyAuth } from '@/lib/appwrite/auth';
+import { dbService } from '@/lib/appwrite/database';
 import { NextRequest, NextResponse } from 'next/server';
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const token = request.cookies.get('token')?.value;
+    const user = await verifyAuth();
     
-    if (!token) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    let userId: string;
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-      userId = decoded.userId;
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      );
-    }
+    const userId = user.id;
 
     // Parse request body
     const body = await request.json();
@@ -57,9 +47,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user exists
-    const user = await dbService.getUserById(userId );
+    const userRecord = await dbService.getUserById(userId );
 
-    if (!user) {
+    if (!userRecord) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
@@ -112,25 +102,16 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
-    const token = request.cookies.get('token')?.value;
+    const user = await verifyAuth();
     
-    if (!token) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    let userId: string;
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-      userId = decoded.userId;
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      );
-    }
+    const userId = user.id;
 
     // Get user's reservations
     const reservations = await dbService.findManyReservations({

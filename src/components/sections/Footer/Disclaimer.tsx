@@ -46,7 +46,7 @@ const Disclaimer = () => {
 
   if (!content) {
     return (
-      <div className="flex max-w-full flex-col items-center md:w-[307px] md:items-start md:justify-start">
+      <div className="flex max-w-[400px] flex-col items-center">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-300 rounded w-32 mb-2"></div>
           <div className="h-4 bg-gray-300 rounded w-40 mb-1"></div>
@@ -57,9 +57,11 @@ const Disclaimer = () => {
   }
   
   return (
-    <div className="flex max-w-full flex-col items-center md:w-[307px] md:items-start md:justify-start">
-      <h3 className="text-[20px] font-semibold text-veryDarkPurple">{content.title}</h3>
-      <p className="mt-2 text-center text-[18px] text-darkPurple md:text-left">
+    <div className="flex max-w-[400px] flex-col items-center gap-[8px] rounded-lg bg-white/50 p-[16px] border border-gray-200">
+      <h3 className="font-lora text-[clamp(16px,14px_+_0.5vw,18px)] font-semibold text-veryDarkPurple">
+        {content.title}
+      </h3>
+      <p className="text-center text-[clamp(12px,10px_+_0.5vw,14px)] leading-relaxed text-gray-600">
         {content.text}
       </p>
     </div>

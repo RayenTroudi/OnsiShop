@@ -1,5 +1,5 @@
-import { Collections, dbService, getDatabase } from '@/lib/database';
-import jwt from 'jsonwebtoken';
+import { verifyAuth } from '@/lib/appwrite/auth';
+import { dbService } from '@/lib/appwrite/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -12,36 +12,25 @@ export async function POST(request: NextRequest) {
   let variantId: string | undefined = undefined;
   
   try {
-    // Get userId from JWT token
-    const token = request.cookies.get('auth-token')?.value;
+    // Get user from Appwrite session
+    const user = await verifyAuth();
     
     console.log('🍪 Cart Add API Debug:', {
-      hasToken: !!token,
-      tokenLength: token?.length || 0,
-      authToken: token ? `${token.substring(0, 10)}...` : 'none',
-      userAgent: request.headers.get('user-agent') || 'unknown',
-      jwtSecret: process.env.JWT_SECRET ? 'SET' : 'MISSING'
+      hasUser: !!user,
+      userId: user?.id,
+      userAgent: request.headers.get('user-agent') || 'unknown'
     });
 
-    if (!token) {
-      console.log('🚫 No auth token found in cart add API');
+    if (!user) {
+      console.log('🚫 No auth user found in cart add API');
       return NextResponse.json({
         success: false,
         message: 'Please log in to add items to cart'
       }, { status: 401 });
     }
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
-      userId = decoded.userId;
-      console.log('✅ Token verified successfully, userId:', userId);
-    } catch (jwtError) {
-      console.log('❌ JWT verification failed:', jwtError);
-      return NextResponse.json({
-        success: false,
-        message: 'Invalid authentication token'
-      }, { status: 401 });
-    }
+    userId = user.id;
+    console.log('✅ User verified successfully, userId:', userId);
 
     const body = await request.json();
     productId = body.productId;
@@ -91,16 +80,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Ensure user exists (create if not exists for demo purposes)
-    let user = await dbService.getUserById(userId );
+    let userRecord = await dbService.getUserById(userId );
 
-    if (!user) {
-      user = await dbService.createUser({
+    if (!userRecord) {
+      userRecord = await dbService.createUser({
         name: 'Demo User',
         email: `${userId}@demo.com`,
-        password: 'demo_password',
         role: 'user',
-        createdAt: new Date(),
-        updatedAt: new Date()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       });
     }
 
@@ -108,38 +96,34 @@ export async function POST(request: NextRequest) {
     let cart = await dbService.getCartByUserId(userId);
 
     if (!cart) {
-      cart = await dbService.createCart({ userId, createdAt: new Date(), updatedAt: new Date() });
+      cart = await dbService.createCart({ userId });
     }
 
     // Check if item already exists in cart
-    const db = await getDatabase();
-    const existingItem = await db.collection(Collections.CART_ITEMS).findOne({
-      cartId: cart.id,
-      productId,
-      variantId: variantId || null
-    });
+    const cartItems = await dbService.getCartItems(cart.id);
+    const existingItem = cartItems.find((item: any) => 
+      item.productId === productId && (item.variantId || null) === (variantId || null)
+    );
 
     let cartItem;
     if (existingItem) {
-      const newQuantity = existingItem.quantity + quantity;
+      const newQuantity = (existingItem as any).quantity + quantity;
       
       // Check stock again for the new total quantity
       if (product.stock < newQuantity) {
         return NextResponse.json({
           success: false,
-          message: `Cannot add ${quantity} more items. Only ${product.stock - existingItem.quantity} more available`
+          message: `Cannot add ${quantity} more items. Only ${product.stock - (existingItem as any).quantity} more available`
         }, { status: 400 });
       }
 
-      cartItem = await dbService.updateCartItem(existingItem._id.toString(), { quantity: newQuantity });
+      cartItem = await dbService.updateCartItem((existingItem as any).id, { quantity: newQuantity });
     } else {
       cartItem = await dbService.createCartItem({
         cartId: cart.id,
         productId,
         quantity,
-        variantId: variantId || undefined,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        variantId: variantId || undefined
       });
     }
 

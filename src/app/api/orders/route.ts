@@ -1,7 +1,7 @@
-import { dbService } from '@/lib/database';
+import { verifyAuth } from '@/lib/appwrite/auth';
+import { dbService } from '@/lib/appwrite/database';
 import { sendCustomerConfirmationEmail, sendOrderNotificationEmail } from '@/lib/email';
 import { withMongoCleanup } from '@/lib/withMongoCleanup';
-import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -9,14 +9,13 @@ export const dynamic = 'force-dynamic';
 // Get orders for authenticated user
 async function handleGET(request: NextRequest) {
   try {
-    const token = request.cookies.get('auth-token')?.value;
+    const user = await verifyAuth();
 
-    if (!token) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
-    const userId = decoded.userId;
+    const userId = user.id;
 
     const orders = await dbService.findManyOrders({
       where: { userId },
@@ -34,23 +33,17 @@ async function handleGET(request: NextRequest) {
 async function handlePOST(request: NextRequest) {
   try {
     console.log('🛒 Order creation started...');
-    const token = request.cookies.get('auth-token')?.value;
     const cartId = request.cookies.get('cartId')?.value;
 
-    console.log('🍪 Order POST Debug:', { 
-      hasToken: !!token, 
-      tokenLength: token?.length,
-      hasCartId: !!cartId 
-    });
+    const user = await verifyAuth();
 
-    if (!token) {
-      console.log('❌ Order creation failed: No token');
+    if (!user) {
+      console.log('❌ Order creation failed: Not authenticated');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
-    const userId = decoded.userId;
-    console.log('✅ Order creation token verified, userId:', userId);
+    const userId = user.id;
+    console.log('✅ Order creation authenticated, userId:', userId);
 
     const { fullName, email, phone, shippingAddress } = await request.json();
     console.log('📝 Order data received:', { fullName, email, phone, shippingAddress });

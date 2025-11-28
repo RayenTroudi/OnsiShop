@@ -1,43 +1,28 @@
-import { dbService } from '@/lib/database';
-import { Collections, getDatabase } from '@/lib/mongodb';
+import { dbService } from '@/lib/appwrite/database';
 
 /**
- * Initialize default video in database if none exists
+ * Initialize default video in database if none exists (deprecated)
  */
 export async function initializeDefaultVideo() {
   try {
     // Check if there's already a hero background video in the database
-    const db = await getDatabase();
-    const existingVideo = await db.collection(Collections.MEDIA_ASSETS).findOne({
-      section: 'hero-background'
-    });
+    const existingVideo = await dbService.getSiteContentByKey('hero_background_video');
 
     if (!existingVideo) {
       console.log('📽️ No hero video found, creating default entry...');
       
-      // Create a default video entry that points to an external source
-      const now = new Date();
-      const defaultVideoData = {
-        filename: 'default-hero-video.mp4',
-        url: '/videos/1758289257342_CHANEL_Fall-Winter_2019_fashion_film_for_Savoir_Flair__Directed_by_VIVIENNE___TAMAS.mp4',
-        type: 'video/mp4',
-        section: 'hero-background',
-        alt: 'Default hero background video',
-        createdAt: now,
-        updatedAt: now
-      };
+      // Create a default video entry using Appwrite
+      await dbService.upsertSiteContent(
+        'hero_background_video',
+        '/videos/1758289257342_CHANEL_Fall-Winter_2019_fashion_film_for_Savoir_Flair__Directed_by_VIVIENNE___TAMAS.mp4'
+      );
       
-      const result = await db.collection(Collections.MEDIA_ASSETS).insertOne(defaultVideoData);
       const defaultVideo = {
-        ...defaultVideoData,
-        _id: result.insertedId.toString(),
-        id: result.insertedId.toString()
+        id: 'default-hero-video',
+        _id: 'default-hero-video'
       };
 
-      // Update the site content to use this video
-      await dbService.updateSiteContentByKey('hero.backgroundVideo', `/api/media/${defaultVideo.id}`);
-
-      console.log('✅ Default hero video initialized:', defaultVideo.id);
+      console.log('✅ Default hero video initialized');
       return defaultVideo;
     }
 
@@ -49,30 +34,18 @@ export async function initializeDefaultVideo() {
 }
 
 /**
- * Get all videos from database
+ * Get all videos from database (deprecated - use dbService.getMediaAssets)
  */
 export async function getVideosFromDatabase() {
   try {
-    const db = await getDatabase();
-    const videos = await db.collection(Collections.MEDIA_ASSETS)
-      .find({
-        type: { $regex: '^video/' }
-      })
-      .sort({ createdAt: -1 })
-      .project({
-        _id: 1,
-        filename: 1,
-        type: 1,
-        section: 1,
-        createdAt: 1
-      })
-      .toArray();
+    const allAssets = await dbService.getMediaAssets();
+    const videos = allAssets.filter((asset: any) => asset.type?.startsWith('video/'));
 
     return videos.map((video: any) => ({
       ...video,
-      id: video._id?.toString(),
-      _id: video._id?.toString(),
-      url: `/api/media/${video._id?.toString()}`,
+      id: video.id || video.$id,
+      _id: video.id || video.$id,
+      url: `/api/media/${video.id || video.$id}`,
       size: 'Database stored'
     }));
   } catch (error) {

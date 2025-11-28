@@ -1,21 +1,13 @@
-import { withSingleConnection } from '@/lib/singleConnection';
+import { dbService } from '@/lib/appwrite/database';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    console.log('🔍 Fetching content from database using SINGLE connection...');
+    console.log('🔍 Fetching content from Appwrite database...');
     
-    // Use single connection for M0 cluster safety
-    const siteContentItems = await withSingleConnection(async (db) => {
-      console.log('📄 Getting site_content collection with single connection');
-      const collection = db.collection('site_content');
-      const items = await collection.find({}).toArray();
-      console.log(`📋 Single connection retrieved ${items.length} items`);
-      return items;
-    });
-
+    const siteContentItems = await dbService.getAllSiteContent();
     console.log(`📋 Found ${siteContentItems.length} content items`);
 
     // Convert to key-value pairs
@@ -31,8 +23,12 @@ export async function GET() {
     const heroVideo = contentData['hero_background_video'];
     const promoImage = contentData['promotion_background_image'];
     
-    console.log('🎬 Hero video:', heroVideo ? `${(heroVideo.length / 1024 / 1024).toFixed(2)}MB` : 'none');
-    console.log('🖼️ Promo image:', promoImage ? `${(promoImage.length / 1024).toFixed(0)}KB` : 'none');
+    console.log('🎬 Hero video:', heroVideo ? 
+      (heroVideo.startsWith('http') ? heroVideo : `Base64 (${(heroVideo.length / 1024 / 1024).toFixed(2)}MB)`) : 
+      'none');
+    console.log('🖼️ Promo image:', promoImage ? 
+      (promoImage.startsWith('http') ? promoImage : `Base64 (${(promoImage.length / 1024).toFixed(0)}KB)`) : 
+      'none');
 
     const response = {
       success: true,

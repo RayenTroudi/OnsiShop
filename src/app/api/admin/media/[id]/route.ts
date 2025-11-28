@@ -1,5 +1,5 @@
+import { dbService } from '@/lib/appwrite/database';
 import { broadcastContentUpdate } from '@/lib/content-stream';
-import { dbService } from '@/lib/database';
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -25,7 +25,8 @@ export async function DELETE(
     await dbService.deleteMediaAssetById(id);
 
     // If this was a hero video, clear the content key
-    if (mediaAsset && mediaAsset.section === 'hero' && mediaAsset.type && mediaAsset.type.startsWith('video/')) {
+    const asset = mediaAsset as any;
+    if (asset && asset.section === 'hero' && asset.type && asset.type.startsWith('video/')) {
       await dbService.upsertSiteContent('hero_background_video', '');
 
       // Broadcast the update

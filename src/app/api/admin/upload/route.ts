@@ -1,28 +1,29 @@
-import { requireAdmin } from '@/lib/auth';
+import { requireAdmin } from '@/lib/appwrite/auth';
+import { uploadFromFormData } from '@/lib/appwrite/storage';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
-  console.log('🔄 Upload request received');
+  console.log('Upload request received - Using Appwrite Storage');
   
-  const authResult = requireAdmin(request);
-  if (authResult instanceof NextResponse) {
-    console.log('❌ Auth failed');
-    return authResult;
+  const user = await requireAdmin();
+  if (!user) {
+    console.log('Auth failed');
+    return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
   
-  console.log('✅ Auth passed');
+  console.log('Auth passed');
 
   try {
-    console.log('📝 Parsing form data...');
+    console.log('Parsing form data...');
     const formData = await request.formData();
     const file = formData.get('file') as File;
     
     if (!file) {
-      console.log('❌ No file in form data');
+      console.log('No file in form data');
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
     
-    console.log('📁 File received:', {
+    console.log('File received:', {
       name: file.name,
       size: file.size,
       type: file.type
@@ -30,41 +31,40 @@ export async function POST(request: NextRequest) {
 
     // Check file type
     if (!file.type.startsWith('image/')) {
-      console.log('❌ Invalid file type:', file.type);
+      console.log('Invalid file type:', file.type);
       return NextResponse.json({ error: 'Only image files are allowed' }, { status: 400 });
     }
 
-    // Check file size (5MB limit for base64 storage)
-    if (file.size > 5 * 1024 * 1024) {
-      console.log('❌ File too large:', file.size);
-      return NextResponse.json({ error: 'File size must be less than 5MB for database storage' }, { status: 400 });
+    // Check file size (8MB limit for Appwrite storage)
+    if (file.size > 8 * 1024 * 1024) {
+      console.log('File too large:', file.size);
+      return NextResponse.json({ error: 'File size must be less than 8MB' }, { status: 400 });
     }
 
-    console.log('🔄 Converting file to base64...');
-    // Convert file to base64
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64 = buffer.toString('base64');
+    console.log('Uploading file to Appwrite Storage...');
     
-    // Create data URL with mime type
-    const dataUrl = `data:${file.type};base64,${base64}`;
+    // Upload to Appwrite Storage
+    const uploadResult = await uploadFromFormData(formData, 'file');
     
-    console.log('✅ File converted to base64 successfully');
-    console.log('� Data URL size:', dataUrl.length, 'characters');
+    console.log('File uploaded to Appwrite successfully:', uploadResult.fileId);
     
-    console.log('🎉 Upload completed:', {
+    console.log('Upload completed:', {
       originalName: file.name,
       type: file.type,
       size: file.size,
-      base64Size: dataUrl.length
+      fileId: uploadResult.fileId,
+      url: uploadResult.url
     });
 
     return NextResponse.json({ 
-      url: dataUrl,
-      message: 'File uploaded and converted to base64 successfully'
+      url: uploadResult.url,
+      fileId: uploadResult.fileId,
+      filename: uploadResult.filename,
+      size: uploadResult.fileSize,
+      message: 'File uploaded to Appwrite Storage successfully'
     });
   } catch (error) {
-    console.error('💥 Upload error:', error);
+    console.error('Upload error:', error);
     
     // Return more specific error message
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';

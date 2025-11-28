@@ -1,22 +1,11 @@
 import ProductForm from '@/components/product/ProductForm';
-import { dbService } from '@/lib/database';
-import jwt from 'jsonwebtoken';
-import { cookies } from 'next/headers';
+import { verifyAuth } from '@/lib/appwrite/auth';
 import { redirect } from 'next/navigation';
 
 // Check if current user is admin
 async function isCurrentUserAdmin(): Promise<boolean> {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('token')?.value;
-
-    if (!token) {
-      return false;
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
-    const user = await dbService.getUserById(decoded.userId );
-
+    const user = await verifyAuth();
     return user?.role === 'admin';
   } catch (error) {
     return false;

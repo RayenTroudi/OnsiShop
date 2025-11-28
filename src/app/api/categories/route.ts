@@ -1,4 +1,4 @@
-import { dbService } from '@/lib/database';
+import { dbService } from '@/lib/appwrite/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -31,12 +31,15 @@ export async function GET(request: NextRequest) {
     const categories = await dbService.getCategories();
     
     // Return only the essential fields for public use
-    const publicCategories = categories.map(category => ({
-      id: category.id,
-      name: category.name,
-      handle: category.handle,
-      description: category.description
-    }));
+    const publicCategories = categories.map(category => {
+      const cat = category as any;
+      return {
+        id: cat.id,
+        name: cat.name,
+        handle: cat.handle,
+        description: cat.description
+      };
+    });
     
     // Generate response with cache headers
     const responseData = JSON.stringify(publicCategories);

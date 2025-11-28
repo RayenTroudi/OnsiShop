@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import HealthMonitor from './HealthMonitor';
 import SimpleMediaUploader from './SimpleMediaUploader';
 import VideoSelector from './VideoSelector';
 
@@ -14,7 +13,7 @@ interface MediaAsset {
   createdAt: string;
 }
 
-type ActiveSection = 'hero-video' | 'hero-image' | 'promotions' | 'health';
+type ActiveSection = 'hero-video' | 'promotions';
 
 export default function SimplifiedAdmin() {
   const [activeSection, setActiveSection] = useState<ActiveSection>('hero-video');
@@ -121,19 +120,30 @@ export default function SimplifiedAdmin() {
     <div className="max-w-6xl mx-auto p-6">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Media Manager</h1>
-        <p className="text-lg text-gray-600">
-          Simple drag & drop interface to manage your website images and videos
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Media Manager</h1>
+            <p className="text-lg text-gray-600">
+              Simple drag & drop interface to manage your website images and videos
+            </p>
+          </div>
+          <a
+            href="/admin"
+            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Admin
+          </a>
+        </div>
       </div>
 
       {/* Section Navigation */}
       <div className="flex flex-wrap gap-3 mb-8 p-4 bg-gray-50 rounded-lg">
         {[
           { key: 'hero-video', label: '🎬 Hero Video', desc: 'Homepage background video' },
-          { key: 'hero-image', label: '🖼️ Hero Image', desc: 'Homepage background image' },
           { key: 'promotions', label: '🎯 Promotions', desc: 'Promotional section image' },
-          { key: 'health', label: '🏥 System Health', desc: 'Database and system monitoring' },
         ].map(section => (
           <button
             key={section.key}
@@ -143,8 +153,9 @@ export default function SimplifiedAdmin() {
                 ? 'bg-indigo-600 text-white shadow-lg transform scale-105'
                 : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
             }`}
+            suppressHydrationWarning
           >
-            <div className="font-semibold">{section.label}</div>
+            <div className="font-semibold" suppressHydrationWarning>{section.label}</div>
             <div className={`text-sm ${activeSection === section.key ? 'text-indigo-100' : 'text-gray-500'}`}>
               {section.desc}
             </div>
@@ -175,18 +186,6 @@ export default function SimplifiedAdmin() {
           </div>
         )}
 
-        {/* Hero Image Section */}
-        {activeSection === 'hero-image' && (
-          <SimpleMediaUploader
-            section="hero"
-            mediaType="image"
-            currentMedia={getCurrentMedia('hero', 'image')}
-            onUploadSuccess={handleUploadSuccess}
-            title="🖼️ Hero Background Image"
-            description="Upload an image for your homepage hero section. This will be displayed as a fallback if no video is uploaded, or on devices where videos don't autoplay."
-          />
-        )}
-
         {/* Promotions Section */}
         {activeSection === 'promotions' && (
           <SimpleMediaUploader
@@ -197,19 +196,6 @@ export default function SimplifiedAdmin() {
             title="🎯 Promotion Background Image"
             description="Upload an image for your promotional section on the homepage. This appears in the promotions banner area to highlight special offers."
           />
-        )}
-
-        {/* Health Monitoring Section */}
-        {activeSection === 'health' && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">🏥 System Health Dashboard</h2>
-              <p className="text-gray-600 mb-6">
-                Monitor your database connections, circuit breaker status, and overall system health in real-time.
-              </p>
-              <HealthMonitor />
-            </div>
-          </div>
         )}
 
         {/* Current Media List */}

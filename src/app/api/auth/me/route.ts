@@ -1,9 +1,9 @@
-import { verifyAuth } from '@/lib/auth';
+import { verifyAuth } from '@/lib/appwrite/auth';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
-    const user = verifyAuth(request);
+    const user = await verifyAuth();
 
     if (!user) {
       return NextResponse.json(
@@ -14,10 +14,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       user: {
-        id: user.userId,
+        id: user.id,
         email: user.email,
         name: user.name,
-        isAdmin: user.isAdmin,
+        isAdmin: user.role === 'admin',
       },
     });
   } catch (error) {

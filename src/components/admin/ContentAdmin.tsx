@@ -220,13 +220,15 @@ export default function ContentAdmin() {
   };
 
   const handleUploadThingComplete = async (url: string) => {
-    console.log(`✅ UploadThing upload completed: ${url}`);
+    console.log(`✅ Upload completed: ${url}`);
     console.log(`📍 Current section input: "${newMediaSection}"`);
     
     try {
-      // Validate the URL is from UploadThing
-      if (!url.includes('uploadthing') && !url.includes('utfs.io')) {
-        console.error('❌ Invalid URL received - not from UploadThing:', url);
+      // Validate the URL is from Appwrite
+      const isAppwrite = url.includes('appwrite.io') || url.includes('/storage/buckets/');
+      
+      if (!isAppwrite) {
+        console.error('❌ Invalid URL received - not from Appwrite:', url);
         alert('❌ Upload Error: Invalid URL format received. Please try again.');
         return;
       }
@@ -282,7 +284,7 @@ export default function ContentAdmin() {
 
       if (response.ok) {
         const result = await response.json();
-        console.log('✅ UploadThing URL saved successfully:', result);
+        console.log('✅ Appwrite Storage URL saved successfully:', result);
         
         // Refresh content and media data immediately
         console.log('🔄 Refreshing content data...');
@@ -303,17 +305,17 @@ export default function ContentAdmin() {
         alert(`✅ Upload successful! Media saved to ${section} section.`);
       } else {
         const errorData = await response.json();
-        console.error('❌ Failed to save UploadThing URL:', errorData);
-        alert(`⚠️ Upload completed but failed to save to database: ${errorData.error || 'Unknown error'}`);
+        console.error('❌ Failed to save Appwrite Storage URL:', errorData);
+        alert(`⚠️ Upload completed but failed to save to database: ${errorData.message || errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error('Error saving UploadThing URL:', error);
+      console.error('Error saving Appwrite Storage URL:', error);
       alert(`❌ Error saving upload: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
   const handleUploadError = (error: Error) => {
-    console.error('UploadThing error:', error);
+    console.error('Appwrite upload error:', error);
     alert(`❌ Upload failed: ${error.message}`);
   };
 

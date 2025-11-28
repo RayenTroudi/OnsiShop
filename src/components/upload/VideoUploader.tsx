@@ -1,6 +1,6 @@
 "use client";
 
-import FileUploader from '@/components/upload/FileUploader';
+import AppwriteFileUploader from '@/components/upload/AppwriteFileUploader';
 import { useState } from 'react';
 
 interface VideoUploaderProps {
@@ -10,8 +10,8 @@ interface VideoUploaderProps {
   description?: string;
   maxSize?: string;
   className?: string;
-  autoSaveToDatabase?: boolean; // New prop to control automatic database saving
-  contentKey?: string; // Content key for database storage
+  autoSaveToDatabase?: boolean;
+  contentKey?: string;
 }
 
 export default function VideoUploader({ 
@@ -31,31 +31,15 @@ export default function VideoUploader({
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
 
   const handleUploadComplete = async (res: any) => {
-    console.log("🔍 Raw upload response:", res);
+    console.log("Raw upload response from Appwrite:", res);
     
-    if (res?.[0]) {
-      const uploadResult = res[0];
-      console.log("📄 Upload result object:", uploadResult);
+    // Appwrite response structure
+    if (res?.url) {
+      const newUrl = res.url;
+      const fileId = res.fileId;
       
-      // Validate that we have a proper UploadThing URL
-      const newUrl = uploadResult.url;
-      console.log("🔗 Extracted URL:", newUrl);
-      
-      // Check if the URL is a base64 data URL (which shouldn't happen with UploadThing)
-      if (newUrl?.startsWith('data:')) {
-        console.error("❌ Received base64 data URL instead of UploadThing URL:", newUrl.substring(0, 100) + "...");
-        setSaveError("❌ Upload error: Received invalid URL format. Please try again.");
-        return;
-      }
-      
-      // Check if it's a proper UploadThing URL
-      if (!newUrl?.includes('uploadthing') && !newUrl?.includes('utfs.io')) {
-        console.error("❌ URL doesn't appear to be from UploadThing:", newUrl);
-        setSaveError("❌ Upload error: Invalid file URL received. Please try again.");
-        return;
-      }
-      
-      console.log("✅ Valid UploadThing URL received:", newUrl);
+      console.log("Extracted URL:", newUrl);
+      console.log("File ID:", fileId);
       
       setUploadedUrl(newUrl);
       setSaveError(null);
@@ -63,14 +47,14 @@ export default function VideoUploader({
 
       // If autoSaveToDatabase is enabled, save to database automatically
       if (autoSaveToDatabase) {
-        await saveToDatabase(newUrl, uploadResult);
+        await saveToDatabase(newUrl, res);
       } else {
         // Otherwise, just call the callback
         onUploadComplete?.(newUrl);
       }
     } else {
-      console.error("❌ No upload result received:", res);
-      setSaveError("❌ Upload failed: No file information received.");
+      console.error("No upload result received:", res);
+      setSaveError("Upload failed: No file information received.");
     }
   };
 
@@ -80,7 +64,7 @@ export default function VideoUploader({
     setSaveSuccess(false);
 
     try {
-      console.log("💾 Saving video URL to database:", videoUrl);
+      console.log("Saving video URL to database:", videoUrl);
 
       const response = await fetch('/api/admin/hero-video', {
         method: 'POST',
@@ -90,9 +74,9 @@ export default function VideoUploader({
         },
         body: JSON.stringify({
           videoUrl,
-          uploadId: uploadResult.uploadId || uploadResult.key,
+          uploadId: uploadResult.fileId,
           metadata: {
-            fileName: uploadResult.name || 'unknown',
+            fileName: uploadResult.filename || 'unknown',
             fileSize: uploadResult.size || 0,
             uploadedAt: new Date().toISOString(),
             contentKey
@@ -149,9 +133,9 @@ export default function VideoUploader({
   const videoUrl = uploadedUrl || currentVideoUrl;
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div className={`space-y-6 ${className}`} suppressHydrationWarning>
       {/* Header */}
-      <div>
+      <div suppressHydrationWarning>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
         <p className="text-sm text-gray-600">{description}</p>
         {autoSaveToDatabase && (
@@ -163,7 +147,7 @@ export default function VideoUploader({
 
       {/* Save Status Messages */}
       {saveError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4" suppressHydrationWarning>
           <div className="flex items-start">
             <svg className="h-5 w-5 text-red-400 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
@@ -176,7 +160,7 @@ export default function VideoUploader({
       )}
 
       {saveSuccess && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4" suppressHydrationWarning>
           <div className="flex items-start">
             <svg className="h-5 w-5 text-green-400 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -191,7 +175,7 @@ export default function VideoUploader({
       )}
 
       {isSaving && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4" suppressHydrationWarning>
           <div className="flex items-center">
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
             <p className="ml-3 text-blue-800 font-medium">💾 Saving video to database...</p>
@@ -202,7 +186,7 @@ export default function VideoUploader({
       {/* Current Video Preview */}
       {videoUrl && (
         <div className="space-y-3">
-          <h4 className="font-medium text-gray-900">
+          <h4 className="font-medium text-gray-900" suppressHydrationWarning>
             {uploadedUrl ? "✅ Newly Uploaded Video" : "Current Video"}
           </h4>
           
@@ -237,34 +221,14 @@ export default function VideoUploader({
 
       {/* Upload Component */}
       <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-6">
-        <FileUploader
-          endpoint="heroVideoUploader"
+        <h4 className="text-lg font-semibold mb-4">Upload Video to Appwrite Storage</h4>
+        <AppwriteFileUploader
+          uploadType="video"
           onUploadComplete={handleUploadComplete}
           onUploadError={handleUploadError}
-          variant="dropzone"
           maxFiles={1}
-        >
-          <div className="text-center space-y-2">
-            <p className="text-sm font-medium text-gray-700">
-              Drag and drop your video file here, or click to browse
-            </p>
-            <p className="text-xs text-gray-500">
-              Maximum file size: {maxSize} • Supported formats: MP4, WebM, MOV
-            </p>
-          </div>
-        </FileUploader>
-      </div>
-
-      {/* Upload Instructions */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-semibold text-blue-900 mb-2">📋 Video Upload Guidelines</h4>
-        <ul className="text-sm text-blue-800 space-y-1">
-          <li>• <strong>Recommended resolution:</strong> 1920x1080 (Full HD) or higher</li>
-          <li>• <strong>Recommended duration:</strong> 15-60 seconds for homepage videos</li>
-          <li>• <strong>File formats:</strong> MP4 (recommended), WebM, MOV</li>
-          <li>• <strong>Compression:</strong> Videos are automatically optimized for web delivery</li>
-          <li>• <strong>Performance:</strong> Files served from global CDN for fast loading</li>
-        </ul>
+          maxSizeMB={32}
+        />
       </div>
 
     </div>

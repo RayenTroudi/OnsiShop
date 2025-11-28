@@ -1,4 +1,4 @@
-import { verifyAuth } from '@/lib/auth';
+import { verifyAuth } from '@/lib/appwrite/auth';
 import { UploadService } from '@/lib/uploadService';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Verify authentication
-    const user = verifyAuth(request);
+    const user = await verifyAuth();
     if (!user) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
 
       case 'stats':
         // Admin only
-        if (!user.isAdmin) {
+        if (user.role !== 'admin') {
           return NextResponse.json(
             { success: false, error: 'Admin access required' },
             { status: 403 }
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     // Verify authentication
-    const user = verifyAuth(request);
+    const user = await verifyAuth();
     if (!user) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },

@@ -14,18 +14,26 @@ const SocialMedia = () => {
   const { t } = useTranslation();
   
   return (
-    <div className="flex w-full flex-col items-center gap-3 md:items-start md:justify-start">
-      <h3 className="text-[20px] font-semibold text-veryDarkPurple">{t('nav_follow_us')}</h3>
-      <div className="flex w-full items-center justify-center gap-4 [&_a]:transition-all [&_a]:duration-300 hover:[&_a]:rounded-full hover:[&_a]:shadow-sm hover:[&_a]:brightness-75">
+    <div className="flex flex-col items-center gap-[12px]">
+      <h3 className="font-lora text-[clamp(18px,16px_+_0.5vw,20px)] font-semibold text-veryDarkPurple">
+        {t('nav_follow_us')}
+      </h3>
+      <div className="flex items-center justify-center gap-[16px] [&_a]:transition-all [&_a]:duration-300 hover:[&_a]:scale-110 hover:[&_a]:brightness-90">
         {socialMediaItems.map((socialMediaItem, i) => (
           <Link
             href={socialMediaItem.url}
             key={i}
             target="_blank"
             title={socialMediaItem.title}
-            className="flex-shrink-0"
+            className="flex-shrink-0 rounded-full bg-white p-2 shadow-sm hover:shadow-md"
           >
-            <Image src={socialMediaItem.image} alt={socialMediaItem.title} width="33" height="33" />
+            <Image 
+              src={socialMediaItem.image} 
+              alt={socialMediaItem.title} 
+              width={28} 
+              height={28}
+              className="object-contain"
+            />
           </Link>
         ))}
       </div>

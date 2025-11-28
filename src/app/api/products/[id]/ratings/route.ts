@@ -1,5 +1,5 @@
-import { dbService } from '@/lib/database';
-import jwt from 'jsonwebtoken';
+import { verifyAuth } from '@/lib/appwrite/auth';
+import { dbService } from '@/lib/appwrite/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -58,27 +58,17 @@ export async function POST(
     const body = await request.json();
     const { stars } = body;
 
-    // Get user from JWT token
-    const token = request.cookies.get('auth-token')?.value || 
-                  request.headers.get('authorization')?.replace('Bearer ', '');
+    // Get authenticated user
+    const user = await verifyAuth();
     
-    if (!token) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    let userId: string;
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
-      userId = decoded.userId;
-    } catch (jwtError) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      );
-    }
+    const userId = user.id;
 
     // Validate input
     if (!stars || stars < 1 || stars > 5 || !Number.isInteger(stars)) {

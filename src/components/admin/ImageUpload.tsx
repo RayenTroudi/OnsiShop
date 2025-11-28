@@ -13,20 +13,21 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
 
   // Ensure images is always an array and filter out malformed URLs
   const safeImages = Array.isArray(images) ? images.filter(img => {
-    // Allow data URLs (base64) and regular URLs, but exclude empty strings
+    // Allow Appwrite URLs and legacy base64/http URLs
     const isValid = img && typeof img === 'string' && img.trim() !== '' &&
-      (img.startsWith('data:') || img.startsWith('http') || img.startsWith('/')) &&
+      (img.includes('appwrite.io') || img.includes('/storage/buckets/') || 
+       img.startsWith('data:') || img.startsWith('http') || img.startsWith('/')) &&
       !img.includes('[') && !img.includes(']') && 
       img !== 'undefined' && img !== 'null';
     if (!isValid && img) {
-      console.warn('🚫 Filtering out malformed image in ImageUpload:', img);
+      console.warn('Filtering out malformed image in ImageUpload:', img);
     }
-    console.log('🖼️ Processing image URL:', img?.substring(0, 50) + '...', 'Valid:', isValid);
+    console.log('Processing image URL:', img?.substring(0, 50) + '...', 'Valid:', isValid);
     return isValid;
   }) : [];
 
-  console.log('🔍 ImageUpload received images:', images);
-  console.log('🛡️ Safe images after filtering:', safeImages);
+  console.log('ImageUpload received images:', images);
+  console.log('Safe images after filtering:', safeImages);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -50,13 +51,12 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
 
         if (response.ok) {
           const result = await response.json();
-          // Validate the returned URL (should be a data URL for base64 images)
+          // Validate the returned URL (should be an Appwrite URL)
           if (result.url && typeof result.url === 'string' && 
-              (result.url.startsWith('data:') || result.url.startsWith('http') || result.url.startsWith('/')) &&
-              !result.url.includes('[') && !result.url.includes(']') && 
+              (result.url.includes('appwrite.io') || result.url.includes('/storage/buckets/')) &&
               result.url.trim() !== '') {
             newImages.push(result.url);
-            console.log('✅ Image uploaded successfully as base64:', result.url.substring(0, 50) + '...');
+            console.log('Image uploaded successfully to Appwrite:', result.url.substring(0, 50) + '...');
           } else {
             console.error('Invalid URL returned from upload:', result.url?.substring(0, 100));
             alert(`Upload failed for ${file.name}: Invalid URL returned`);
@@ -123,8 +123,8 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
               <p className="mb-2 text-sm text-gray-500">
                 <span className="font-semibold">Click to upload</span> or drag and drop
               </p>
-              <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
-              <p className="text-xs text-gray-400 mt-1">Images will be stored in database as base64</p>
+              <p className="text-xs text-gray-500">PNG, JPG, WebP, GIF up to 8MB</p>
+              <p className="text-xs text-gray-400 mt-1">Files stored in Appwrite Cloud Storage</p>
             </div>
             <input
               type="file"
@@ -139,7 +139,7 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
         {uploading && (
           <div className="flex items-center justify-center mt-2">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-            <p className="text-sm text-blue-600 ml-2">Uploading images...</p>
+            <p className="text-sm text-blue-600 ml-2">Uploading to Appwrite Storage...</p>
           </div>
         )}
       </div>
