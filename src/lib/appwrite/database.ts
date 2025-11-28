@@ -374,6 +374,7 @@ export class AppwriteDbService {
     availableForSale?: boolean;
     images?: string[];
     stock?: number;
+    categoryId?: string | null;
   }) {
     try {
       const doc = await serverDatabases.updateDocument(
