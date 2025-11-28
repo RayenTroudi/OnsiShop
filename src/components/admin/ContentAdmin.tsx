@@ -1,6 +1,6 @@
 'use client';
 
-import FileUploader from '@/components/upload/FileUploader';
+import AppwriteFileUploader from '@/components/upload/AppwriteFileUploader';
 import { useTranslation } from '@/contexts/TranslationContext';
 import { useEffect, useState } from 'react';
 import HeroVideoManager from './HeroVideoManager';
@@ -500,29 +500,17 @@ export default function ContentAdmin() {
                 
                 {(newMediaSection || activeSection) && (
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                    <FileUploader
-                      endpoint="mediaUploader"
-                      onUploadComplete={(res) => {
-                        if (res?.[0]) {
-                          handleUploadThingComplete(res[0].url);
+                    <AppwriteFileUploader
+                      uploadType="image"
+                      onUploadComplete={(result) => {
+                        if (result?.url) {
+                          handleUploadThingComplete(result.url);
                         }
                       }}
                       onUploadError={handleUploadError}
-                      variant="dropzone"
                       maxFiles={1}
-                    >
-                      <div className="text-center space-y-2">
-                        <p className="text-sm font-medium text-gray-700">
-                          Drag and drop your image here, or click to browse
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Uploaded via UploadThing • Maximum file size: 32MB
-                        </p>
-                        <p className="text-xs text-blue-600">
-                          Will be saved to: {newMediaSection || activeSection} section
-                        </p>
-                      </div>
-                    </FileUploader>
+                      maxSizeMB={32}
+                    />
                   </div>
                 )}
                 
