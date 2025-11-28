@@ -208,7 +208,7 @@ export default function SimpleMediaUploader({
           <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-6">
             <h4 className="text-lg font-semibold mb-4">Upload {mediaType === 'image' ? 'Image' : 'Media'}</h4>
             <AppwriteFileUploader
-              uploadType={mediaType}
+              uploadType={mediaType === 'both' ? 'general' : mediaType}
               onUploadComplete={(res) => {
                 if (res?.url) {
                   handleAppwriteUploadComplete(res.url);

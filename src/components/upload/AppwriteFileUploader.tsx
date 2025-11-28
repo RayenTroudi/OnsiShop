@@ -91,6 +91,8 @@ export default function AppwriteFileUploader({
 
       for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
+        if (!file) continue; // Skip if file is undefined
+        
         const formData = new FormData();
         
         // Use appropriate key based on upload type
