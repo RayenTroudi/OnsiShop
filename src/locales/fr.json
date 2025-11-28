@@ -3,6 +3,9 @@
   "hero_subtitle": "Découvrez des produits incroyables à des prix avantageux",
   "hero_description": "Achetez les dernières tendances et trouvez votre style parfait avec notre collection soignée de produits premium.",
   "hero_cta": "Acheter Maintenant",
+  "hero_cta_primary": "Découvrir les Nouveautés",
+  "hero_cta_secondary": "Voir Tous les Produits",
+  "hero_eyebrow": "Collection Printemps 2025",
   "hero_explore": "Explorer les Produits",
   
   "nav_home": "Accueil",
@@ -150,7 +153,10 @@
   "nav_orders": "Commandes",
   
   "section_new_arrivals": "Nouveautés",
+  "section_new_arrivals_eyebrow": "Tout Juste Arrivé",
+  "section_new_arrivals_description": "Découvrez les derniers ajouts à notre collection",
   "button_view_more": "Voir Plus",
+  "button_view_all": "Voir Tout",
   "button_add_to_cart": "Ajouter au Panier",
   "button_adding": "Ajout...",
   "cart_added_success": "Ajouté au panier!",
@@ -212,6 +218,15 @@
   "admin_manage_translations": "Gérer les Traductions",
   "admin_recent_products": "Produits Récents",
   "admin_no_products_yet": "Aucun produit encore",
+  
+  "trust_free_shipping": "Livraison Gratuite",
+  "trust_free_shipping_desc": "Sur les commandes de plus de 50$",
+  "trust_easy_returns": "Retours Faciles",
+  "trust_easy_returns_desc": "Politique de retour de 30 jours",
+  "trust_secure_payment": "Paiement Sécurisé",
+  "trust_secure_payment_desc": "Paiement crypté SSL",
+  "trust_support": "Support 24/7",
+  "trust_support_desc": "Toujours là pour vous aider",
   
   "section_promotions": "Promotions",
   "section_discounts": "Remises Spéciales",

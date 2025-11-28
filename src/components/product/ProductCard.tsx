@@ -81,16 +81,16 @@ const ProductCard = ({
   return (
     <LazyMotion features={domAnimation}>
       <m.article
-        className="relative flex w-[180px] flex-col items-center justify-center gap-[10px] sm:w-[280px]"
-        initial={{ opacity: 0, y: 50 }}
+        className="group relative flex w-full flex-col"
+        initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ ease: 'easeOut', duration, delay }}
         viewport={{ once: true }}
       >
         <a
           href={'/products/' + product.id}
+          className="block"
           onMouseEnter={() => {
-            // Only change to hover image if a second image exists
             if (product.images?.[1]?.url) {
               setActiveImage('hover');
             }
@@ -98,92 +98,83 @@ const ProductCard = ({
           }}
           onMouseLeave={() => setActiveImage('main')}
         >
-          <div className="relative aspect-[7/10] h-[257px] overflow-hidden rounded-[16px] sm:h-[400px]">
+          <div className="relative aspect-[3/4] overflow-hidden rounded-2xl mb-4 bg-gray-100">
             {rank !== undefined && (
-              <div className="absolute left-0 top-0 z-10 flex aspect-square w-[20%] max-w-[56px] items-center justify-center rounded-br-[16px] bg-white/50 text-[clamp(16px,4px_+_2vw,24px)] font-bold text-veryDarkPurple/70 backdrop-blur-sm">
-                {getNumberWithOrdinal(rank)}
+              <div className="absolute left-3 top-3 z-20 flex items-center justify-center px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm shadow-lg">
+                <span className="text-[14px] font-bold text-veryDarkPurple">
+                  {getNumberWithOrdinal(rank)}
+                </span>
               </div>
             )}
+            
             <Image
               src={product.images?.[0]?.url || '/images/placeholder-product.svg'}
               alt="product image"
               fill
-              sizes="(min-width: 768px) 280px, 180px"
-              className={clsx('object-cover transition-all duration-500 will-change-transform', {
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 50vw"
+              className={clsx('object-cover transition-all duration-700 will-change-transform group-hover:scale-105', {
                 'opacity-0': activeImage !== 'main',
                 'opacity-100': activeImage === 'main'
               })}
             />
-            {/* Only show hover image if a second image exists */}
-            {product.images?.[1]?.url && (
-              <Image
-                src={product.images[1].url}
-                alt="product image"
                 fill
-                sizes="(min-width: 768px) 280px, 180px"
-                className={clsx('object-cover transition-all duration-500 will-change-transform', {
+                sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 50vw"
+                className={clsx('object-cover transition-all duration-700 will-change-transform', {
                   'opacity-0': activeImage !== 'hover',
                   'opacity-100': activeImage === 'hover'
                 })}
               />
             )}
-            {colorVariants.map((variant, i) => {
-              return (
-                <Image
-                  key={i}
-                  src={variant.image || '/images/placeholder-product.svg'}
-                  fill
-                  sizes="(min-width: 768px) 280px, 180px"
-                  alt="product image"
-                  className={clsx(
-                    'object-cover transition-all duration-300 will-change-transform',
-                    {
-                      'opacity-0': activeImage !== variant.image,
-                      'opacity-100': activeImage === variant.image
-                    }
-                  )}
-                />
-              );
-            })}
           </div>
         </a>
-        <div className="flex flex-wrap items-center justify-center gap-[24px] lg:gap-[8px]">
-          {colorVariants.map((variant, i) => {
-            return (
-              <button
-                key={i}
-                className="aspect-square w-[20px] cursor-pointer rounded-full border border-purple"
-                style={{ backgroundColor: colors[variant.name as keyof typeof colors] }}
-                onClick={() => setActiveImage(variant.image)}
-                onMouseLeave={() => {
-                  timeoutId.current = setTimeout(() => setActiveImage('main'), 2000);
-                }}
-                onMouseEnter={() => clearTimeout(timeoutId.current)}
-                title={variant.name}
-              />
-            );
-          })}
-        </div>
-        <a href={'/products/' + product.id}>
-          <h3 className="text-center font-quicksand text-[clamp(20px,8px_+_2vw,22px)] font-bold text-darkPurple transition-all duration-300 hover:text-purple">
-            {product.title}
-          </h3>
-        </a>
-        <p className="font-lora text-[clamp(20px,8px_+_2vw,24px)] text-darkPurple">
-          {Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(
-            Number(product.priceRange?.minVariantPrice?.amount || '0')
+        
+        <div className="flex flex-col gap-3">
+          <a href={'/products/' + product.id} className="block">
+            <h3 className="font-quicksand text-[clamp(16px,1.5vw,18px)] font-bold text-darkPurple line-clamp-2 group-hover:text-purple transition-colors duration-300 mb-1">
+              {product.title}
+            </h3>
+          </a>
+          
+          <div className="flex items-baseline gap-2">
+            <p className="font-lora text-[clamp(20px,2vw,24px)] font-bold text-veryDarkPurple">
+              {Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(
+                Number(product.priceRange?.minVariantPrice?.amount || '0')
+              )}
+            </p>
+          </div>
+          
+          {colorVariants.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {colorVariants.slice(0, 5).map((variant, i) => (
+                <button
+                  key={i}
+                  className="w-6 h-6 rounded-full border-2 border-gray-300 hover:border-purple hover:scale-110 transition-all duration-200"
+                  style={{ backgroundColor: colors[variant.name as keyof typeof colors] }}
+                  onClick={() => setActiveImage(variant.image)}
+                  onMouseLeave={() => {
+                    timeoutId.current = setTimeout(() => setActiveImage('main'), 2000);
+                  }}
+                  onMouseEnter={() => clearTimeout(timeoutId.current)}
+                  title={variant.name}
+                />
+              ))}
+              {colorVariants.length > 5 && (
+                <span className="text-xs text-darkPurple/60">+{colorVariants.length - 5}</span>
+              )}
+            </div>
           )}
-        </p>
-        {isMounted && (
-          <DatabaseAddToCart
-            productId={product.id}
-            availableForSale={product.availableForSale}
-            stock={typeof (product as any).stock === 'number' ? (product as any).stock : 999}
-            className="w-full bg-purple text-white px-4 py-2 rounded-lg font-semibold hover:bg-darkPurple transition-colors"
-          >
-            <span>Add to Cart</span>
-          </DatabaseAddToCart>
-        )}
+          
+          {isMounted && (
+            <DatabaseAddToCart
+              productId={product.id}
+              availableForSale={product.availableForSale}
+              stock={typeof (product as any).stock === 'number' ? (product as any).stock : 999}
+              className="w-full bg-purple text-white px-4 py-3 rounded-xl font-semibold text-[15px] hover:bg-darkPurple hover:shadow-lg transition-all duration-300"
+            >
+              <span>Add to Cart</span>
+            </DatabaseAddToCart>
+          )}
+        </div>
       </m.article>
     </LazyMotion>
   );

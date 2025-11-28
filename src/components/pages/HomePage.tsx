@@ -6,6 +6,7 @@ import { Suspense, useEffect } from 'react';
 
 // Direct imports for components that work
 import HeroSection from '@/components/sections/HeroSection';
+import TrustBar from '@/components/sections/TrustBar';
 
 // Loading fallback component
 const SectionSkeleton = () => (
@@ -94,19 +95,15 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen">
-      {/* Always render HeroSection - it manages its own loading */}
       <Suspense fallback={<div className="w-full h-screen bg-gradient-to-br from-purple-900 to-pink-600 animate-pulse"></div>}>
         <HeroSection />
       </Suspense>
       
-      {/* Render other sections immediately but they won't be visible until loading is complete */}
+      <TrustBar />
+      
       <div className={isLoading ? "opacity-0" : "opacity-100 transition-opacity duration-1000 delay-300"}>
-        <Suspense fallback={<div className="w-full h-12 bg-purple-600 animate-pulse"></div>}>
-          <Discounts />
-        </Suspense>
-        
         <Suspense fallback={<SectionSkeleton />}>
-          <BestSellers />
+          <NewArrivals />
         </Suspense>
         
         <Suspense fallback={<SectionSkeleton />}>
@@ -114,7 +111,7 @@ export default function HomePage() {
         </Suspense>
         
         <Suspense fallback={<SectionSkeleton />}>
-          <NewArrivals />
+          <BestSellers />
         </Suspense>
       </div>
     </main>

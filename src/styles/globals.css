@@ -31,7 +31,6 @@
   @apply relative h-full before:absolute before:bottom-0 before:left-1/2 before:hidden before:h-[4px] before:w-0 before:bg-purple before:opacity-0 before:transition-all before:duration-300 before:will-change-transform before:-translate-x-1/2 hover:text-purple hover:before:w-full hover:before:opacity-100 md:before:block;
 }
 
-/* Shimmer animation for lazy loading */
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -45,6 +44,44 @@
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s ease-out forwards;
+}
+
+.animation-delay-200 {
+  animation-delay: 0.2s;
+  opacity: 0;
+}
+
+.animation-delay-400 {
+  animation-delay: 0.4s;
+  opacity: 0;
 }
 
 /* Global loading spinner styles */

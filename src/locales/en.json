@@ -3,6 +3,9 @@
   "hero_subtitle": "Discover amazing products at great prices",
   "hero_description": "Shop the latest trends and find your perfect style with our curated collection of premium products.",
   "hero_cta": "Shop Now",
+  "hero_cta_primary": "Shop New Arrivals",
+  "hero_cta_secondary": "View All Products",
+  "hero_eyebrow": "Spring 2025 Collection",
   "hero_explore": "Explore Products",
   "search_placeholder": "Search for products...",
   
@@ -147,7 +150,10 @@
   "nav_orders": "Orders",
   
   "section_new_arrivals": "New Arrivals",
+  "section_new_arrivals_eyebrow": "Just Landed",
+  "section_new_arrivals_description": "Discover the latest additions to our collection",
   "button_view_more": "View More",
+  "button_view_all": "View All",
   "button_add_to_cart": "Add to Cart",
   "button_adding": "Adding...",
   "cart_added_success": "Added to cart!",
@@ -209,6 +215,15 @@
   "admin_manage_translations": "Manage Translations",
   "admin_recent_products": "Recent Products",
   "admin_no_products_yet": "No products yet",
+  
+  "trust_free_shipping": "Free Shipping",
+  "trust_free_shipping_desc": "On orders over $50",
+  "trust_easy_returns": "Easy Returns",
+  "trust_easy_returns_desc": "30-day return policy",
+  "trust_secure_payment": "Secure Payment",
+  "trust_secure_payment_desc": "SSL encrypted checkout",
+  "trust_support": "24/7 Support",
+  "trust_support_desc": "Always here to help",
   
   "section_promotions": "Promotions",
   "section_discounts": "Special Discounts",

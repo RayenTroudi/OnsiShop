@@ -88,11 +88,9 @@ const HeroSection = () => {
   }, [t]);
 
   return (
-    <section className="relative h-[500px] md:h-[600px] flex items-center justify-center text-white overflow-hidden">
-      {/* Background Images and Videos - Direct UploadThing loading */}
+    <section className="relative h-screen min-h-[700px] max-h-[900px] flex items-center justify-center text-white overflow-hidden">
+      {/* Background Images and Videos */}
       <div className="absolute inset-0 z-0">
-        
-        {/* Background Image - Cached UploadThing */}
         {cachedImageUrl && !content.backgroundVideo && !loading && (
           <>
             <Image
@@ -100,12 +98,11 @@ const HeroSection = () => {
               alt="Hero background image"
               fill
               sizes="100vw"
-              className="object-cover"
+              className="object-cover brightness-75"
               priority={true}
               quality={90}
               unoptimized={content.backgroundImage?.startsWith('data:')}
             />
-            {/* Cache status indicator */}
             {imageCached && (
               <div className="absolute top-4 right-4 z-50 bg-green-500/80 text-white px-2 py-1 text-xs rounded">
                 📦 Cached Image
@@ -119,13 +116,12 @@ const HeroSection = () => {
           </>
         )}
         
-        {/* Background Video - Cached UploadThing loading */}
         {cachedVideoUrl && !loading && (
           <>
             <video
               ref={videoRef}
               src={cachedVideoUrl}
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover brightness-75"
               poster={cachedImageUrl || content.backgroundImage}
               muted
               autoPlay
@@ -145,7 +141,6 @@ const HeroSection = () => {
                 console.error('❌ Hero video failed to load:', e);
               }}
             />
-            {/* Cache status indicators */}
             {videoCached && (
               <div className="absolute top-4 left-4 z-50 bg-green-500/80 text-white px-2 py-1 text-xs rounded">
                 📦 Cached Video
@@ -160,31 +155,48 @@ const HeroSection = () => {
         )}
       </div>
       
-      {/* Fallback gradient background */}
       {!cachedImageUrl && !cachedVideoUrl && (
         <div className="absolute inset-0 z-0 bg-gradient-to-br from-purple-900 via-purple-700 to-pink-600" />
       )}
       
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent z-10" />
+      
       {/* Content */}
-      <div className="relative z-20 max-w-4xl mx-auto px-4 text-center">
-        <h1 className="text-4xl md:text-6xl font-bold mb-4 text-white" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+      <div className="relative z-20 max-w-5xl mx-auto px-6 md:px-8 text-center">
+        <p className="text-[14px] uppercase tracking-[0.2em] font-semibold text-white/90 mb-6 animate-fade-in">
+          {t('hero_eyebrow') || 'Spring 2025 Collection'}
+        </p>
+        
+        <h1 className="font-lora text-[clamp(48px,6vw,80px)] font-bold leading-[1.1] mb-8 text-white animate-fade-in-up" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.4)' }}>
           {content.title}
         </h1>
         
-        <h2 className="text-xl md:text-2xl font-medium mb-6 text-white" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.8)' }}>
+        <p className="text-[clamp(18px,2vw,24px)] leading-relaxed mb-12 max-w-3xl mx-auto text-white/90 animate-fade-in-up animation-delay-200" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.3)' }}>
           {content.subtitle}
-        </h2>
-        
-        <p className="text-lg md:text-xl mb-8 max-w-3xl mx-auto leading-relaxed text-white" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
-          {content.description}
         </p>
+        
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up animation-delay-400">
+          <a 
+            href="/search/all-products" 
+            className="w-full sm:w-auto px-10 py-5 bg-white text-veryDarkPurple font-bold text-[18px] rounded-full hover:bg-white/90 hover:scale-105 transition-all duration-300 shadow-xl"
+          >
+            {t('hero_cta_primary') || 'Shop New Arrivals'}
+          </a>
+          <a 
+            href="/products" 
+            className="w-full sm:w-auto px-10 py-5 border-2 border-white text-white font-bold text-[18px] rounded-full hover:bg-white/10 transition-all duration-300"
+          >
+            {t('hero_cta_secondary') || 'View All Products'}
+          </a>
+        </div>
       </div>
       
-      {/* Decorative Elements */}
-      <div className="absolute top-10 left-10 w-20 h-20 border-2 border-white/20 rounded-full animate-pulse z-10" />
-      <div className="absolute bottom-20 right-20 w-16 h-16 border-2 border-white/20 rounded-full animate-pulse delay-1000 z-10" />
-      <div className="absolute top-1/2 left-20 w-12 h-12 border-2 border-white/20 rounded-full animate-pulse delay-500 z-10" />
-      
+      {/* Scroll Indicator */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 animate-bounce">
+        <div className="w-6 h-10 border-2 border-white/50 rounded-full flex items-start justify-center p-2">
+          <div className="w-1 h-2 bg-white/70 rounded-full animate-pulse" />
+        </div>
+      </div>
     </section>
   );
 };

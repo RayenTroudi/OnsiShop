@@ -93,24 +93,22 @@ const Promotions = () => {
 
   return (
     <ParallaxProvider>
-      <div className="relative h-[570px] overflow-hidden sm:h-screen">
+      <div className="relative h-[600px] md:h-[700px] overflow-hidden">
         <h2 className="sr-only">Promotions</h2>
         
-        {/* Cached Appwrite Image Loading */}
         {cachedImageUrl && (
           <>
-            <Parallax speed={-50} className="relative hidden h-full w-full sm:block">
+            <Parallax speed={-20} className="relative hidden h-full w-full md:block">
               <Image
                 src={cachedImageUrl}
                 alt="promotion background"
                 fill
-                sizes="(min-width: 768px) 100vw, 867px"
-                className="object-cover"
+                sizes="100vw"
+                className="object-cover brightness-90"
                 priority={true}
                 quality={90}
                 unoptimized={content.backgroundImage.startsWith('data:')}
               />
-              {/* Cache status indicators */}
               {imageCached && (
                 <div className="absolute top-4 right-4 z-50 bg-green-500/80 text-white px-2 py-1 text-xs rounded">
                   📦 Cached
@@ -122,18 +120,17 @@ const Promotions = () => {
                 </div>
               )}
             </Parallax>
-            <div className="relative block h-full w-full sm:hidden">
+            <div className="relative block h-full w-full md:hidden">
               <Image
                 src={cachedImageUrl}
                 alt="promotion background"
                 fill
-                sizes="(max-width: 767px) 100vw, 867px"
-                className="object-cover"
+                sizes="100vw"
+                className="object-cover brightness-90"
                 priority={true}
                 quality={90}
                 unoptimized={content.backgroundImage.startsWith('data:')}
               />
-              {/* Mobile cache status */}
               {imageCached && (
                 <div className="absolute top-4 right-4 z-50 bg-green-500/80 text-white px-2 py-1 text-xs rounded">
                   📦 Cached
@@ -143,21 +140,24 @@ const Promotions = () => {
           </>
         )}
         
-        <div className="absolute right-[5%] top-[50%] flex w-[65%] max-w-[610px] flex-col items-center justify-center gap-[16px] rounded-[16px] bg-white/30 p-[16px] text-center -translate-y-1/2 md:gap-[32px] md:p-[32px]">
-          <h3 className="font-lora text-[clamp(24px,14px_+_2vw,60px)] font-bold leading-[1.5] text-white drop-shadow-md">
-            {content.title.split('\n').map((line: string, i: number) => (
-              <span key={i}>
-                {line}
-                {i < content.title.split('\n').length - 1 && <br />}
-              </span>
-            ))}
-          </h3>
-          <p className="text-[clamp(18px,10px_+_2vw,32px)] font-semibold text-veryDarkPurple drop-shadow-md">
-            {content.subtitle}
-          </p>
-          <a className="btn text-[clamp(16px,8px_+_2vw,22px)]" href={content.buttonLink}>
-            {content.buttonText}
-          </a>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-transparent" />
+        
+        <div className="absolute inset-0 flex items-center">
+          <div className="max-w-7xl mx-auto px-6 md:px-8 w-full">
+            <div className="max-w-2xl">
+              <h3 className="font-lora text-[clamp(32px,5vw,64px)] font-bold leading-[1.2] text-white mb-6 drop-shadow-2xl">
+                {content.title.split('\n').map((line: string, i: number) => (
+                  <span key={i}>
+                    {line}
+                    {i < content.title.split('\n').length - 1 && <br />}
+                  </span>
+                ))}
+              </h3>
+              <p className="text-[clamp(18px,2vw,28px)] font-semibold text-white/95 drop-shadow-lg">
+                {content.subtitle}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </ParallaxProvider>
