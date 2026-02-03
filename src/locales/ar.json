@@ -1,13 +1,19 @@
 {
-  "hero_title": "مرحباً بكم في OnsiShop",
-  "hero_subtitle": "اكتشف منتجات رائعة بأسعار مذهلة",
-  "hero_description": "تسوق أحدث الصيحات واعثر على أسلوبك المثالي مع مجموعتنا المختارة من المنتجات المتميزة.",
+  "hero_title": "اكتشف أسلوبك المثالي",
+  "hero_subtitle": "أزياء راقية لكل مناسبة",
+  "hero_description": "استكشف مجموعتنا المختارة من الملابس والإكسسوارات العصرية. من الأناقة غير الرسمية إلى الأزياء المسائية الراقية، اعثر على القطع التي تعبر عن أسلوبك الفريد.",
   "hero_cta": "تسوق الآن",
   "hero_cta_primary": "تسوق الجديد",
   "hero_cta_secondary": "عرض جميع المنتجات",
   "hero_eyebrow": "مجموعة ربيع 2025",
   "hero_explore": "استكشف المنتجات",
-  
+  "search_placeholder": "ابحث عن المنتجات...",
+
+  "categories_shop_by": "تسوق حسب الفئة",
+  "products_featured": "منتجات مميزة",
+  "products_discover_collection": "اكتشف مجموعتنا المختارة من عناصر الموضة المتميزة",
+  "common_view_all": "عرض الكل",
+
   "nav_home": "الرئيسية",
   "nav_products": "المنتجات",
   "nav_categories": "الفئات",
@@ -17,7 +23,7 @@
   "nav_account": "الحساب",
   "nav_login": "تسجيل الدخول",
   "nav_logout": "تسجيل الخروج",
-  
+
   "auth_sign_in": "تسجيل الدخول",
   "auth_sign_up": "إنشاء حساب",
   "auth_create_new_account": "إنشاء حساب جديد",
@@ -30,7 +36,7 @@
   "auth_login_success": "تم تسجيل الدخول بنجاح!",
   "auth_logout_success": "تم تسجيل الخروج بنجاح!",
   "auth_invalid_credentials": "بيانات اعتماد غير صالحة",
-  
+
   "common_or": "أو",
   "common_loading": "جاري التحميل...",
   "common_error": "خطأ",
@@ -49,7 +55,7 @@
   "common_subtotal": "المجموع الفرعي",
   "common_shipping": "الشحن",
   "common_tax": "الضريبة",
-  
+
   "products_title": "المنتجات",
   "products_all": "جميع المنتجات",
   "products_category": "الفئة",
@@ -65,7 +71,7 @@
   "products_view_details": "عرض التفاصيل",
   "products_out_of_stock": "نفد من المخزون",
   "products_in_stock": "متوفر",
-  
+
   "product_details": "تفاصيل المنتج",
   "product_description": "الوصف",
   "product_specifications": "المواصفات",
@@ -73,7 +79,7 @@
   "product_related": "منتجات مشابهة",
   "product_share": "مشاركة",
   "product_wishlist": "إضافة إلى المفضلة",
-  
+
   "cart_title": "سلة التسوق",
   "cart_empty": "سلة التسوق فارغة",
   "cart_item_added": "تمت إضافة العنصر إلى السلة",
@@ -82,7 +88,7 @@
   "cart_remove_item": "إزالة العنصر",
   "cart_checkout": "الدفع",
   "cart_continue_shopping": "متابعة التسوق",
-  
+
   "checkout_title": "الدفع",
   "checkout_billing": "معلومات الفوترة",
   "checkout_shipping": "معلومات الشحن",
@@ -90,9 +96,13 @@
   "checkout_review": "مراجعة الطلب",
   "checkout_place_order": "تأكيد الطلب",
   "checkout_order_summary": "ملخص الطلب",
-  
 
-  
+  "about_title": "من نحن",
+  "about_description": "تعرف على المزيد عن شركتنا ورسالتنا",
+  "about_mission": "مهمتنا",
+  "about_vision": "رؤيتنا",
+  "about_team": "فريقنا",
+
   "contact_title": "اتصل بنا",
   "contact_get_in_touch": "تواصل معنا",
   "contact_name": "الاسم",
@@ -100,33 +110,33 @@
   "contact_message": "الرسالة",
   "contact_send": "إرسال الرسالة",
   "contact_success": "تم إرسال الرسالة بنجاح!",
-  
+
   "footer_company": "الشركة",
   "footer_support": "الدعم",
   "footer_social": "تابعنا",
   "footer_newsletter": "النشرة الإخبارية",
   "footer_newsletter_subscribe": "اشترك في نشرتنا الإخبارية",
   "footer_copyright": "© 2024 OnsiShop. جميع الحقوق محفوظة.",
-  
+
   "promo_title": "عروض خاصة",
   "promo_subtitle": "لا تفوت عروضنا الرائعة",
   "promo_shop_now": "تسوق الآن",
-  
+
   "categories_title": "الفئات",
   "categories_view_all": "عرض الكل",
   "categories_no_products": "لا توجد منتجات في هذه الفئة",
-  
+
   "search_placeholder": "البحث عن المنتجات...",
   "search_results": "نتائج البحث",
   "search_no_results": "لم يتم العثور على نتائج لبحثك",
-  
+
   "account_title": "حسابي",
   "account_profile": "الملف الشخصي",
   "account_orders": "الطلبات",
   "account_wishlist": "المفضلة",
   "account_settings": "الإعدادات",
   "account_logout": "تسجيل الخروج",
-  
+
   "orders_title": "طلباتي",
   "orders_empty": "ليس لديك طلبات حتى الآن",
   "orders_order_number": "طلب رقم #",
@@ -134,20 +144,20 @@
   "orders_order_status": "الحالة",
   "orders_order_total": "المجموع",
   "orders_view_details": "عرض التفاصيل",
-  
+
   "status_pending": "في الانتظار",
   "status_confirmed": "مؤكد",
   "status_shipped": "تم الشحن",
   "status_delivered": "تم التسليم",
   "status_cancelled": "ملغي",
-  
+
   "nav_best_sellers": "الأكثر مبيعاً",
   "nav_new_arrivals": "وصل حديثاً",
   "nav_clothing": "الملابس",
   "nav_accessories": "الإكسسوارات",
   "nav_follow_us": "تابعونا",
   "nav_orders": "الطلبات",
-  
+
   "section_new_arrivals": "وصل حديثاً",
   "section_new_arrivals_eyebrow": "وصل للتو",
   "section_new_arrivals_description": "اكتشف أحدث الإضافات إلى مجموعتنا",
@@ -183,23 +193,22 @@
   "button_yes_delete": "نعم، احذف",
   "button_cancel": "إلغاء",
   "button_delete_product": "حذف المنتج",
-  
+
   "menu_profile": "الملف الشخصي",
   "menu_admin": "إدارة",
-  
+
   "footer_disclaimer_title": "إخلاء مسؤولية",
   "footer_disclaimer_text": "هذا الموقع لأغراض العرض التوضيحي فقط. جميع المنتجات والأسعار وهمية.",
-  
+
   "auth_network_error": "خطأ في الشبكة. يرجى المحاولة مرة أخرى.",
   "auth_continue_checkout": "يرجى تسجيل الدخول للمتابعة مع طلبك",
   "auth_signing_in": "جاري تسجيل الدخول...",
-  
 
   "nav_navigation": "التنقل",
   "section_best_sellers": "الأكثر مبيعاً",
   "promo_free_shipping": "شحن مجاني",
   "footer_all_rights_reserved": "جميع الحقوق محفوظة",
-  
+
   "admin_total_products": "إجمالي المنتجات",
   "admin_categories": "الفئات",
   "admin_content_items": "عناصر المحتوى",
@@ -214,7 +223,7 @@
   "admin_manage_translations": "إدارة الترجمات",
   "admin_recent_products": "المنتجات الأخيرة",
   "admin_no_products_yet": "لا توجد منتجات بعد",
-  
+
   "trust_free_shipping": "شحن مجاني",
   "trust_free_shipping_desc": "للطلبات فوق 50$",
   "trust_easy_returns": "إرجاع سهل",
@@ -223,7 +232,7 @@
   "trust_secure_payment_desc": "تشفير SSL للدفع",
   "trust_support": "دعم 24/7",
   "trust_support_desc": "دائماً هنا لمساعدتك",
-  
+
   "section_promotions": "العروض الترويجية",
   "section_discounts": "خصومات خاصة",
   "promo_learn_more": "اعرف المزيد",

@@ -11,6 +11,8 @@ interface CheckoutFormData {
   email: string;
   phone: string;
   shippingAddress: string;
+  paymentMethod: string;
+  shippingMethod: string;
 }
 
 interface CheckoutFormProps {
@@ -22,21 +24,23 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
   const { cart, clearCart, loading, refreshCart } = useCart();
   const { t } = useTranslation();
   const router = useRouter();
-  
+
   const [formData, setFormData] = useState<CheckoutFormData>({
     fullName: user?.name || '',
     email: user?.email || '',
     phone: '',
-    shippingAddress: ''
+    shippingAddress: '',
+    paymentMethod: 'cod',
+    shippingMethod: 'standard'
   });
-  
+
   const [errors, setErrors] = useState<Partial<CheckoutFormData>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Update form data when user changes
   useEffect(() => {
     if (user) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         fullName: user.name || '',
         email: user.email || ''
@@ -87,17 +91,17 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
     // Clear error when user starts typing
     if (errors[name as keyof CheckoutFormData]) {
-      setErrors(prev => ({ ...prev, [name]: undefined }));
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -113,9 +117,9 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData)
       });
 
       const result = await response.json();
@@ -124,7 +128,7 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
         // Cart is already cleared by the order API
         // Refresh cart to reflect the change in the UI
         await refreshCart();
-        
+
         // Call success callback or redirect
         if (onSubmitSuccess) {
           onSubmitSuccess(result.orderId);
@@ -145,8 +149,8 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
   // Show loading state while cart is loading
   if (loading) {
     return (
-      <div className="max-w-md mx-auto mt-8 p-6 text-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple mx-auto mb-4"></div>
+      <div className="mx-auto mt-8 max-w-md p-6 text-center">
+        <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-b-2 border-purple"></div>
         <p className="text-gray-600">Loading your cart...</p>
       </div>
     );
@@ -155,11 +159,11 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
   // Show empty cart message only after loading is complete
   if (!cart || !cart.items || cart.items.length === 0) {
     return (
-      <div className="max-w-md mx-auto mt-8 p-6 bg-gray-50 rounded-lg text-center">
-        <p className="text-gray-600 mb-4">Your cart is empty</p>
+      <div className="mx-auto mt-8 max-w-md rounded-lg bg-gray-50 p-6 text-center">
+        <p className="mb-4 text-gray-600">Your cart is empty</p>
         <button
           onClick={() => router.push('/')}
-          className="px-6 py-2 bg-purple text-white rounded-md hover:bg-purple/80"
+          className="rounded-md bg-purple px-6 py-2 text-white hover:bg-purple/80"
         >
           Continue Shopping
         </button>
@@ -168,41 +172,59 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-8 text-center">Checkout</h1>
-      
+    <div className="mx-auto max-w-2xl p-6">
+      <h1 className="mb-8 text-center text-3xl font-bold">Checkout</h1>
+
       {/* Order Summary */}
-      <div className="bg-gray-50 rounded-lg p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+      <div className="mb-8 rounded-lg bg-gray-50 p-6">
+        <h2 className="mb-4 text-xl font-semibold">Order Summary</h2>
         <div className="space-y-3">
           {(() => {
             try {
-              return cart.items?.map((item) => (
-                <div key={item?.id || Math.random()} className="flex justify-between items-center">
-                  <div>
-                    <span className="font-medium">
-                      {item?.product?.name || item?.product?.title || 'Product Name Unavailable'}
+              return (
+                cart.items?.map((item) => (
+                  <div
+                    key={item?.id || Math.random()}
+                    className="flex items-center justify-between"
+                  >
+                    <div>
+                      <span className="font-medium">
+                        {item?.product?.name || item?.product?.title || 'Product Name Unavailable'}
+                      </span>
+                      <span className="ml-2 text-gray-500">× {item?.quantity || 0}</span>
+                    </div>
+                    <span className="font-semibold">
+                      {((item?.product?.price || 0) * (item?.quantity || 0)).toFixed(2)} DT
                     </span>
-                    <span className="text-gray-500 ml-2">× {item?.quantity || 0}</span>
                   </div>
-                  <span className="font-semibold">
-                    {((item?.product?.price || 0) * (item?.quantity || 0)).toFixed(2)} DT
-                  </span>
-                </div>
-              )) || [];
+                )) || []
+              );
             } catch (error) {
               console.error('Error rendering cart items in checkout:', error);
               return (
-                <div className="text-red-500 text-center py-4">
+                <div className="py-4 text-center text-red-500">
                   Error loading cart items. Please try refreshing the page.
                 </div>
               );
             }
           })()}
-          <div className="border-t pt-3 mt-3">
-            <div className="flex justify-between items-center text-lg font-bold">
-              <span>Total:</span>
+          <div className="mt-3 border-t pt-3">
+            <div className="flex items-center justify-between">
+              <span>Subtotal:</span>
               <span>{(cart.totalAmount || 0).toFixed(2)} DT</span>
+            </div>
+            <div className="mt-2 flex items-center justify-between">
+              <span>Shipping:</span>
+              <span>{formData.shippingMethod === 'express' ? '15.00' : '0.00'} DT</span>
+            </div>
+            <div className="mt-2 flex items-center justify-between border-t pt-2 text-lg font-bold">
+              <span>Total:</span>
+              <span>
+                {(
+                  (cart.totalAmount || 0) + (formData.shippingMethod === 'express' ? 15 : 0)
+                ).toFixed(2)}{' '}
+                DT
+              </span>
             </div>
           </div>
         </div>
@@ -213,9 +235,9 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
         {/* Personal Information */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Personal Information</h3>
-          
+
           <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="fullName" className="mb-1 block text-sm font-medium text-gray-700">
               Full Name *
             </label>
             <input
@@ -224,16 +246,16 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
               name="fullName"
               value={formData.fullName}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple/50 ${
+              className={`w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple/50 ${
                 errors.fullName ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="Enter your full name"
             />
-            {errors.fullName && <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>}
+            {errors.fullName && <p className="mt-1 text-sm text-red-500">{errors.fullName}</p>}
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
               Email Address *
             </label>
             <input
@@ -242,16 +264,16 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple/50 ${
+              className={`w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple/50 ${
                 errors.email ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="Enter your email address"
             />
-            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+            {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
           </div>
 
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="phone" className="mb-1 block text-sm font-medium text-gray-700">
               Phone Number *
             </label>
             <input
@@ -260,21 +282,24 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
               name="phone"
               value={formData.phone}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple/50 ${
+              className={`w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple/50 ${
                 errors.phone ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="Enter your phone number"
             />
-            {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+            {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
           </div>
         </div>
 
         {/* Shipping Address */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Shipping Address</h3>
-          
+
           <div>
-            <label htmlFor="shippingAddress" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="shippingAddress"
+              className="mb-1 block text-sm font-medium text-gray-700"
+            >
               Complete Address *
             </label>
             <textarea
@@ -283,12 +308,98 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
               value={formData.shippingAddress}
               onChange={handleInputChange}
               rows={4}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple/50 ${
+              className={`w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple/50 ${
                 errors.shippingAddress ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="Enter your complete shipping address including street, city, state, and postal code"
             />
-            {errors.shippingAddress && <p className="text-red-500 text-sm mt-1">{errors.shippingAddress}</p>}
+            {errors.shippingAddress && (
+              <p className="mt-1 text-sm text-red-500">{errors.shippingAddress}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Shipping Method */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Shipping Method</h3>
+          <div className="space-y-2">
+            <label className="flex cursor-pointer items-center rounded-md border p-4 hover:bg-gray-50">
+              <input
+                type="radio"
+                name="shippingMethod"
+                value="standard"
+                checked={formData.shippingMethod === 'standard'}
+                onChange={handleInputChange}
+                className="mr-3"
+              />
+              <div className="flex-1">
+                <div className="font-medium">Standard Shipping - Free</div>
+                <div className="text-sm text-gray-500">5-7 business days</div>
+              </div>
+            </label>
+            <label className="flex cursor-pointer items-center rounded-md border p-4 hover:bg-gray-50">
+              <input
+                type="radio"
+                name="shippingMethod"
+                value="express"
+                checked={formData.shippingMethod === 'express'}
+                onChange={handleInputChange}
+                className="mr-3"
+              />
+              <div className="flex-1">
+                <div className="font-medium">Express Shipping - 15.00 DT</div>
+                <div className="text-sm text-gray-500">2-3 business days</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        {/* Payment Method */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Payment Method</h3>
+          <div className="space-y-2">
+            <label className="flex cursor-pointer items-center rounded-md border p-4 hover:bg-gray-50">
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="cod"
+                checked={formData.paymentMethod === 'cod'}
+                onChange={handleInputChange}
+                className="mr-3"
+              />
+              <div className="flex-1">
+                <div className="font-medium">💵 Cash on Delivery</div>
+                <div className="text-sm text-gray-500">Pay when you receive your order</div>
+              </div>
+            </label>
+            <label className="flex cursor-pointer items-center rounded-md border p-4 hover:bg-gray-50">
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="card"
+                checked={formData.paymentMethod === 'card'}
+                onChange={handleInputChange}
+                className="mr-3"
+              />
+              <div className="flex-1">
+                <div className="font-medium">💳 Credit/Debit Card</div>
+                <div className="text-sm text-gray-500">Pay securely with your card</div>
+              </div>
+            </label>
+            <label className="flex cursor-pointer items-center rounded-md border p-4 hover:bg-gray-50">
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="bank_transfer"
+                checked={formData.paymentMethod === 'bank_transfer'}
+                onChange={handleInputChange}
+                className="mr-3"
+              />
+              <div className="flex-1">
+                <div className="font-medium">🏦 Bank Transfer</div>
+                <div className="text-sm text-gray-500">Transfer payment to our bank account</div>
+              </div>
+            </label>
           </div>
         </div>
 
@@ -297,14 +408,14 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex-1 py-3 px-6 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium"
+            className="flex-1 rounded-md border border-gray-300 px-6 py-3 font-medium text-gray-700 hover:bg-gray-50"
           >
             Back to Cart
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 py-3 px-6 bg-purple text-white rounded-md hover:bg-purple/80 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 rounded-md bg-purple px-6 py-3 font-medium text-white hover:bg-purple/80 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting ? t('button_placing_order') : t('button_place_order')}
           </button>
@@ -312,10 +423,10 @@ export default function OrderCheckoutForm({ onSubmitSuccess }: CheckoutFormProps
       </form>
 
       {/* Payment Info */}
-      <div className="mt-8 p-4 bg-green-50 rounded-lg">
+      <div className="mt-8 rounded-lg bg-green-50 p-4">
         <p className="text-sm text-green-800">
-          <strong>Secure Checkout:</strong> Your order will be processed securely. 
-          You will receive an email confirmation with order details and tracking information.
+          <strong>Secure Checkout:</strong> Your order will be processed securely. You will receive
+          an email confirmation with order details and tracking information.
         </p>
       </div>
     </div>

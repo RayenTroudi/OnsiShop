@@ -1,14 +1,19 @@
 {
-  "hero_title": "Welcome to OnsiShop",
-  "hero_subtitle": "Discover amazing products at great prices",
-  "hero_description": "Shop the latest trends and find your perfect style with our curated collection of premium products.",
+  "hero_title": "Discover Your Perfect Style",
+  "hero_subtitle": "Premium Fashion for Every Occasion",
+  "hero_description": "Explore our curated collection of trendy clothing and accessories. From casual chic to elegant evening wear, find pieces that express your unique style.",
   "hero_cta": "Shop Now",
   "hero_cta_primary": "Shop New Arrivals",
   "hero_cta_secondary": "View All Products",
   "hero_eyebrow": "Spring 2025 Collection",
   "hero_explore": "Explore Products",
   "search_placeholder": "Search for products...",
-  
+
+  "categories_shop_by": "Shop by Category",
+  "products_featured": "Featured Products",
+  "products_discover_collection": "Discover our curated collection of premium fashion items",
+  "common_view_all": "View All",
+
   "nav_home": "Home",
   "nav_products": "Products",
   "nav_categories": "Categories",
@@ -18,7 +23,7 @@
   "nav_account": "Account",
   "nav_login": "Login",
   "nav_logout": "Logout",
-  
+
   "auth_sign_in": "Sign In",
   "auth_sign_up": "Sign Up",
   "auth_create_new_account": "Create New Account",
@@ -31,7 +36,7 @@
   "auth_login_success": "Login successful!",
   "auth_logout_success": "Logout successful!",
   "auth_invalid_credentials": "Invalid credentials",
-  
+
   "common_or": "or",
   "common_loading": "Loading...",
   "common_error": "Error",
@@ -50,7 +55,7 @@
   "common_subtotal": "Subtotal",
   "common_shipping": "Shipping",
   "common_tax": "Tax",
-  
+
   "products_title": "Products",
   "products_all": "All Products",
   "products_category": "Category",
@@ -66,7 +71,7 @@
   "products_view_details": "View Details",
   "products_out_of_stock": "Out of Stock",
   "products_in_stock": "In Stock",
-  
+
   "product_details": "Product Details",
   "product_description": "Description",
   "product_specifications": "Specifications",
@@ -74,7 +79,7 @@
   "product_related": "Related Products",
   "product_share": "Share",
   "product_wishlist": "Add to Wishlist",
-  
+
   "cart_title": "Shopping Cart",
   "cart_empty": "Your cart is empty",
   "cart_item_added": "Item added to cart",
@@ -83,7 +88,7 @@
   "cart_remove_item": "Remove Item",
   "cart_checkout": "Checkout",
   "cart_continue_shopping": "Continue Shopping",
-  
+
   "checkout_title": "Checkout",
   "checkout_billing": "Billing Information",
   "checkout_shipping": "Shipping Information",
@@ -91,10 +96,7 @@
   "checkout_review": "Review Order",
   "checkout_place_order": "Place Order",
   "checkout_order_summary": "Order Summary",
-  
 
-
-  
   "contact_title": "Contact Us",
   "contact_get_in_touch": "Get in Touch",
   "contact_name": "Name",
@@ -102,32 +104,32 @@
   "contact_message": "Message",
   "contact_send": "Send Message",
   "contact_success": "Message sent successfully!",
-  
+
   "footer_company": "Company",
   "footer_support": "Support",
   "footer_social": "Follow Us",
   "footer_newsletter": "Newsletter",
   "footer_newsletter_subscribe": "Subscribe to our newsletter",
   "footer_copyright": "© 2024 OnsiShop. All rights reserved.",
-  
+
   "promo_title": "Special Offers",
   "promo_subtitle": "Don't miss our amazing deals",
   "promo_shop_now": "Shop Now",
-  
+
   "categories_title": "Categories",
   "categories_view_all": "View All",
   "categories_no_products": "No products in this category",
-  
+
   "search_results": "Search Results",
   "search_no_results": "No results found for your search",
-  
+
   "account_title": "My Account",
   "account_profile": "Profile",
   "account_orders": "Orders",
   "account_wishlist": "Wishlist",
   "account_settings": "Settings",
   "account_logout": "Logout",
-  
+
   "orders_title": "My Orders",
   "orders_empty": "You have no orders yet",
   "orders_order_number": "Order #",
@@ -135,20 +137,20 @@
   "orders_order_status": "Status",
   "orders_order_total": "Total",
   "orders_view_details": "View Details",
-  
+
   "status_pending": "Pending",
   "status_confirmed": "Confirmed",
   "status_shipped": "Shipped",
   "status_delivered": "Delivered",
   "status_cancelled": "Cancelled",
-  
+
   "nav_best_sellers": "Best Sellers",
   "nav_new_arrivals": "New Arrivals",
   "nav_clothing": "Clothing",
   "nav_accessories": "Accessories",
   "nav_follow_us": "Follow Us",
   "nav_orders": "Orders",
-  
+
   "section_new_arrivals": "New Arrivals",
   "section_new_arrivals_eyebrow": "Just Landed",
   "section_new_arrivals_description": "Discover the latest additions to our collection",
@@ -184,23 +186,22 @@
   "button_yes_delete": "Yes, Delete",
   "button_cancel": "Cancel",
   "button_delete_product": "Delete Product",
-  
+
   "menu_profile": "Profile",
   "menu_admin": "Admin",
-  
+
   "footer_disclaimer_title": "Disclaimer",
   "footer_disclaimer_text": "This website is for demonstration purposes only. All products and prices are fictional.",
-  
+
   "auth_network_error": "Network error. Please try again.",
   "auth_continue_checkout": "Please sign in to continue with your order",
   "auth_signing_in": "Signing in...",
-  
 
   "nav_navigation": "Navigation",
   "section_best_sellers": "Best Sellers",
   "promo_free_shipping": "Free Shipping",
   "footer_all_rights_reserved": "All rights reserved",
-  
+
   "admin_total_products": "Total Products",
   "admin_categories": "Categories",
   "admin_content_items": "Content Items",
@@ -215,7 +216,7 @@
   "admin_manage_translations": "Manage Translations",
   "admin_recent_products": "Recent Products",
   "admin_no_products_yet": "No products yet",
-  
+
   "trust_free_shipping": "Free Shipping",
   "trust_free_shipping_desc": "On orders over $50",
   "trust_easy_returns": "Easy Returns",
@@ -224,7 +225,7 @@
   "trust_secure_payment_desc": "SSL encrypted checkout",
   "trust_support": "24/7 Support",
   "trust_support_desc": "Always here to help",
-  
+
   "section_promotions": "Promotions",
   "section_discounts": "Special Discounts",
   "promo_learn_more": "Learn More",

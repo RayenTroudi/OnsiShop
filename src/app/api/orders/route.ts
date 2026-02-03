@@ -26,7 +26,7 @@ async function handleGET(request: NextRequest) {
     const ordersWithItems = await Promise.all(
       orders.map(async (order: any) => {
         const orderItems = await dbService.getOrderItems(order.id);
-        
+
         // Enhance order items with product details
         const itemsWithProducts = await Promise.all(
           orderItems.map(async (item: any) => {
@@ -74,22 +74,27 @@ async function handlePOST(request: NextRequest) {
     const userId = user.id;
     console.log('✅ Order creation authenticated, userId:', userId);
 
-    const { fullName, email, phone, shippingAddress } = await request.json();
-    console.log('📝 Order data received:', { fullName, email, phone, shippingAddress });
+    const { fullName, email, phone, shippingAddress, paymentMethod, shippingMethod } =
+      await request.json();
+    console.log('📝 Order data received:', {
+      fullName,
+      email,
+      phone,
+      shippingAddress,
+      paymentMethod,
+      shippingMethod
+    });
 
     // Validate required fields
-    if (!fullName || !email || !phone || !shippingAddress) {
+    if (!fullName || !email || !phone || !shippingAddress || !paymentMethod) {
       console.log('❌ Order creation failed: Missing required fields');
-      return NextResponse.json(
-        { error: 'All fields are required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
     }
 
     // Get cart items for the authenticated user
     const cart = await dbService.getCartByUserId(userId);
     const cartItems = cart ? await dbService.getCartItems(cart.id) : [];
-    
+
     // Enhance cart items with product details
     const cartItemsWithProducts = await Promise.all(
       cartItems.map(async (item: any) => {
@@ -97,7 +102,7 @@ async function handlePOST(request: NextRequest) {
         return { ...item, product };
       })
     );
-    
+
     // Create enhanced cart object
     const enhancedCart = {
       ...cart,
@@ -105,27 +110,30 @@ async function handlePOST(request: NextRequest) {
     };
 
     if (!enhancedCart || enhancedCart.items.length === 0) {
-      console.log('❌ Order creation failed: Cart is empty', { 
-        cartExists: !!enhancedCart, 
-        itemCount: enhancedCart?.items?.length || 0 
+      console.log('❌ Order creation failed: Cart is empty', {
+        cartExists: !!enhancedCart,
+        itemCount: enhancedCart?.items?.length || 0
       });
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
     }
 
     console.log('✅ Cart found with items:', enhancedCart.items.length);
 
-    // Calculate total amount
-    const totalAmount = enhancedCart.items.reduce(
-      (sum: number, item: any) => sum + (item.product.price * item.quantity),
-      0
-    );
+    const shippingCost = shippingMethod === 'express' ? 15 : 0;
+    const totalAmount =
+      enhancedCart.items.reduce(
+        (sum: number, item: any) => sum + item.product.price * item.quantity,
+        0
+      ) + shippingCost;
 
     // Check stock availability
     for (const item of enhancedCart.items) {
       if (item.product.stock < item.quantity) {
         return NextResponse.json(
-          { 
-            error: `Insufficient stock for ${item.product.name || item.product.title}. Available: ${item.product.stock}, Requested: ${item.quantity}` 
+          {
+            error: `Insufficient stock for ${item.product.name || item.product.title}. Available: ${
+              item.product.stock
+            }, Requested: ${item.quantity}`
           },
           { status: 400 }
         );
@@ -140,6 +148,8 @@ async function handlePOST(request: NextRequest) {
       email,
       phone,
       shippingAddress,
+      paymentMethod: paymentMethod || 'cod',
+      shippingMethod: shippingMethod || 'standard',
       totalAmount,
       status: 'pending',
       createdAt: new Date(),
@@ -162,8 +172,8 @@ async function handlePOST(request: NextRequest) {
       });
 
       // Update product stock
-      const currentProduct = await dbService.getProductById(item.productId) as any;
-      
+      const currentProduct = (await dbService.getProductById(item.productId)) as any;
+
       if (currentProduct) {
         await dbService.updateProduct(item.productId, {
           stock: currentProduct.stock - item.quantity
@@ -215,12 +225,12 @@ async function handlePOST(request: NextRequest) {
     }
 
     // Clear cart cookie (though we're not using it anymore)
-    const response = NextResponse.json({ 
-      success: true, 
+    const response = NextResponse.json({
+      success: true,
       orderId: order.id,
-      message: 'Order placed successfully!' 
+      message: 'Order placed successfully!'
     });
-    
+
     response.cookies.set('cartId', '', {
       maxAge: 0,
       httpOnly: true,

@@ -2,11 +2,12 @@
 import { ReactNode } from 'react';
 
 // components
-import ClientProviders from '@/components/layout/ClientProviders';
-import LayoutWrapper from '@/components/layout/LayoutWrapper';
-
-// utils
-import { ensureStartsWith } from '@/lib/utils';
+import Footer from '@/components/layout/Footer';
+import Navigation from '@/components/layout/Navigation';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { CartProvider } from '@/contexts/CartContext';
+import { LoadingProvider } from '@/contexts/LoadingContext';
+import { TranslationProvider } from '@/contexts/TranslationContext';
 
 // styles
 import '@/styles/globals.css';
@@ -17,40 +18,50 @@ import { lora, quicksand } from '@/fonts/fonts';
 // metadata
 const { TWITTER_CREATOR, TWITTER_SITE, SITE_NAME } = process.env;
 const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
-  ? 'https://clothing-store.rashidshamloo.com'
+  ? 'https://onsishop.vercel.app'
   : 'http://localhost:3000';
-const twitterCreator = TWITTER_CREATOR ? ensureStartsWith(TWITTER_CREATOR, '@') : undefined;
-const twitterSite = TWITTER_SITE ? ensureStartsWith(TWITTER_SITE, 'https://') : undefined;
 
 export const metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: SITE_NAME!,
-    template: `%s | ${SITE_NAME}`
+    default: 'OnsiShop - Premium Fashion E-commerce',
+    template: '%s | OnsiShop'
   },
+  description:
+    'Discover premium fashion and lifestyle products at OnsiShop. Shop the latest trends with fast shipping and excellent customer service.',
   robots: {
     follow: true,
     index: true
   },
-  ...(twitterCreator &&
-    twitterSite && {
-      twitter: {
-        card: 'summary_large_image',
-        creator: twitterCreator,
-        site: twitterSite,
-        images: '/images/screenshots/home.webp'
-      }
-    }),
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: baseUrl,
+    title: 'OnsiShop - Premium Fashion E-commerce',
+    description: 'Discover premium fashion and lifestyle products at OnsiShop.',
+    siteName: 'OnsiShop'
+  },
   icons: { icon: '/favicon.png' }
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${quicksand.variable} ${lora.variable} ${quicksand.className}`}>
-      <body className="bg-white text-veryDarkPurple" suppressHydrationWarning={true}>
-        <ClientProviders>
-          <LayoutWrapper>{children}</LayoutWrapper>
-        </ClientProviders>
+      <body
+        className="flex min-h-screen flex-col bg-gray-50 text-gray-900"
+        suppressHydrationWarning={true}
+      >
+        <TranslationProvider>
+          <LoadingProvider>
+            <AuthProvider>
+              <CartProvider>
+                <Navigation />
+                <main className="flex-1">{children}</main>
+                <Footer />
+              </CartProvider>
+            </AuthProvider>
+          </LoadingProvider>
+        </TranslationProvider>
       </body>
     </html>
   );
