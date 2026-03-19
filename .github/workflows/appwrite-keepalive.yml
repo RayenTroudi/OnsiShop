@@ -1,0 +1,146 @@
+name: Appwrite Keepalive
+
+on:
+  schedule:
+    # Run every 6 hours to prevent Appwrite free-tier inactivity timeout
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      keepalive_url:
+        description: 'Optional keepalive URL (defaults to KEEPALIVE_URL secret or NEXTAUTH_URL)'
+        required: false
+        type: string
+
+jobs:
+  keepalive:
+    name: Check Appwrite Health
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Resolve keepalive URL
+        id: resolve_url
+        run: |
+          # Priority order for URL resolution:
+          # 1. workflow_dispatch input
+          # 2. repository secret KEEPALIVE_URL
+          # 3. repository variable KEEPALIVE_URL
+          # 4. repository secret NEXTAUTH_URL
+          # 5. repository variable NEXTAUTH_URL
+
+          URL="${{ github.event.inputs.keepalive_url }}"
+
+          if [ -z "$URL" ]; then
+            URL="${{ secrets.KEEPALIVE_URL }}"
+          fi
+
+          if [ -z "$URL" ]; then
+            URL="${{ vars.KEEPALIVE_URL }}"
+          fi
+
+          if [ -z "$URL" ]; then
+            URL="${{ secrets.NEXTAUTH_URL }}"
+          fi
+
+          if [ -z "$URL" ]; then
+            URL="${{ vars.NEXTAUTH_URL }}"
+          fi
+
+          if [ -z "$URL" ]; then
+            echo "ERROR: Could not resolve keepalive URL"
+            echo "Please set one of:"
+            echo "  - Repository secret: KEEPALIVE_URL"
+            echo "  - Repository variable: KEEPALIVE_URL"
+            echo "  - Repository secret: NEXTAUTH_URL"
+            echo "  - Repository variable: NEXTAUTH_URL"
+            echo "Or provide via workflow_dispatch input"
+            exit 1
+          fi
+
+          # Warn if URL appears to be localhost
+          if [[ "$URL" == *"localhost"* ]] || [[ "$URL" == *"127.0.0.1"* ]]; then
+            echo "⚠️  WARNING: keepalive_url appears to be localhost: $URL"
+            echo "GitHub Actions cannot reach localhost URLs. This will fail."
+          fi
+
+          # Normalize URL: append /api/cron/appwrite-keepalive if not already present
+          if [[ ! "$URL" == */api/cron/appwrite-keepalive ]]; then
+            if [[ "$URL" != */ ]]; then
+              URL="$URL/"
+            fi
+            URL="${URL}api/cron/appwrite-keepalive"
+          fi
+
+          echo "final_url=$URL" >> $GITHUB_OUTPUT
+          echo "✅ Resolved keepalive URL: $URL"
+
+      - name: Perform keepalive check
+        id: keepalive
+        run: |
+          URL="${{ steps.resolve_url.outputs.final_url }}"
+
+          echo "📡 Pinging: $URL"
+
+          # Build curl command with optional Authorization header
+          CURL_CMD="curl -X GET '$URL' \
+            -H 'Content-Type: application/json' \
+            -H 'User-Agent: GitHub-Actions-Keepalive' \
+            -w '\nHTTP_STATUS:%{http_code}' \
+            -s"
+
+          # Add authorization header only if CRON_SECRET is set
+          if [ -n "${{ secrets.CRON_SECRET }}" ]; then
+            CURL_CMD="$CURL_CMD -H 'Authorization: Bearer ${{ secrets.CRON_SECRET }}'"
+            echo "🔐 Using CRON_SECRET authorization"
+          else
+            echo "🔓 CRON_SECRET not set (endpoint must be open)"
+          fi
+
+          # Execute the request
+          RESPONSE=$(eval $CURL_CMD)
+
+          # Parse response
+          HTTP_STATUS=$(echo "$RESPONSE" | grep -oP '(?<=HTTP_STATUS:)\d+' || echo "000")
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "Response Status: $HTTP_STATUS"
+          echo "Response Body: $BODY"
+
+          # Save for later steps
+          echo "status=$HTTP_STATUS" >> $GITHUB_OUTPUT
+          echo "body=$BODY" >> $GITHUB_OUTPUT
+
+          # Check if successful (2xx range)
+          if [[ $HTTP_STATUS =~ ^2[0-9][0-9]$ ]]; then
+            echo "✅ Keepalive check successful ($HTTP_STATUS)"
+            exit 0
+          else
+            echo "❌ Keepalive check failed with HTTP $HTTP_STATUS"
+            exit 1
+          fi
+
+      - name: Log failure details
+        if: failure()
+        run: |
+          echo "❌ Keepalive check failed"
+          echo ""
+          echo "Failure details:"
+          echo "- URL: ${{ steps.resolve_url.outputs.final_url }}"
+          echo "- HTTP Status: ${{ steps.keepalive.outputs.status }}"
+          echo "- Response: ${{ steps.keepalive.outputs.body }}"
+          echo ""
+          echo "Troubleshooting:"
+          echo "1. Verify keepalive URL is accessible from GitHub Actions"
+          echo "2. Check that Appwrite environment variables are set in deployment"
+          echo "3. If endpoint requires CRON_SECRET, ensure it's set in repository secrets"
+          echo "4. Review keepalive endpoint logs in your production deployment"
+
+      - name: Log success
+        if: success()
+        run: |
+          echo "✅ Appwrite keepalive check completed successfully"
+          echo ""
+          echo "Details:"
+          echo "- URL: ${{ steps.resolve_url.outputs.final_url }}"
+          echo "- Status: ${{ steps.keepalive.outputs.status }}"
+          echo "- Timestamp: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
