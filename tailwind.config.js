@@ -9,18 +9,29 @@ module.exports = {
         xs: '480px'
       },
       colors: {
+        // Legacy purple palette (kept for compatibility)
         veryDarkPurple: '#2e2e38',
         darkPurple: '#5c5c70',
         purple: '#9d9cc9',
         lightPurple: '#dedeed',
-        veryLightPurple: '#eeeefe'
+        veryLightPurple: '#eeeefe',
+        // Maison Noir design system
+        ink: '#0D0B09',
+        'ink-light': '#2A2520',
+        cream: '#FAF6EE',
+        stone: '#F0E8D8',
+        terracotta: '#C85D3A',
+        'terracotta-hover': '#A84928',
+        gold: '#B8943F',
+        mist: '#8A7D6B',
+        border: '#E2D8C8',
       },
       fontFamily: {
-        sans: ['var(--font-geist-sans)'],
-        // quicksand: ['Quicksand', 'sans-serif'],
-        // lora: ['Lora', 'serif']
-        lora: ['var(--lora)'],
-        quicksand: ['var(--quicksand)']
+        sans: ['var(--dm-sans)', 'var(--font-geist-sans)', 'sans-serif'],
+        lora: ['var(--lora)', 'serif'],
+        quicksand: ['var(--quicksand)', 'sans-serif'],
+        cormorant: ['var(--cormorant)', 'serif'],
+        display: ['var(--cormorant)', 'var(--lora)', 'serif'],
       },
       keyframes: {
         fadeIn: {

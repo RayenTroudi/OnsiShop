@@ -1,253 +1,170 @@
-/* @import url('https://fonts.googleapis.com/css2?family=Lora&family=Quicksand:wght@400;500;600;700&display=swap'); */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Design Tokens ────────────────────────────────────────────── */
+:root {
+  --ink: #0D0B09;
+  --ink-light: #2A2520;
+  --cream: #FAF6EE;
+  --stone: #F0E8D8;
+  --terracotta: #C85D3A;
+  --terracotta-hover: #A84928;
+  --gold: #B8943F;
+  --mist: #8A7D6B;
+  --border: #E2D8C8;
+  --nav-height: 64px;
+  --cat-bar-height: 44px;
+}
+
+/* ─── Base ──────────────────────────────────────────────────────── */
+@layer base {
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--cream);
+    color: var(--ink);
+    font-family: var(--dm-sans), sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--cormorant), var(--lora), serif;
+  }
+}
+
+/* ─── Legacy button classes (kept for compat) ───────────────────── */
 .btn {
-  @apply relative rounded-[8px] border border-transparent bg-lightPurple px-[32px] py-[16px] font-bold text-darkPurple shadow-md transition-all duration-300 after:absolute after:right-[20px] after:top-[calc(50%_+_2px)] after:font-[swiper-icons] after:text-[20px] after:text-white after:opacity-0 after:transition-all after:duration-300 after:content-['next'] after:-translate-y-1/2 hover:border-lightPurple hover:bg-purple hover:pl-[16px] hover:pr-[48px] hover:text-white hover:after:opacity-100;
+  @apply relative rounded-[8px] border border-transparent bg-lightPurple px-[32px] py-[16px] font-bold text-darkPurple shadow-md transition-all duration-300;
 }
-
 .btn-dark {
-  @apply relative rounded-[8px] border border-transparent bg-purple px-[32px] py-[16px] font-bold text-white shadow-md transition-all duration-300 after:absolute after:right-[20px] after:top-1/2 after:font-[swiper-icons] after:text-[18px] after:text-white after:opacity-0 after:transition-all after:duration-300 after:content-['next'] after:-translate-y-1/2 hover:border-white hover:bg-darkPurple hover:pl-[16px] hover:pr-[48px] hover:after:opacity-100;
+  @apply relative rounded-[8px] border border-transparent bg-purple px-[32px] py-[16px] font-bold text-white shadow-md transition-all duration-300;
 }
-
-.btn-very-dark {
-  @apply relative rounded-[8px] border border-transparent bg-darkPurple px-[32px] py-[16px] font-bold text-white shadow-md transition-all duration-300 after:absolute after:right-[20px] after:top-1/2 after:font-[swiper-icons] after:text-[18px] after:text-white after:opacity-0 after:transition-all after:duration-300 after:content-['next'] after:-translate-y-1/2 hover:border-white hover:bg-purple hover:pl-[16px] hover:pr-[48px] hover:after:opacity-100;
-}
-
 .btn-cart {
-  @apply relative w-full rounded-[8px] border border-transparent bg-purple px-[32px] py-[16px] font-bold text-white shadow-md transition-all duration-300 after:absolute after:right-[20px] after:top-1/2 after:text-[32px] after:text-white after:opacity-0 after:transition-all after:duration-300 after:content-['+'] after:-translate-y-1/2 hover:border-white hover:bg-darkPurple hover:pl-[16px] hover:pr-[48px] hover:text-white hover:after:opacity-100;
+  @apply relative w-full rounded-[8px] border border-transparent bg-purple px-[32px] py-[16px] font-bold text-white shadow-md transition-all duration-300;
+}
+.btn-cart-disabled { @apply relative w-full rounded-[8px] bg-purple px-[32px] py-[16px] font-bold text-white shadow-md; }
+.hover-line { @apply relative transition-all duration-300; }
+.header-link { @apply relative h-full; }
+
+/* ─── Maison Noir — primary CTA ─────────────────────────────────── */
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-none border border-transparent bg-ink px-8 py-3.5 text-sm font-medium tracking-widest uppercase text-cream transition-all duration-300 hover:bg-ink-light;
+}
+.btn-outline {
+  @apply inline-flex items-center justify-center gap-2 rounded-none border border-ink px-8 py-3.5 text-sm font-medium tracking-widest uppercase text-ink transition-all duration-300 hover:bg-ink hover:text-cream;
+}
+.btn-accent {
+  @apply inline-flex items-center justify-center gap-2 rounded-none border border-transparent bg-terracotta px-8 py-3.5 text-sm font-medium tracking-widest uppercase text-cream transition-all duration-300 hover:bg-terracotta-hover;
 }
 
-.btn-cart-disabled {
-  @apply relative w-full rounded-[8px] border border-transparent bg-purple px-[32px] py-[16px] font-bold text-white shadow-md;
+/* ─── Typography helpers ────────────────────────────────────────── */
+.display-heading {
+  font-family: var(--cormorant), var(--lora), serif;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.section-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--mist);
 }
 
-.hover-line {
-  @apply relative transition-all duration-300 before:absolute before:bottom-0 before:left-1/2 before:h-[1px] before:w-0 before:bg-purple before:opacity-0 before:transition-all before:duration-300 before:will-change-transform before:-translate-x-1/2 hover:text-purple hover:before:w-full hover:before:opacity-100;
-}
-
-.header-link {
-  @apply relative h-full before:absolute before:bottom-0 before:left-1/2 before:hidden before:h-[4px] before:w-0 before:bg-purple before:opacity-0 before:transition-all before:duration-300 before:will-change-transform before:-translate-x-1/2 hover:text-purple hover:before:w-full hover:before:opacity-100 md:before:block;
-}
-
+/* ─── Animations ────────────────────────────────────────────────── */
 @keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+  0%  { background-position: -200% 0; }
+  100%{ background-position:  200% 0; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+@keyframes spin {
+  0%   { transform: rotate(0deg);   }
+  100% { transform: rotate(360deg); }
+}
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, #ede8de 25%, #e2dbd0 50%, #ede8de 75%);
   background-size: 200% 100%;
-  animation: shimmer 2s infinite;
+  animation: shimmer 1.8s infinite;
 }
+.animate-fade-in       { animation: fade-in    0.7s ease-out forwards; }
+.animate-fade-in-up    { animation: fade-in-up 0.7s ease-out forwards; }
+.animate-slide-down    { animation: slide-down 0.25s ease-out forwards; }
 
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.animation-delay-100 { animation-delay: 0.1s; opacity: 0; }
+.animation-delay-200 { animation-delay: 0.2s; opacity: 0; }
+.animation-delay-300 { animation-delay: 0.3s; opacity: 0; }
+.animation-delay-400 { animation-delay: 0.4s; opacity: 0; }
+.animation-delay-500 { animation-delay: 0.5s; opacity: 0; }
+.animation-delay-600 { animation-delay: 0.6s; opacity: 0; }
+
+/* ─── Product card image zoom ───────────────────────────────────── */
+.product-card-img {
+  transition: transform 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
+.product-card-img:hover { transform: scale(1.07); }
 
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.8s ease-out forwards;
-}
-
-.animate-fade-in-up {
-  animation: fade-in-up 0.8s ease-out forwards;
-}
-
-.animation-delay-200 {
-  animation-delay: 0.2s;
-  opacity: 0;
-}
-
-.animation-delay-400 {
-  animation-delay: 0.4s;
-  opacity: 0;
-}
-
-/* Global loading spinner styles */
-.global-loading-overlay {
-  position: fixed;
-  top: 0;
+/* ─── Mega-menu ─────────────────────────────────────────────────── */
+.mega-menu {
+  position: absolute;
+  top: 100%;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-  overflow: hidden;
-  backdrop-filter: blur(10px);
+  right: 0;
+  background: var(--cream);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 16px 48px rgba(13,11,9,0.12);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity 0.22s ease, transform 0.22s ease, visibility 0s linear 0.22s;
+  z-index: 50;
+}
+.mega-menu-trigger:hover .mega-menu,
+.mega-menu-trigger:focus-within .mega-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity 0.22s ease, transform 0.22s ease;
 }
 
-.global-loading-overlay.opacity-0 {
-  opacity: 0;
-  transform: scale(1.05);
-  pointer-events: none;
+/* ─── Loading overlay ───────────────────────────────────────────── */
+.global-loading-overlay {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: var(--cream);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.4s ease-out;
 }
+.global-loading-overlay.opacity-0 { opacity: 0; pointer-events: none; }
 
 .loading-spinner {
-  width: 80px;
-  height: 80px;
-  border: 6px solid rgba(147, 51, 234, 0.15);
-  border-top: 6px solid #9333ea;
-  border-right: 6px solid #a855f7;
+  width: 40px; height: 40px;
+  border: 2px solid var(--border);
+  border-top: 2px solid var(--terracotta);
   border-radius: 50%;
-  animation: spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  flex-shrink: 0;
-  position: relative;
+  animation: spin 0.9s linear infinite;
 }
 
-.loading-spinner::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 50px;
-  height: 50px;
-  border: 3px solid rgba(168, 85, 247, 0.3);
-  border-top: 3px solid #c084fc;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  animation: spin 0.8s linear infinite reverse;
-}
-
-.loading-content {
-  text-align: center;
-  animation: fadeInUp 0.6s ease-out;
-}
-
-.loading-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #7c3aed;
-  margin-bottom: 0.75rem;
-  letter-spacing: -0.025em;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.loading-subtitle {
-  font-size: 1.125rem;
-  color: #6b7280;
-  margin-bottom: 2rem;
-  font-weight: 500;
-}
-
-.loading-progress {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 2rem;
-}
-
-.loading-dot {
-  width: 8px;
-  height: 8px;
-  background: #9333ea;
-  border-radius: 50%;
-  animation: bounce 1.4s ease-in-out infinite both;
-}
-
-.loading-dot:nth-child(1) { animation-delay: -0.32s; }
-.loading-dot:nth-child(2) { animation-delay: -0.16s; }
-.loading-dot:nth-child(3) { animation-delay: 0s; }
-
-.loading-video-status {
-  font-size: 0.875rem;
-  color: #8b5cf6;
-  margin-top: 1rem;
-  font-weight: 600;
-  opacity: 0.8;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes fadeInUp {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes bounce {
-  0%, 80%, 100% {
-    transform: scale(0);
-  }
-  40% {
-    transform: scale(1);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
-/* Content fade-in animation */
-.fade-in-content {
-  animation: fadeIn 0.8s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Responsive adjustments */
-@media (max-width: 640px) {
-  .loading-content {
-    padding: 1rem;
-  }
-  
-  .loading-title {
-    font-size: 2rem;
-  }
-  
-  .loading-subtitle {
-    font-size: 1rem;
-  }
-  
-  .loading-spinner {
-    width: 48px;
-    height: 48px;
-  }
-}
+/* ─── Scrollbar ─────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--stone); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--mist); }

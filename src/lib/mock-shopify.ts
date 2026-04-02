@@ -1,6 +1,7 @@
 // Mock data and functions to replace Shopify functionality
 
 import { NextResponse } from 'next/server';
+import { dbService } from './appwrite/database';
 import { Cart, Collection, Menu, Page, Product } from './types';
 
 // Mock menu data
@@ -104,7 +105,13 @@ export const getCollection = async (handle: string): Promise<Collection | null> 
 
 // Additional product functions
 export const getProduct = async (handle: string): Promise<Product | null> => {
-  return null;
+  try {
+    const raw = await dbService.getProductByHandle(handle);
+    if (!raw) return null;
+    return dbService.transformToShopifyProduct(raw) as unknown as Product;
+  } catch {
+    return null;
+  }
 };
 
 // Revalidation function (placeholder)

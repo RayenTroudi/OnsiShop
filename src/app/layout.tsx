@@ -13,7 +13,7 @@ import { TranslationProvider } from '@/contexts/TranslationContext';
 import '@/styles/globals.css';
 
 // fonts
-import { lora, quicksand } from '@/fonts/fonts';
+import { cormorant, dmSans, lora, quicksand } from '@/fonts/fonts';
 
 // metadata
 const { TWITTER_CREATOR, TWITTER_SITE, SITE_NAME } = process.env;
@@ -46,9 +46,10 @@ export const metadata = {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${quicksand.variable} ${lora.variable} ${quicksand.className}`}>
+    <html lang="en" className={`${quicksand.variable} ${lora.variable} ${cormorant.variable} ${dmSans.variable}`}>
       <body
-        className="flex min-h-screen flex-col bg-gray-50 text-gray-900"
+        className="flex min-h-screen flex-col bg-cream text-ink"
+        style={{ fontFamily: 'var(--dm-sans), sans-serif' }}
         suppressHydrationWarning={true}
       >
         <TranslationProvider>

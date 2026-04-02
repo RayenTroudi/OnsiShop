@@ -1,63 +1,46 @@
 'use client';
 
-import { useTranslation } from '@/contexts/TranslationContext';
+import { WOMEN_CATEGORIES } from '@/data/categories';
 import Link from 'next/link';
 
 export default function Footer() {
-  const { t } = useTranslation();
-
-  const footerLinks = {
-    company: [
-      { label: t('nav_about'), href: '/about' },
-      { label: t('nav_contact'), href: '/contact' },
-      { label: 'Privacy Policy', href: '/privacy' },
-      { label: 'Terms of Service', href: '/terms' }
-    ],
-    support: [
-      { label: 'FAQ', href: '/faq' },
-      { label: 'Shipping Info', href: '/shipping' },
-      { label: 'Returns', href: '/returns' },
-      { label: 'Size Guide', href: '/size-guide' }
-    ]
-  };
-
   return (
-    <footer className="bg-gray-900 text-white">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+    <footer className="bg-ink text-cream/70">
+      {/* Top section */}
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-4">
+
           {/* Brand */}
-          <div>
-            <h3 className="mb-4 text-2xl font-bold">OnsiShop</h3>
-            <p className="mb-4 text-gray-400">
-              Your destination for premium fashion and lifestyle products.
+          <div className="md:col-span-1">
+            <p
+              className="mb-4 text-cream"
+              style={{ fontFamily: 'var(--cormorant)', fontSize: '2rem', fontWeight: 400, letterSpacing: '0.08em' }}
+            >
+              ONSI
             </p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 transition-colors hover:text-white">
-                <span className="sr-only">Facebook</span>
-                📘
-              </a>
-              <a href="#" className="text-gray-400 transition-colors hover:text-white">
-                <span className="sr-only">Instagram</span>
-                📷
-              </a>
-              <a href="#" className="text-gray-400 transition-colors hover:text-white">
-                <span className="sr-only">Twitter</span>
-                🐦
-              </a>
+            <p className="mb-6 text-sm leading-relaxed text-cream/50">
+              Curated women&apos;s fashion inspired by global trends, delivered to your door.
+            </p>
+            <div className="flex gap-4">
+              {['Instagram', 'TikTok', 'Facebook'].map((s) => (
+                <a key={s} href="#" className="text-xs tracking-wider uppercase text-cream/30 transition-colors hover:text-cream">
+                  {s}
+                </a>
+              ))}
             </div>
           </div>
 
-          {/* Company */}
+          {/* Shop */}
           <div>
-            <h4 className="mb-4 text-lg font-semibold">{t('footer_company')}</h4>
-            <ul className="space-y-2">
-              {footerLinks.company.map((link) => (
-                <li key={link.href}>
+            <p className="mb-5 text-[10px] font-medium tracking-widest uppercase text-cream/40">Shop</p>
+            <ul className="space-y-3">
+              {WOMEN_CATEGORIES.map((cat) => (
+                <li key={cat.handle}>
                   <Link
-                    href={link.href}
-                    className="text-gray-400 transition-colors hover:text-white"
+                    href={`/products?category=${cat.handle}`}
+                    className={`text-sm transition-colors hover:text-cream ${cat.highlight ? 'text-terracotta' : 'text-cream/60'}`}
                   >
-                    {link.label}
+                    {cat.label}
                   </Link>
                 </li>
               ))}
@@ -66,16 +49,17 @@ export default function Footer() {
 
           {/* Support */}
           <div>
-            <h4 className="mb-4 text-lg font-semibold">{t('footer_support')}</h4>
-            <ul className="space-y-2">
-              {footerLinks.support.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-gray-400 transition-colors hover:text-white"
-                  >
-                    {link.label}
-                  </Link>
+            <p className="mb-5 text-[10px] font-medium tracking-widest uppercase text-cream/40">Support</p>
+            <ul className="space-y-3">
+              {[
+                { label: 'FAQ',             href: '/faq'         },
+                { label: 'Shipping Info',   href: '/shipping'    },
+                { label: 'Returns',         href: '/returns'     },
+                { label: 'Size Guide',      href: '/size-guide'  },
+                { label: 'Contact Us',      href: '/contact'     },
+              ].map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="text-sm text-cream/60 transition-colors hover:text-cream">{l.label}</Link>
                 </li>
               ))}
             </ul>
@@ -83,29 +67,37 @@ export default function Footer() {
 
           {/* Newsletter */}
           <div>
-            <h4 className="mb-4 text-lg font-semibold">{t('footer_newsletter')}</h4>
-            <p className="mb-4 text-gray-400">{t('footer_newsletter_subscribe')}</p>
-            <div className="flex">
+            <p className="mb-5 text-[10px] font-medium tracking-widest uppercase text-cream/40">Stay Updated</p>
+            <p className="mb-4 text-sm leading-relaxed text-cream/50">
+              Get early access to new arrivals and exclusive offers.
+            </p>
+            <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-2">
               <input
                 type="email"
-                placeholder="Enter your email"
-                className="focus:border-purple-500 flex-1 rounded-l-md border border-gray-700 bg-gray-800 px-4 py-2 text-white placeholder-gray-400 focus:outline-none"
+                placeholder="Your email"
+                className="border border-white/10 bg-white/5 px-4 py-3 text-sm text-cream placeholder-cream/30 outline-none focus:border-cream/30"
               />
-              <button className="bg-purple-600 hover:bg-purple-700 rounded-r-md px-4 py-2 text-white transition-colors">
+              <button
+                type="submit"
+                className="bg-terracotta px-4 py-3 text-xs font-medium tracking-widest uppercase text-cream transition-colors hover:bg-terracotta-hover"
+              >
                 Subscribe
               </button>
-            </div>
+            </form>
           </div>
         </div>
+      </div>
 
-        {/* Bottom Bar */}
-        <div className="mt-8 flex flex-col items-center justify-between border-t border-gray-800 pt-8 md:flex-row">
-          <p className="text-sm text-gray-400">{t('footer_copyright')}</p>
-
-          <div className="mt-4 md:mt-0">
-            <p className="text-sm text-gray-400">
-              <strong>{t('footer_disclaimer_title')}:</strong> {t('footer_disclaimer_text')}
-            </p>
+      {/* Bottom bar */}
+      <div className="border-t border-white/5">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-6 sm:flex-row sm:px-6 lg:px-8">
+          <p className="text-xs text-cream/30">© {new Date().getFullYear()} ONSI. All rights reserved.</p>
+          <div className="flex gap-6">
+            {['Privacy Policy', 'Terms of Service'].map((l) => (
+              <Link key={l} href="#" className="text-xs text-cream/30 transition-colors hover:text-cream/60">
+                {l}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

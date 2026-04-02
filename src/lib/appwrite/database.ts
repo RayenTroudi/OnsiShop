@@ -245,8 +245,48 @@ export class AppwriteDbService {
   ) {
     try {
       const { page = 1, limit = 10, category, search } = options;
-      const offset = (page - 1) * limit;
 
+      // When searching: fetch a broad set then filter in-memory
+      // (Appwrite Query.search requires a fulltext index which may not exist)
+      if (search) {
+        const term = search.toLowerCase();
+        const fetchLimit = 200; // reasonable upper bound for in-memory filter
+        const allDocs = await serverDatabases.listDocuments(
+          databaseId,
+          COLLECTION_IDS.PRODUCTS,
+          [Query.limit(fetchLimit)]
+        );
+
+        const matched = allDocs.documents.filter((doc: any) => {
+          const title = (doc.title || doc.name || '').toLowerCase();
+          const desc  = (doc.description || '').toLowerCase();
+          const tags  = Array.isArray(doc.tags) ? doc.tags.join(' ').toLowerCase() : '';
+          return title.includes(term) || desc.includes(term) || tags.includes(term);
+        });
+
+        const offset     = (page - 1) * limit;
+        const pageSlice  = matched.slice(offset, offset + limit);
+        const totalCount = matched.length;
+
+        const products = pageSlice.map((doc: any) => ({
+          ...doc,
+          id: doc.$id,
+          _id: doc.$id,
+          category: null
+        }));
+
+        return {
+          products,
+          totalCount,
+          totalPages: Math.ceil(totalCount / limit),
+          currentPage: page,
+          hasNextPage: page < Math.ceil(totalCount / limit),
+          hasPrevPage: page > 1
+        };
+      }
+
+      // Normal paginated fetch (no search term)
+      const offset  = (page - 1) * limit;
       const queries = [Query.limit(limit), Query.offset(offset)];
 
       if (category) {
@@ -254,10 +294,7 @@ export class AppwriteDbService {
         if (categoryDoc) {
           queries.push(Query.equal('categoryId', categoryDoc.id));
         }
-      }
-
-      if (search) {
-        queries.push(Query.search('title', search));
+        // If category not found in DB, no extra filter — all products returned
       }
 
       const response = await serverDatabases.listDocuments(
@@ -269,23 +306,25 @@ export class AppwriteDbService {
       const categoryIds = Array.from(
         new Set(response.documents.map((p: any) => p.categoryId).filter(Boolean))
       );
-      const categories = await this.getCategoriesByIds(categoryIds);
-      const categoryMap = new Map(categories.filter((c) => c !== null).map((c: any) => [c.id, c]));
+      const categories  = await this.getCategoriesByIds(categoryIds);
+      const categoryMap = new Map(
+        categories.filter((c) => c !== null).map((c: any) => [c.id, c])
+      );
 
       const products = response.documents.map((doc) => ({
         ...doc,
         id: doc.$id,
         _id: doc.$id,
-        category: doc.categoryId ? categoryMap.get(doc.categoryId) || null : null
+        category: (doc as any).categoryId ? categoryMap.get((doc as any).categoryId) || null : null
       }));
 
       return {
         products,
         totalCount: response.total,
         totalPages: Math.ceil(response.total / limit),
-        currentPage: options.page || 1,
-        hasNextPage: (options.page || 1) < Math.ceil(response.total / limit),
-        hasPrevPage: (options.page || 1) > 1
+        currentPage: page,
+        hasNextPage: page < Math.ceil(response.total / limit),
+        hasPrevPage: page > 1
       };
     } catch (error) {
       console.error('Error fetching paginated products:', error);
